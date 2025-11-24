@@ -67,7 +67,7 @@ export default function WorkoutSelection() {
             </CardContent>
           </Card>
 
-          {/* Encontre seu Treino */}
+          {/* Treinos Prontos Mensais */}
           <Card 
             className="cursor-pointer hover:border-accent transition-smooth shadow-card hover:shadow-accent/20 group"
             onClick={() => navigate("/preset-workouts")}
@@ -76,17 +76,17 @@ export default function WorkoutSelection() {
               <div className="w-20 h-20 mx-auto rounded-full gradient-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-smooth">
                 <Search className="w-10 h-10 text-accent-foreground" />
               </div>
-              <CardTitle className="text-2xl">Encontre seu Treino</CardTitle>
+              <CardTitle className="text-2xl">Treinos Prontos Mensais</CardTitle>
               <CardDescription className="text-base">
-                Escolha entre treinos prontos
+                Treinos já montados para você
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                <li>✓ Treinos organizados por objetivo</li>
-                <li>✓ Hipertrofia, definição e mais</li>
-                <li>✓ Treinos femininos especializados</li>
-                <li>✓ Comece a treinar imediatamente</li>
+                <li>✓ Treinos completos já montados</li>
+                <li>✓ Diversos objetivos disponíveis</li>
+                <li>✓ Apenas escolha e comece</li>
+                <li>✓ Adicione aos seus treinos</li>
               </ul>
               <Button 
                 className="w-full gradient-accent text-accent-foreground font-semibold"

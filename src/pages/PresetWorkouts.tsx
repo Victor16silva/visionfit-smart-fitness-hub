@@ -1,127 +1,118 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Flame, Heart, TrendingUp, Sparkles } from "lucide-react";
+import { ArrowLeft, Dumbbell, Clock, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
-interface WorkoutCategory {
+interface WorkoutPlan {
   id: string;
-  title: string;
+  name: string;
+  division_letter: string;
+  muscle_groups: string[];
   description: string;
-  icon: any;
-  color: string;
-  workouts: {
-    id: string;
-    name: string;
-    duration: string;
-    calories: string;
-    focus: string[];
-  }[];
+  created_by: string | null;
 }
-
-const categories: WorkoutCategory[] = [
-  {
-    id: "hipertrofia",
-    title: "Hipertrofia",
-    description: "Aumento de massa muscular",
-    icon: Flame,
-    color: "text-orange-500",
-    workouts: [
-      {
-        id: "hipertrofia-membros-superiores",
-        name: "Esforço Máximo Membros Superiores",
-        duration: "30-40 min",
-        calories: "224 kcal",
-        focus: ["Peito", "Costas", "Bíceps", "Tríceps", "Ombros"],
-      },
-      {
-        id: "hipertrofia-push",
-        name: "Push - Empurrar",
-        duration: "40-50 min",
-        calories: "280 kcal",
-        focus: ["Peito", "Ombros", "Tríceps"],
-      },
-    ],
-  },
-  {
-    id: "treinos-femininos",
-    title: "Treinos Femininos",
-    description: "Programas específicos",
-    icon: Heart,
-    color: "text-pink-500",
-    workouts: [
-      {
-        id: "feminino-inferior",
-        name: "Foco na Região Inferior",
-        duration: "35-45 min",
-        calories: "200 kcal",
-        focus: ["Glúteos", "Quadríceps", "Posteriores"],
-      },
-      {
-        id: "feminino-pernas",
-        name: "Pernas Esculpidas",
-        duration: "40-50 min",
-        calories: "220 kcal",
-        focus: ["Pernas", "Glúteos"],
-      },
-    ],
-  },
-  {
-    id: "perder-peso",
-    title: "Perder Peso",
-    description: "Queima de gordura",
-    icon: TrendingUp,
-    color: "text-green-500",
-    workouts: [
-      {
-        id: "emagrecimento-saude",
-        name: "Emagrecer com Saúde",
-        duration: "30-40 min",
-        calories: "300 kcal",
-        focus: ["Cardio", "Funcional"],
-      },
-      {
-        id: "intensidade-maxima",
-        name: "Intensidade Máxima",
-        duration: "25-35 min",
-        calories: "350 kcal",
-        focus: ["HIIT", "Full Body"],
-      },
-    ],
-  },
-  {
-    id: "definicao",
-    title: "Definição",
-    description: "Definição muscular",
-    icon: Sparkles,
-    color: "text-blue-500",
-    workouts: [
-      {
-        id: "definicao-muscular",
-        name: "Definição Muscular",
-        duration: "35-45 min",
-        calories: "250 kcal",
-        focus: ["Resistência", "Tonificação"],
-      },
-      {
-        id: "intensidade-moderada",
-        name: "Intensidade Moderada",
-        duration: "30-40 min",
-        calories: "230 kcal",
-        focus: ["Definição", "Cardio"],
-      },
-    ],
-  },
-];
 
 export default function PresetWorkouts() {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [workouts, setWorkouts] = useState<WorkoutPlan[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleWorkoutSelect = (workoutId: string) => {
-    // TODO: Implementar navegação para detalhes do treino pré-definido
-    console.log("Selected workout:", workoutId);
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    loadPresetWorkouts();
+  }, [user, navigate]);
+
+  const loadPresetWorkouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("workout_plans")
+        .select("*")
+        .not("created_by", "is", null)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setWorkouts(data || []);
+    } catch (error) {
+      console.error("Error loading preset workouts:", error);
+      toast({
+        title: "Erro ao carregar treinos",
+        description: "Não foi possível carregar os treinos prontos.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdoptWorkout = async (workout: WorkoutPlan) => {
+    try {
+      // Copiar treino pronto para o usuário
+      const { data: newPlan, error: planError } = await supabase
+        .from("workout_plans")
+        .insert({
+          user_id: user?.id,
+          name: workout.name,
+          division_letter: workout.division_letter,
+          muscle_groups: workout.muscle_groups,
+          description: workout.description,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (planError) throw planError;
+
+      // Copiar exercícios
+      const { data: exercises, error: exercisesError } = await supabase
+        .from("workout_exercises")
+        .select("*")
+        .eq("workout_plan_id", workout.id);
+
+      if (exercisesError) throw exercisesError;
+
+      if (exercises && exercises.length > 0) {
+        const newExercises = exercises.map((ex) => ({
+          workout_plan_id: newPlan.id,
+          exercise_id: ex.exercise_id,
+          order_index: ex.order_index,
+          sets: ex.sets,
+          reps_min: ex.reps_min,
+          reps_max: ex.reps_max,
+          rest_seconds: ex.rest_seconds,
+          notes: ex.notes,
+        }));
+
+        const { error: insertError } = await supabase
+          .from("workout_exercises")
+          .insert(newExercises);
+
+        if (insertError) throw insertError;
+      }
+
+      toast({
+        title: "Treino adicionado!",
+        description: "O treino foi adicionado aos seus treinos.",
+      });
+      
+      navigate(`/workout/${newPlan.id}`);
+    } catch (error) {
+      console.error("Error adopting workout:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adotar o treino.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -144,99 +135,75 @@ export default function PresetWorkouts() {
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold mb-2 text-gradient-primary">
-            Escolha por Objetivo
+            Treinos Prontos Mensais
           </h2>
           <p className="text-muted-foreground">
-            Selecione a categoria que melhor se adapta ao seu objetivo
+            Escolha um treino já montado e comece a treinar agora mesmo
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            const isSelected = selectedCategory === category.id;
-            
-            return (
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Carregando treinos...</p>
+          </div>
+        ) : workouts.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Dumbbell className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground text-lg mb-2">
+                Nenhum treino pronto disponível no momento
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Em breve teremos novos treinos para você!
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {workouts.map((workout) => (
               <Card
-                key={category.id}
-                className={`cursor-pointer transition-smooth hover:shadow-lg ${
-                  isSelected ? "border-primary shadow-primary/20" : ""
-                }`}
-                onClick={() => setSelectedCategory(isSelected ? null : category.id)}
+                key={workout.id}
+                className="hover:border-primary transition-smooth shadow-card hover:shadow-primary/20 group"
               >
-                <CardHeader className="text-center pb-3">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                    <Icon className={`w-8 h-8 ${category.color}`} />
+                <CardHeader>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center">
+                      <span className="text-xl font-bold text-primary-foreground">
+                        {workout.division_letter || "A"}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{workout.name}</CardTitle>
+                    </div>
                   </div>
-                  <CardTitle className="text-lg">{category.title}</CardTitle>
-                  <CardDescription className="text-sm">
-                    {category.description}
+                  <CardDescription className="line-clamp-2">
+                    {workout.description}
                   </CardDescription>
                 </CardHeader>
-              </Card>
-            );
-          })}
-        </div>
-
-        {selectedCategory && (
-          <div className="space-y-4">
-            <h3 className="text-2xl font-bold flex items-center gap-2">
-              {categories.find((c) => c.id === selectedCategory)?.title}
-              <Badge variant="secondary">
-                {categories.find((c) => c.id === selectedCategory)?.workouts.length} treinos
-              </Badge>
-            </h3>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              {categories
-                .find((c) => c.id === selectedCategory)
-                ?.workouts.map((workout) => (
-                  <Card
-                    key={workout.id}
-                    className="cursor-pointer hover:border-primary transition-smooth shadow-card"
-                    onClick={() => handleWorkoutSelect(workout.id)}
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {workout.muscle_groups.slice(0, 4).map((group, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {group}
+                      </Badge>
+                    ))}
+                    {workout.muscle_groups.length > 4 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{workout.muscle_groups.length - 4}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    onClick={() => handleAdoptWorkout(workout)}
+                    className="w-full gradient-primary text-primary-foreground font-semibold group-hover:scale-105 transition-smooth"
                   >
-                    <CardHeader>
-                      <CardTitle className="text-xl">{workout.name}</CardTitle>
-                      <div className="flex gap-4 text-sm text-muted-foreground">
-                        <span>⏱️ {workout.duration}</span>
-                        <span>🔥 {workout.calories}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm font-medium mb-2">Foco:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {workout.focus.map((muscle, idx) => (
-                              <Badge key={idx} variant="secondary">
-                                {muscle}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        <Button 
-                          className="w-full gradient-primary text-primary-foreground font-semibold"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleWorkoutSelect(workout.id);
-                          }}
-                        >
-                          Ver Detalhes
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {!selectedCategory && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg">
-              Selecione uma categoria acima para ver os treinos disponíveis
-            </p>
+                    <Dumbbell className="w-4 h-4 mr-2" />
+                    Começar Treino
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </main>
