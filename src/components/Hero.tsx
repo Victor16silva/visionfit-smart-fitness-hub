@@ -43,7 +43,7 @@ const Hero = () => {
               variant="hero" 
               size="lg" 
               className="group"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/")}
             >
               Comece Grátis
               <ArrowRight className="group-hover:translate-x-1 transition-smooth" />
