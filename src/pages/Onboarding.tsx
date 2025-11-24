@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dumbbell, ChevronRight } from "lucide-react";
@@ -9,6 +9,16 @@ import loginImg from "@/assets/onboarding-login.jpg";
 export default function Onboarding() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+
+  // Auto-advance from first slide after 2 seconds
+  useEffect(() => {
+    if (currentSlide === 0) {
+      const timer = setTimeout(() => {
+        setCurrentSlide(1);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentSlide]);
 
   const slides = [
     {
@@ -22,24 +32,12 @@ export default function Onboarding() {
       title: "Bem-vindo",
       description: "VisionFit é um personal trainer alimentado por IA que se adapta aos seus objetivos, rastreia seu progresso e oferece treinos personalizados e planos focados.",
       showButton: true,
-      buttonText: "Comece a Treinar Agora",
-    },
-    {
-      image: loginImg,
-      title: "Olá!",
-      description: "Por favor, insira suas credenciais para continuar...",
-      showButton: true,
-      buttonText: "Fazer Login",
-      isLogin: true,
+      buttonText: "Vamos Começar",
     },
   ];
 
   const handleNext = () => {
-    if (currentSlide < slides.length - 1) {
-      setCurrentSlide(currentSlide + 1);
-    } else {
-      navigate("/auth");
-    }
+    navigate("/auth");
   };
 
   const currentSlideData = slides[currentSlide];
