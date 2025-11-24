@@ -139,7 +139,7 @@ export default function Workouts() {
           </CardHeader>
           <CardContent>
             <Button 
-              onClick={() => navigate("/create-workout")} 
+              onClick={() => navigate("/workout-selection")} 
               size="lg"
               className="gradient-primary text-primary-foreground font-semibold shadow-primary hover:scale-105 transition-smooth"
             >
