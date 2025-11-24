@@ -89,17 +89,28 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Bottom Section */}
+          {/* Bottom Section */}
         <div className="space-y-6">
           {currentSlideData.showButton && (
-            <Button
-              onClick={handleNext}
-              size="lg"
-              className="w-full h-14 text-lg font-bold gradient-primary shadow-primary"
-            >
-              {currentSlideData.buttonText}
-              <ChevronRight className="w-6 h-6 ml-2" />
-            </Button>
+            <>
+              <Button
+                onClick={handleNext}
+                size="lg"
+                className="w-full h-14 text-lg font-bold gradient-primary shadow-primary"
+              >
+                {currentSlideData.buttonText}
+                <ChevronRight className="w-6 h-6 ml-2" />
+              </Button>
+              
+              <Button
+                onClick={() => navigate("/home")}
+                size="lg"
+                variant="outline"
+                className="w-full h-14 text-lg font-bold border-2 border-primary/30 hover:border-primary hover:bg-primary/10"
+              >
+                Ver Site
+              </Button>
+            </>
           )}
 
           {/* Pagination Dots */}
