@@ -10,12 +10,12 @@ export default function Onboarding() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
 
-  // Auto-advance from first slide after 2 seconds
+  // Auto-advance from first slide after 5 seconds
   useEffect(() => {
     if (currentSlide === 0) {
       const timer = setTimeout(() => {
         setCurrentSlide(1);
-      }, 2000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [currentSlide]);
