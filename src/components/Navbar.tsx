@@ -35,8 +35,19 @@ const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost">Entrar</Button>
-            <Button variant="hero">Começar Grátis</Button>
+            <Button 
+              variant="ghost" 
+              className="hover:text-primary transition-smooth font-medium"
+              onClick={() => window.location.href = '/auth'}
+            >
+              Entrar
+            </Button>
+            <Button 
+              className="gradient-primary text-primary-foreground font-semibold shadow-primary hover:scale-105 transition-smooth"
+              onClick={() => window.location.href = '/auth'}
+            >
+              Começar Grátis
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -65,8 +76,19 @@ const Navbar = () => {
                 Sobre
               </a>
               <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border/50">
-                <Button variant="ghost" className="w-full">Entrar</Button>
-                <Button variant="hero" className="w-full">Começar Grátis</Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full hover:text-primary transition-smooth"
+                  onClick={() => window.location.href = '/auth'}
+                >
+                  Entrar
+                </Button>
+                <Button 
+                  className="w-full gradient-primary text-primary-foreground font-semibold shadow-primary"
+                  onClick={() => window.location.href = '/auth'}
+                >
+                  Começar Grátis
+                </Button>
               </div>
             </div>
           </div>
