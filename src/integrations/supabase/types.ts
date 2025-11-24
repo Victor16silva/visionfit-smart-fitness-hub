@@ -305,6 +305,8 @@ export type Database = {
       }
       workout_plans: {
         Row: {
+          category: string | null
+          cover_image_url: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -317,6 +319,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -329,6 +333,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
