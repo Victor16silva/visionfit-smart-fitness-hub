@@ -10,12 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface Exercise {
   id: string;
   name: string;
   equipment: string;
   muscle_groups: string[];
+  description: string | null;
+  image_url: string | null;
 }
 
 interface SelectedExercise {
@@ -251,14 +254,62 @@ export default function CreateWorkout() {
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um exercício" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[400px]">
                       {exercises.map((ex) => (
                         <SelectItem key={ex.id} value={ex.id}>
-                          {ex.name} - {ex.equipment}
+                          <div className="flex items-center gap-3 py-1">
+                            {ex.image_url && (
+                              <img 
+                                src={ex.image_url} 
+                                alt={ex.name}
+                                className="w-12 h-12 rounded object-cover"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <p className="font-medium">{ex.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {ex.equipment} • {ex.muscle_groups.join(", ")}
+                              </p>
+                            </div>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+
+                  {/* Mostrar detalhes do exercício selecionado */}
+                  {selectedEx.exercise_id && exercises.find(e => e.id === selectedEx.exercise_id) && (
+                    <Card className="bg-muted/50">
+                      <CardContent className="pt-4">
+                        <div className="flex gap-4">
+                          {exercises.find(e => e.id === selectedEx.exercise_id)?.image_url && (
+                            <img 
+                              src={exercises.find(e => e.id === selectedEx.exercise_id)!.image_url!} 
+                              alt={exercises.find(e => e.id === selectedEx.exercise_id)?.name}
+                              className="w-24 h-24 rounded object-cover"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <h4 className="font-semibold mb-1">
+                              {exercises.find(e => e.id === selectedEx.exercise_id)?.name}
+                            </h4>
+                            {exercises.find(e => e.id === selectedEx.exercise_id)?.description && (
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {exercises.find(e => e.id === selectedEx.exercise_id)?.description}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-1">
+                              {exercises.find(e => e.id === selectedEx.exercise_id)?.muscle_groups.map((muscle, idx) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {muscle}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

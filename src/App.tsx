@@ -11,6 +11,8 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import WorkoutSession from "./pages/WorkoutSession";
 import CreateWorkout from "./pages/CreateWorkout";
+import WorkoutSelection from "./pages/WorkoutSelection";
+import PresetWorkouts from "./pages/PresetWorkouts";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -62,10 +64,26 @@ const App = () => (
               }
             />
             <Route
+              path="/workout-selection"
+              element={
+                <AppLayout>
+                  <WorkoutSelection />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/create-workout"
               element={
                 <AppLayout>
                   <CreateWorkout />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/preset-workouts"
+              element={
+                <AppLayout>
+                  <PresetWorkouts />
                 </AppLayout>
               }
             />
