@@ -15,6 +15,8 @@ import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Challenges from "./pages/Challenges";
+import Shop from "./pages/Shop";
+import ProductDetail from "./pages/ProductDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -96,6 +98,22 @@ const App = () => (
               element={
                 <AppLayout>
                   <Challenges />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/shop"
+              element={
+                <AppLayout>
+                  <Shop />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/product/:handle"
+              element={
+                <AppLayout>
+                  <ProductDetail />
                 </AppLayout>
               }
             />
