@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
@@ -52,89 +53,111 @@ const App = () => (
             <Route
               path="/dashboard"
               element={
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/workout/:id"
               element={
-                <AppLayout>
-                  <WorkoutSession />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WorkoutSession />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/workout-selection"
               element={
-                <AppLayout>
-                  <WorkoutSelection />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WorkoutSelection />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/create-workout"
               element={
-                <AppLayout>
-                  <CreateWorkout />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CreateWorkout />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/preset-workouts"
               element={
-                <AppLayout>
-                  <PresetWorkouts />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PresetWorkouts />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/progress"
               element={
-                <AppLayout>
-                  <Progress />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Progress />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/profile"
               element={
-                <AppLayout>
-                  <Profile />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Profile />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/settings"
               element={
-                <AppLayout>
-                  <Settings />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/challenges"
               element={
-                <AppLayout>
-                  <Challenges />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Challenges />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/shop"
               element={
-                <AppLayout>
-                  <Shop />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Shop />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/product/:handle"
               element={
-                <AppLayout>
-                  <ProductDetail />
-                </AppLayout>
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProductDetail />
+                  </AppLayout>
+                </ProtectedRoute>
               }
             />
             <Route path="*" element={<NotFound />} />

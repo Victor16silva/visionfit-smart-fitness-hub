@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Dumbbell, ChevronRight } from "lucide-react";
 import splashImg from "@/assets/onboarding-splash.jpg";
@@ -9,6 +10,14 @@ import loginImg from "@/assets/onboarding-login.jpg";
 export default function Onboarding() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
 
   // Auto-advance from first slide after 5 seconds
   useEffect(() => {
