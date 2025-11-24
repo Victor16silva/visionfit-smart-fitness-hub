@@ -68,18 +68,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10">
-      <header className="border-b bg-card/50 backdrop-blur">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Dumbbell className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">VisionFit</h1>
-          </div>
-          <Button variant="ghost" size="icon" onClick={signOut}>
-            <LogOut className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">Meu Treino</h2>

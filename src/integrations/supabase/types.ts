@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      challenge_messages: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_messages_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: string
+          opponent_id: string
+          status: string
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: string
+          opponent_id: string
+          status?: string
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: string
+          opponent_id?: string
+          status?: string
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
       exercise_logs: {
         Row: {
           completed: boolean | null
