@@ -42,7 +42,7 @@ const features = [
 
 const Features = () => {
   return (
-    <section className="py-24 relative">
+    <section id="features" className="py-24 relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
