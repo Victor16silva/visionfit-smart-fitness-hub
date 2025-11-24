@@ -175,13 +175,12 @@ export default function PresetWorkouts() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold mb-2 text-gradient-primary">
-            Escolha por Categoria
-          </h2>
+      <main className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="mb-8">
+          <h2 className="text-lg text-muted-foreground mb-1">Treinos Profissionais</h2>
+          <h1 className="text-3xl font-bold mb-2">Escolha por Categoria</h1>
           <p className="text-muted-foreground">
-            Treinos profissionais organizados por objetivo
+            Treinos montados e organizados por objetivo
           </p>
         </div>
 
@@ -202,64 +201,78 @@ export default function PresetWorkouts() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-10">
             {categories.map((category) => (
               <div key={category.name}>
-                <div className="flex items-center gap-3 mb-6">
-                  <h3 className="text-2xl font-bold">{category.name}</h3>
-                  <Badge variant="secondary">{category.workouts.length} treinos</Badge>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-2xl font-bold">{category.name}</h3>
+                    <Badge variant="secondary" className="font-medium">{category.workouts.length}</Badge>
+                  </div>
+                  <button className="text-sm text-accent font-medium hover:text-accent-glow transition-smooth">
+                    Ver todos →
+                  </button>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {category.workouts.map((workout) => (
                     <Card
                       key={workout.id}
-                      className="overflow-hidden hover:border-primary transition-smooth shadow-card hover:shadow-primary/20 group"
+                      className="overflow-hidden border-none hover:border-primary/30 transition-smooth shadow-card hover:shadow-primary/20 group cursor-pointer"
+                      onClick={() => handleAdoptWorkout(workout)}
                     >
                       {/* Imagem da Categoria */}
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative h-44 overflow-hidden bg-secondary">
                         <img 
                           src={category.image} 
                           alt={category.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-smooth"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-                        <div className="absolute bottom-3 left-3 right-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
-                              <span className="text-lg font-bold text-primary-foreground">
-                                {workout.division_letter || "A"}
-                              </span>
-                            </div>
-                            <h4 className="font-bold text-lg text-foreground">{workout.name}</h4>
+                        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+                        
+                        {/* Badge da Divisão */}
+                        <div className="absolute top-3 left-3">
+                          <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-primary">
+                            <span className="text-base font-bold text-primary-foreground">
+                              {workout.division_letter || "A"}
+                            </span>
                           </div>
+                        </div>
+
+                        {/* Nome do Treino */}
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <h4 className="font-bold text-lg text-foreground line-clamp-1">{workout.name}</h4>
                         </div>
                       </div>
 
-                      <CardContent className="pt-4 space-y-4">
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                      <CardContent className="pt-4 pb-4 space-y-3">
+                        <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
                           {workout.description || "Treino completo e balanceado"}
                         </p>
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {workout.muscle_groups.slice(0, 3).map((group, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
+                            <Badge key={idx} variant="secondary" className="text-xs font-medium">
                               {group}
                             </Badge>
                           ))}
                           {workout.muscle_groups.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs font-medium">
                               +{workout.muscle_groups.length - 3}
                             </Badge>
                           )}
                         </div>
                         
                         <Button 
-                          onClick={() => handleAdoptWorkout(workout)}
-                          className="w-full gradient-primary text-primary-foreground font-semibold group-hover:scale-105 transition-smooth"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAdoptWorkout(workout);
+                          }}
+                          size="lg"
+                          className="w-full gradient-accent text-accent-foreground font-bold shadow-accent group-hover:scale-105 transition-smooth"
                         >
                           <Dumbbell className="w-4 h-4 mr-2" />
-                          Escolher Treino
+                          Escolher
                         </Button>
                       </CardContent>
                     </Card>
