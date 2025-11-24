@@ -44,12 +44,13 @@ export default function Workouts() {
       if (myError) throw myError;
       setMyWorkouts(myData || []);
 
-      // Treinos prontos (criados por personal trainers)
+      // Treinos prontos (criados por personal trainers, mas não pelo usuário atual)
       const { data: readyData, error: readyError } = await supabase
         .from("workout_plans")
         .select("*")
         .not("created_by", "is", null)
         .neq("user_id", user?.id)
+        .neq("created_by", user?.id)  // Não mostrar treinos criados pelo próprio usuário
         .order("created_at", { ascending: false })
         .limit(10);
 
