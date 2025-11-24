@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Dumbbell, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Dumbbell, Mail, Lock, User, ArrowRight, ArrowLeft } from "lucide-react";
 import heroImg from "@/assets/hero-gym.jpg";
 
 export default function Auth() {
@@ -16,6 +17,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +99,16 @@ export default function Auth() {
       {/* Lado Direito - Formulário */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
+          {/* Botão Voltar */}
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="mb-6 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+
           {/* Logo Mobile */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-primary">
