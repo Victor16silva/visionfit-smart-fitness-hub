@@ -1,4 +1,4 @@
-import { Home, Dumbbell, User, Settings, Trophy, LogOut } from "lucide-react";
+import { Home, Dumbbell, User, Settings, Trophy, LogOut, ShoppingBag } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -15,6 +15,7 @@ import {
 const items = [
   { title: "Home", url: "/", icon: Home },
   { title: "Treinos", url: "/dashboard", icon: Dumbbell },
+  { title: "Loja", url: "/shop", icon: ShoppingBag },
   { title: "Desafios", url: "/challenges", icon: Trophy },
   { title: "Conta", url: "/profile", icon: User },
   { title: "Configurações", url: "/settings", icon: Settings },
