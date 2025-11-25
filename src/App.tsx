@@ -7,8 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Onboarding from "./pages/Onboarding";
 import Auth from "./pages/Auth";
@@ -17,6 +15,7 @@ import WorkoutSession from "./pages/WorkoutSession";
 import CreateWorkout from "./pages/CreateWorkout";
 import WorkoutSelection from "./pages/WorkoutSelection";
 import PresetWorkouts from "./pages/PresetWorkouts";
+import Workouts from "./pages/Workouts";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -28,22 +27,12 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
-  <SidebarProvider>
-    <div className="flex min-h-screen w-full">
-      <div className="hidden md:flex">
-        <AppSidebar />
-      </div>
-      <div className="flex-1 flex flex-col">
-        <header className="h-14 flex items-center border-b px-4 md:flex hidden">
-          <SidebarTrigger />
-        </header>
-        <main className="flex-1">
-          <div className="max-w-md mx-auto md:max-w-full">{children}</div>
-        </main>
-        <BottomNav />
-      </div>
-    </div>
-  </SidebarProvider>
+  <div className="min-h-screen w-full bg-background">
+    <main className="w-full">
+      <div className="max-w-md mx-auto">{children}</div>
+    </main>
+    <BottomNav />
+  </div>
 );
 
 const App = () => (
@@ -71,6 +60,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workouts"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Workouts />
                   </AppLayout>
                 </ProtectedRoute>
               }
