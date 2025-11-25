@@ -10,7 +10,7 @@ export default function Settings() {
   const [weeklyReport, setWeeklyReport] = useState(true);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-2xl pb-24">
       <h1 className="text-3xl font-bold mb-8">Configurações</h1>
 
       <Card className="mb-6">

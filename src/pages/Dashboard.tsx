@@ -32,9 +32,9 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="p-6 pb-8">
+      <div className="p-4 pb-6">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">
             <span className="text-lime">VISION</span>
@@ -72,14 +72,14 @@ export default function Dashboard() {
       </div>
 
       {/* Recommended Workouts */}
-      <div className="px-6 mb-8">
+      <div className="px-4 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold">Recomendados</h3>
           <Button variant="link" className="text-lime p-0 h-auto hover:text-lime/80">
             Ver Todos →
           </Button>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+        <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {recommendedWorkouts.map((workout, index) => (
             <div
               key={index}
@@ -108,9 +108,9 @@ export default function Dashboard() {
       </div>
 
       {/* Muscle Focus Area */}
-      <div className="px-6">
+      <div className="px-4">
         <h3 className="text-xl font-bold mb-4">Área de Foco</h3>
-        <div className="flex gap-4 overflow-x-auto pb-2 -mx-6 px-6 scrollbar-hide">
+        <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {muscleGroups.map((group, index) => (
             <div
               key={index}

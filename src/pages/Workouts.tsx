@@ -168,7 +168,7 @@ export default function Workouts() {
 
   // Se tem treino ativo, mostrar treino da semana
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 pb-24">
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Saudação */}
         <div className="mb-8">

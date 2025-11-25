@@ -174,25 +174,37 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           created_at: string
           full_name: string
+          gender: string | null
           id: string
+          onboarding_completed: boolean | null
           updated_at: string
+          weight_kg: number | null
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           created_at?: string
           full_name: string
+          gender?: string | null
           id: string
+          onboarding_completed?: boolean | null
           updated_at?: string
+          weight_kg?: number | null
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string
+          gender?: string | null
           id?: string
+          onboarding_completed?: boolean | null
           updated_at?: string
+          weight_kg?: number | null
         }
         Relationships: []
       }

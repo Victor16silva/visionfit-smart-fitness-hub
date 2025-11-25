@@ -378,7 +378,7 @@ export default function Challenges() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-4xl pb-24">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
         <Trophy className="h-8 w-8 text-primary" />
         Desafios

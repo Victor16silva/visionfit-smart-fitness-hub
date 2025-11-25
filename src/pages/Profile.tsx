@@ -14,6 +14,9 @@ export default function Profile() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
+  const [gender, setGender] = useState("");
+  const [age, setAge] = useState<number | null>(null);
+  const [weight, setWeight] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -28,12 +31,15 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, gender, age, weight_kg")
         .eq("id", user?.id)
         .single();
 
       if (error) throw error;
       setFullName(data.full_name);
+      setGender(data.gender || "");
+      setAge(data.age);
+      setWeight(data.weight_kg);
     } catch (error) {
       console.error("Error loading profile:", error);
     }
@@ -44,7 +50,12 @@ export default function Profile() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName })
+        .update({ 
+          full_name: fullName,
+          gender,
+          age,
+          weight_kg: weight,
+        })
         .eq("id", user?.id);
 
       if (error) throw error;
@@ -74,8 +85,9 @@ export default function Profile() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-8">Minha Conta</h1>
+    <div className="min-h-screen bg-background pb-24">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <h1 className="text-3xl font-bold mb-8">Minha Conta</h1>
 
       <Card className="mb-6">
         <CardHeader>
@@ -114,11 +126,39 @@ export default function Profile() {
               onChange={(e) => setFullName(e.target.value)}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="gender">Gênero</Label>
+            <Input
+              id="gender"
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              placeholder="Male/Female"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="age">Idade</Label>
+            <Input
+              id="age"
+              type="number"
+              value={age || ""}
+              onChange={(e) => setAge(Number(e.target.value))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="weight">Peso (kg)</Label>
+            <Input
+              id="weight"
+              type="number"
+              value={weight || ""}
+              onChange={(e) => setWeight(Number(e.target.value))}
+            />
+          </div>
           <Button onClick={handleSave} disabled={loading}>
             {loading ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
