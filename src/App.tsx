@@ -1,4 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
+import BottomNav from "@/components/BottomNav";
+import UserOnboarding from "./pages/UserOnboarding";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -28,12 +30,17 @@ const queryClient = new QueryClient();
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <SidebarProvider>
     <div className="flex min-h-screen w-full">
-      <AppSidebar />
+      <div className="hidden md:flex">
+        <AppSidebar />
+      </div>
       <div className="flex-1 flex flex-col">
-        <header className="h-14 flex items-center border-b px-4">
+        <header className="h-14 flex items-center border-b px-4 md:flex hidden">
           <SidebarTrigger />
         </header>
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <div className="max-w-md mx-auto md:max-w-full">{children}</div>
+        </main>
+        <BottomNav />
       </div>
     </div>
   </SidebarProvider>
@@ -50,6 +57,14 @@ const App = () => (
             <Route path="/" element={<Onboarding />} />
             <Route path="/home" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route 
+              path="/onboarding-form" 
+              element={
+                <ProtectedRoute>
+                  <UserOnboarding />
+                </ProtectedRoute>
+              } 
+            />
             <Route
               path="/dashboard"
               element={
