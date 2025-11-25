@@ -16,15 +16,15 @@
     --popover: 220 20% 12%;
     --popover-foreground: 0 0% 98%;
 
-    /* Brand Colors - Vibrant teal for health & vitality */
-    --primary: 175 65% 48%;
-    --primary-foreground: 220 25% 8%;
-    --primary-glow: 175 70% 58%;
+    /* Brand Colors - Lime green for VisionFit */
+    --primary: 84 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --primary-glow: 84 100% 60%;
 
-    /* Accent - Coral for energy & action */
-    --accent: 18 85% 60%;
-    --accent-foreground: 220 25% 8%;
-    --accent-glow: 18 90% 70%;
+    /* Accent - Lime green */
+    --accent: 84 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --accent-glow: 84 100% 60%;
 
     /* Secondary - Subtle surfaces */
     --secondary: 220 18% 18%;
@@ -41,18 +41,30 @@
     /* Borders & Inputs */
     --border: 220 15% 25%;
     --input: 220 15% 25%;
-    --ring: 175 65% 48%;
+    --ring: 84 100% 50%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
+    
+    /* Custom VisionFit colors */
+    --lime: 84 100% 50%;
+    --lime-foreground: 0 0% 0%;
+    --purple: 270 80% 45%;
+    --purple-foreground: 0 0% 100%;
+    --orange: 30 100% 50%;
+    --orange-foreground: 0 0% 0%;
+    --blue: 210 100% 45%;
+    --blue-foreground: 0 0% 100%;
+    --brown: 25 45% 30%;
+    --brown-foreground: 0 0% 100%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(175 65% 48%) 0%, hsl(175 70% 58%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(18 85% 60%) 0%, hsl(18 90% 70%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(175 65% 48% / 0.15) 0%, hsl(18 85% 60% / 0.15) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(84 100% 50%) 0%, hsl(84 100% 60%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(84 100% 50%) 0%, hsl(84 100% 60%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(84 100% 50% / 0.15) 0%, hsl(270 80% 45% / 0.15) 100%);
     
     /* Shadows with color glow */
-    --shadow-primary: 0 10px 40px -10px hsl(175 65% 48% / 0.4);
-    --shadow-accent: 0 10px 40px -10px hsl(18 85% 60% / 0.4);
+    --shadow-primary: 0 10px 40px -10px hsl(84 100% 50% / 0.4);
+    --shadow-accent: 0 10px 40px -10px hsl(84 100% 50% / 0.4);
     --shadow-card: 0 4px 20px -4px hsl(220 25% 8% / 0.3);
     
     /* Transitions */
@@ -62,12 +74,12 @@
     /* Sidebar */
     --sidebar-background: 220 20% 10%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 175 65% 48%;
-    --sidebar-primary-foreground: 220 25% 8%;
+    --sidebar-primary: 84 100% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 220 18% 18%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 220 15% 25%;
-    --sidebar-ring: 175 65% 48%;
+    --sidebar-ring: 84 100% 50%;
   }
 }
 
