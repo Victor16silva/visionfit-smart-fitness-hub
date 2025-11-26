@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { Flame, Clock, Dumbbell, Lightbulb } from "lucide-react";
 
 interface WorkoutDay {
@@ -12,8 +11,15 @@ interface WorkoutDay {
 }
 
 export default function PerformanceCalendar() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedIndex, setSelectedIndex] = useState(0);
   
+  // Generate last 5 days
+  const last5Days = Array.from({ length: 5 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (4 - i));
+    return date;
+  });
+
   // Mock data - in real app, fetch from database
   const workoutData: Record<string, WorkoutDay> = {
     [new Date(2025, 10, 26).toDateString()]: {
@@ -39,27 +45,44 @@ export default function PerformanceCalendar() {
     },
   };
 
-  const selectedData = selectedDate ? workoutData[selectedDate.toDateString()] : null;
+  const selectedDate = last5Days[selectedIndex];
+  const selectedData = workoutData[selectedDate.toDateString()];
+
+  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   return (
     <div>
-      <Card className="p-4 bg-card border-border">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={setSelectedDate}
-          className="rounded-lg"
-          modifiers={{
-            workout: Object.keys(workoutData).map(key => new Date(key))
-          }}
-          modifiersStyles={{
-            workout: {
-              fontWeight: "bold",
-              color: "hsl(var(--lime))",
-            }
-          }}
-        />
-      </Card>
+      {/* Horizontal 5-day calendar */}
+      <div className="flex gap-2 mb-4">
+        {last5Days.map((date, index) => {
+          const hasWorkout = !!workoutData[date.toDateString()];
+          const isSelected = index === selectedIndex;
+          
+          return (
+            <button
+              key={index}
+              onClick={() => setSelectedIndex(index)}
+              className={`flex-1 p-3 rounded-xl transition-all ${
+                isSelected 
+                  ? 'bg-lime text-black' 
+                  : 'bg-card border border-border text-foreground'
+              }`}
+            >
+              <div className="text-xs opacity-80 mb-1">
+                {dayNames[date.getDay()]}
+              </div>
+              <div className="text-xl font-bold mb-1">
+                {date.getDate()}
+              </div>
+              {hasWorkout && (
+                <div className={`w-1.5 h-1.5 rounded-full mx-auto ${
+                  isSelected ? 'bg-black' : 'bg-lime'
+                }`} />
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {selectedData && (
         <Card className="mt-4 p-4 bg-card border-border">
