@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, TrendingUp, Apple, Users, Bell, User, Trophy, Clock, Flame } from "lucide-react";
+import { Bell, User, Trophy, Clock, Flame } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import PerformanceCalendar from "@/components/PerformanceCalendar";
 import workoutDaily from "@/assets/workout-daily.jpg";
 import workoutFullbody from "@/assets/workout-fullbody.jpg";
 import workoutHiit from "@/assets/workout-hiit.jpg";
@@ -19,13 +20,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const userName = user?.user_metadata?.full_name?.split(' ')[0] || 'victor';
-
-  const quickActions = [
-    { icon: Dumbbell, label: "Treino", color: "bg-lime hover:bg-lime/90", route: "/workouts" },
-    { icon: TrendingUp, label: "Progresso", color: "bg-purple hover:bg-purple/90", route: "/progress" },
-    { icon: Apple, label: "Nutrição", color: "bg-orange hover:bg-orange/90", route: "/settings" },
-    { icon: Users, label: "Comunidade", color: "bg-blue hover:bg-blue/90", route: "/challenges" },
-  ];
 
   const recommendedWorkouts = [
     { title: "Treino Diário", duration: "16 min", calories: "150 kcal", level: "Iniciante", image: workoutDaily },
@@ -83,18 +77,10 @@ export default function Dashboard() {
           <p className="text-muted-foreground text-sm">É hora de desafiar seus limites.</p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {quickActions.map((action) => (
-            <Button
-              key={action.label}
-              onClick={() => navigate(action.route)}
-              className={`${action.color} h-20 flex flex-col gap-1.5 text-foreground transition-all rounded-2xl`}
-            >
-              <action.icon className="h-6 w-6" />
-              <span className="font-semibold text-sm">{action.label}</span>
-            </Button>
-          ))}
+        {/* Performance Calendar */}
+        <div className="mb-6">
+          <h3 className="text-lg font-bold mb-3">Meu Desempenho</h3>
+          <PerformanceCalendar />
         </div>
       </div>
 
@@ -214,8 +200,8 @@ export default function Dashboard() {
                   className="w-24 h-24 rounded-xl object-cover"
                 />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-sm mb-1 text-foreground">{meal.title}</h4>
-                  <p className="text-xs text-muted-foreground">{meal.calories}</p>
+                  <h4 className="font-semibold text-sm mb-1 text-gray-900">{meal.title}</h4>
+                  <p className="text-xs text-gray-600">{meal.calories}</p>
                 </div>
               </div>
             </div>
