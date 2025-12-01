@@ -1,23 +1,50 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { 
+  Settings, 
+  Users, 
+  Target, 
+  Trophy, 
+  Heart, 
+  Calendar, 
+  Bell, 
+  HelpCircle,
+  LogOut,
+  ChevronRight,
+  Dumbbell,
+  Flame,
+  TrendingUp,
+  ExternalLink
+} from "lucide-react";
+
+interface ProfileStats {
+  workouts: number;
+  streak: number;
+  level: string;
+}
+
+interface MenuItem {
+  icon: React.ElementType;
+  label: string;
+  path?: string;
+  action?: () => void;
+  variant?: "default" | "warning" | "danger";
+}
 
 export default function Profile() {
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
-  const [gender, setGender] = useState("");
-  const [age, setAge] = useState<number | null>(null);
-  const [weight, setWeight] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [stats, setStats] = useState<ProfileStats>({
+    workouts: 1,
+    streak: 7,
+    level: "Iniciante"
+  });
 
   useEffect(() => {
     if (!user) {
@@ -25,53 +52,36 @@ export default function Profile() {
       return;
     }
     loadProfile();
+    checkAdminStatus();
   }, [user, navigate]);
 
   const loadProfile = async () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, gender, age, weight_kg")
+        .select("full_name")
         .eq("id", user?.id)
         .single();
 
       if (error) throw error;
       setFullName(data.full_name);
-      setGender(data.gender || "");
-      setAge(data.age);
-      setWeight(data.weight_kg);
     } catch (error) {
       console.error("Error loading profile:", error);
     }
   };
 
-  const handleSave = async () => {
-    setLoading(true);
+  const checkAdminStatus = async () => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ 
-          full_name: fullName,
-          gender,
-          age,
-          weight_kg: weight,
-        })
-        .eq("id", user?.id);
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user?.id)
+        .in("role", ["admin", "master"])
+        .maybeSingle();
 
-      if (error) throw error;
-
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram salvas com sucesso.",
-      });
+      setIsAdmin(!!data);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o perfil.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error("Error checking admin status:", error);
     }
   };
 
@@ -81,83 +91,173 @@ export default function Profile() {
       .map((n) => n[0])
       .join("")
       .toUpperCase()
-      .slice(0, 2);
+      .slice(0, 2) || "U";
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  const accountMenuItems: MenuItem[] = [
+    { icon: Users, label: "Sobre Mim", path: "/settings" },
+    { icon: Target, label: "Meus Objetivos", path: "/goals" },
+    { icon: Trophy, label: "Conquistas", path: "/progress" },
+    { icon: Heart, label: "Favoritos", path: "/favorites" },
+    { icon: Calendar, label: "Meu Progresso", path: "/calendar" },
+    { icon: Bell, label: "Notificações", path: "/settings" },
+    { icon: Settings, label: "Configurações", path: "/settings" },
+    { icon: HelpCircle, label: "Suporte", path: "/settings" },
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-8">Minha Conta</h1>
+      {/* Header */}
+      <div className="px-4 pt-12 pb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-black text-foreground">Perfil</h1>
+        <button 
+          onClick={() => navigate("/settings")}
+          className="w-10 h-10 rounded-full bg-card flex items-center justify-center"
+        >
+          <Settings className="h-5 w-5 text-muted-foreground" />
+        </button>
+      </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle>{fullName}</CardTitle>
-              <CardDescription>{user?.email}</CardDescription>
-              <p className="text-xs text-muted-foreground mt-1">
-                ID: {user?.id}
-              </p>
+      {/* Profile Card with Gradient */}
+      <div className="px-4 mb-6">
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-purple via-purple/80 to-accent">
+          <CardContent className="p-6">
+            {/* User Info */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="relative">
+                <Avatar className="h-20 w-20 border-4 border-background">
+                  <AvatarFallback className="text-2xl bg-card text-primary font-bold">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center">
+                  <ExternalLink className="h-3.5 w-3.5 text-primary-foreground" />
+                </button>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold text-white">{fullName}</h2>
+                <p className="text-white/70 text-sm">{user?.email}</p>
+                <div className="flex gap-2 mt-2">
+                  <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                    Premium
+                  </span>
+                  {isAdmin && (
+                    <span className="px-2 py-0.5 rounded-full bg-card text-foreground text-xs font-semibold">
+                      Admin
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações Pessoais</CardTitle>
-          <CardDescription>Atualize suas informações de perfil</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" value={user?.email || ""} disabled />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Nome Completo</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gênero</Label>
-            <Input
-              id="gender"
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              placeholder="Male/Female"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="age">Idade</Label>
-            <Input
-              id="age"
-              type="number"
-              value={age || ""}
-              onChange={(e) => setAge(Number(e.target.value))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="weight">Peso (kg)</Label>
-            <Input
-              id="weight"
-              type="number"
-              value={weight || ""}
-              onChange={(e) => setWeight(Number(e.target.value))}
-            />
-          </div>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Salvando..." : "Salvar Alterações"}
-          </Button>
-        </CardContent>
-      </Card>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <Dumbbell className="h-5 w-5 text-primary mx-auto mb-2" />
+                <p className="text-2xl font-black text-white">{stats.workouts}</p>
+                <p className="text-xs text-white/70">Treinos</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <Flame className="h-5 w-5 text-primary mx-auto mb-2" />
+                <p className="text-2xl font-black text-white">{stats.streak}</p>
+                <p className="text-xs text-white/70">Sequência</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <TrendingUp className="h-5 w-5 text-primary mx-auto mb-2" />
+                <p className="text-lg font-black text-white">{stats.level}</p>
+                <p className="text-xs text-white/70">Nível</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* About Me Section */}
+      <div className="px-4 mb-4">
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <h3 className="font-bold text-foreground mb-1">Sobre Mim</h3>
+            <p className="text-sm text-muted-foreground">
+              Adicione uma descrição sobre você e seus objetivos fitness.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Admin Section */}
+      {isAdmin && (
+        <div className="px-4 mb-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
+            Gerenciamento
+          </p>
+          <Card 
+            className="bg-orange/10 border-orange/30 cursor-pointer hover:bg-orange/20 transition-colors"
+            onClick={() => navigate("/admin")}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-orange/20 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-orange" />
+                  </div>
+                  <span className="font-bold text-orange">Painel Admin</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-orange" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Account Menu */}
+      <div className="px-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
+          Conta
+        </p>
+        <div className="space-y-2">
+          {accountMenuItems.map((item, index) => (
+            <Card 
+              key={index}
+              className="bg-card border-border cursor-pointer hover:border-primary/30 transition-colors"
+              onClick={() => item.path && navigate(item.path)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-card-hover flex items-center justify-center">
+                      <item.icon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <span className="font-medium text-foreground">{item.label}</span>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Logout */}
+        <Card 
+          className="bg-destructive/10 border-destructive/30 cursor-pointer hover:bg-destructive/20 transition-colors mt-4"
+          onClick={handleSignOut}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-destructive/20 flex items-center justify-center">
+                  <LogOut className="h-5 w-5 text-destructive" />
+                </div>
+                <span className="font-bold text-destructive">Sair da Conta</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-destructive" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
