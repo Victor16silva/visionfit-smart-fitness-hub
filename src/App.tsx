@@ -23,6 +23,15 @@ import Challenges from "./pages/Challenges";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
 import NotFound from "./pages/NotFound";
+// New pages
+import Nutrition from "./pages/Nutrition";
+import Goals from "./pages/Goals";
+import Favorites from "./pages/Favorites";
+import Calendar from "./pages/Calendar";
+import AllWorkouts from "./pages/AllWorkouts";
+import WorkoutPlayer from "./pages/WorkoutPlayer";
+import WorkoutComplete from "./pages/WorkoutComplete";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +44,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+// Layout without BottomNav for full-screen pages
+const FullScreenLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen w-full bg-background">
+    <main className="w-full">
+      <div className="max-w-md mx-auto">{children}</div>
+    </main>
+  </div>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -43,9 +61,12 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Onboarding />} />
             <Route path="/home" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            
+            {/* Onboarding Flow */}
             <Route 
               path="/onboarding-form" 
               element={
@@ -54,6 +75,16 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/goals" 
+              element={
+                <ProtectedRoute>
+                  <Goals />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Main App Routes with BottomNav */}
             <Route
               path="/dashboard"
               element={
@@ -75,12 +106,102 @@ const App = () => (
               }
             />
             <Route
+              path="/workouts/all"
+              element={
+                <ProtectedRoute>
+                  <AllWorkouts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/nutrition"
+              element={
+                <ProtectedRoute>
+                  <Nutrition />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/challenges"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Challenges />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Profile />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/favorites"
+              element={
+                <ProtectedRoute>
+                  <Favorites />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <Calendar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/progress"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Progress />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Workout Routes */}
+            <Route
               path="/workout/:id"
               element={
                 <ProtectedRoute>
                   <AppLayout>
                     <WorkoutSession />
                   </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout/:id/play"
+              element={
+                <ProtectedRoute>
+                  <WorkoutPlayer />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout/:id/complete"
+              element={
+                <ProtectedRoute>
+                  <WorkoutComplete />
                 </ProtectedRoute>
               }
             />
@@ -114,46 +235,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/progress"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Progress />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Profile />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Settings />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/challenges"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Challenges />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+            
+            {/* Shop Routes */}
             <Route
               path="/shop"
               element={
@@ -174,6 +257,18 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
