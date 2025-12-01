@@ -2,84 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VisionFit Design System - All colors MUST be HSL */
+/* VisionFit Design System - Based on Report */
 
 @layer base {
   :root {
-    /* Background & Surface Colors */
-    --background: 220 25% 8%;
+    /* Background & Surface Colors - gray-950 */
+    --background: 222 84% 3%;
     --foreground: 0 0% 98%;
 
-    --card: 220 20% 12%;
+    /* Card - gray-900 */
+    --card: 222 47% 11%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 220 20% 12%;
+    /* Popover - gray-900 */
+    --popover: 222 47% 11%;
     --popover-foreground: 0 0% 98%;
 
-    /* Brand Colors - Lime green for VisionFit */
-    --primary: 84 100% 50%;
+    /* Brand Colors - Lime #c8ff00 */
+    --primary: 75 100% 50%;
     --primary-foreground: 0 0% 0%;
-    --primary-glow: 84 100% 60%;
+    --primary-glow: 75 100% 60%;
+    --primary-dark: 72 100% 43%;
 
     /* Accent - Lime green */
-    --accent: 84 100% 50%;
+    --accent: 75 100% 50%;
     --accent-foreground: 0 0% 0%;
-    --accent-glow: 84 100% 60%;
+    --accent-glow: 75 100% 60%;
 
-    /* Secondary - Subtle surfaces */
-    --secondary: 220 18% 18%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary - Purple #8b5cf6 */
+    --secondary: 263 90% 66%;
+    --secondary-foreground: 0 0% 100%;
 
-    /* Muted - Less prominent elements */
-    --muted: 220 15% 20%;
+    /* Muted - gray-800 */
+    --muted: 217 33% 17%;
     --muted-foreground: 220 10% 60%;
 
     /* Destructive */
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Borders & Inputs */
-    --border: 220 15% 25%;
-    --input: 220 15% 25%;
-    --ring: 84 100% 50%;
+    /* Borders & Inputs - gray-700 */
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
+    --ring: 75 100% 50%;
 
     --radius: 1rem;
     
     /* Custom VisionFit colors */
-    --lime: 84 100% 50%;
+    --lime: 75 100% 50%;
     --lime-foreground: 0 0% 0%;
-    --purple: 270 80% 45%;
+    --lime-dark: 72 100% 43%;
+    
+    --purple: 263 90% 66%;
     --purple-foreground: 0 0% 100%;
-    --orange: 30 100% 50%;
+    
+    --orange: 25 95% 53%;
     --orange-foreground: 0 0% 0%;
+    
     --blue: 210 100% 45%;
     --blue-foreground: 0 0% 100%;
+    
     --brown: 25 45% 30%;
     --brown-foreground: 0 0% 100%;
+
+    /* Gray scale for elements */
+    --gray-400: 218 11% 65%;
+    --gray-500: 220 9% 46%;
+    --gray-600: 215 14% 34%;
+    --gray-700: 217 19% 27%;
+    --gray-800: 217 33% 17%;
+    --gray-900: 222 47% 11%;
+    --gray-950: 222 84% 5%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(84 100% 50%) 0%, hsl(84 100% 60%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(84 100% 50%) 0%, hsl(84 100% 60%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(84 100% 50% / 0.15) 0%, hsl(270 80% 45% / 0.15) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(75 100% 50%) 0%, hsl(75 100% 60%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(75 100% 50%) 0%, hsl(75 100% 60%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(75 100% 50% / 0.15) 0%, hsl(263 90% 66% / 0.15) 100%);
+    --gradient-purple: linear-gradient(135deg, hsl(263 90% 66%) 0%, hsl(263 90% 76%) 100%);
+    --gradient-orange: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(25 95% 63%) 100%);
     
     /* Shadows with color glow */
-    --shadow-primary: 0 10px 40px -10px hsl(84 100% 50% / 0.4);
-    --shadow-accent: 0 10px 40px -10px hsl(84 100% 50% / 0.4);
-    --shadow-card: 0 4px 20px -4px hsl(220 25% 8% / 0.3);
+    --shadow-primary: 0 10px 40px -10px hsl(75 100% 50% / 0.4);
+    --shadow-accent: 0 10px 40px -10px hsl(75 100% 50% / 0.4);
+    --shadow-purple: 0 10px 40px -10px hsl(263 90% 66% / 0.4);
+    --shadow-orange: 0 10px 40px -10px hsl(25 95% 53% / 0.4);
+    --shadow-card: 0 4px 20px -4px hsl(222 84% 3% / 0.5);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     /* Sidebar */
-    --sidebar-background: 220 20% 10%;
+    --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 84 100% 50%;
+    --sidebar-primary: 75 100% 50%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 220 18% 18%;
+    --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 15% 25%;
-    --sidebar-ring: 84 100% 50%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 75 100% 50%;
   }
 }
 
@@ -91,6 +112,19 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Typography from report */
+  .title {
+    @apply font-black tracking-tight;
+  }
+  
+  .subtitle {
+    @apply font-bold;
+  }
+  
+  .body-text {
+    @apply font-medium;
   }
 }
 
@@ -107,12 +141,28 @@
     background: var(--gradient-hero);
   }
   
+  .gradient-purple {
+    background: var(--gradient-purple);
+  }
+  
+  .gradient-orange {
+    background: var(--gradient-orange);
+  }
+  
   .shadow-primary {
     box-shadow: var(--shadow-primary);
   }
   
   .shadow-accent {
     box-shadow: var(--shadow-accent);
+  }
+  
+  .shadow-purple {
+    box-shadow: var(--shadow-purple);
+  }
+  
+  .shadow-orange {
+    box-shadow: var(--shadow-orange);
   }
   
   .shadow-card {
@@ -139,5 +189,30 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+  
+  .text-gradient-purple {
+    background: var(--gradient-purple);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Glass effect for cards */
+  .glass {
+    @apply bg-card/80 backdrop-blur-lg border border-border/50;
+  }
+  
+  /* Glow effects */
+  .glow-lime {
+    box-shadow: 0 0 20px hsl(75 100% 50% / 0.3), 0 0 40px hsl(75 100% 50% / 0.1);
+  }
+  
+  .glow-purple {
+    box-shadow: 0 0 20px hsl(263 90% 66% / 0.3), 0 0 40px hsl(263 90% 66% / 0.1);
+  }
+  
+  .glow-orange {
+    box-shadow: 0 0 20px hsl(25 95% 53% / 0.3), 0 0 40px hsl(25 95% 53% / 0.1);
   }
 }
