@@ -23,6 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import UserDetailCard from "@/components/admin/UserDetailCard";
+import AssignWorkoutModal from "@/components/admin/AssignWorkoutModal";
+import CreateWorkoutModal from "@/components/admin/CreateWorkoutModal";
+import ExercisePickerModal from "@/components/admin/ExercisePickerModal";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -30,6 +35,9 @@ interface User {
   email?: string;
   role?: string;
   workouts_count?: number;
+  gender?: string;
+  age?: number;
+  weight_kg?: number;
 }
 
 interface WorkoutPlan {
@@ -38,6 +46,7 @@ interface WorkoutPlan {
   muscle_groups: string[];
   category?: string;
   division_letter?: string;
+  description?: string;
 }
 
 interface Exercise {
@@ -45,6 +54,7 @@ interface Exercise {
   name: string;
   muscle_groups: string[];
   difficulty?: string;
+  image_url?: string;
 }
 
 type TabType = "users" | "workouts" | "exercises";
@@ -60,6 +70,13 @@ export default function Admin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("");
   const [focusFilter, setFocusFilter] = useState<string>("");
+
+  // Modal states
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
 
   const stats = {
     users: users.length,
@@ -99,14 +116,14 @@ export default function Admin() {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      // Load users
+      // Load users with auth data
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, gender, age, weight_kg")
         .order("full_name");
 
-      // Get roles for each user
-      const usersWithRoles = await Promise.all(
+      // Get roles and email for each user
+      const usersWithDetails = await Promise.all(
         (profilesData || []).map(async (profile) => {
           const { data: roleData } = await supabase
             .from("user_roles")
@@ -114,14 +131,21 @@ export default function Admin() {
             .eq("user_id", profile.id)
             .maybeSingle();
 
+          // Count workouts for user
+          const { count } = await supabase
+            .from("workout_plans")
+            .select("*", { count: 'exact', head: true })
+            .eq("user_id", profile.id);
+
           return {
             ...profile,
-            role: roleData?.role || "user"
+            role: roleData?.role || "user",
+            workouts_count: count || 0
           };
         })
       );
 
-      setUsers(usersWithRoles);
+      setUsers(usersWithDetails);
 
       // Load workouts
       const { data: workoutsData } = await supabase
@@ -145,20 +169,58 @@ export default function Admin() {
     }
   };
 
-  const getRoleBadge = (role: string) => {
-    const variants: Record<string, { bg: string; text: string }> = {
-      master: { bg: "bg-orange", text: "text-white" },
-      admin: { bg: "bg-purple", text: "text-white" },
-      personal: { bg: "bg-blue-500", text: "text-white" },
-      user: { bg: "bg-card-hover", text: "text-foreground" }
-    };
+  const handleAssignWorkout = (userId: string) => {
+    const foundUser = users.find(u => u.id === userId);
+    if (foundUser) {
+      setSelectedUser(foundUser);
+      setAssignModalOpen(true);
+    }
+  };
 
-    const variant = variants[role] || variants.user;
-    return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${variant.bg} ${variant.text}`}>
-        {role.charAt(0).toUpperCase() + role.slice(1)}
-      </span>
-    );
+  const handleCreateWorkout = (userId: string) => {
+    const foundUser = users.find(u => u.id === userId);
+    if (foundUser) {
+      setSelectedUser(foundUser);
+      setSelectedExercises([]);
+      setCreateModalOpen(true);
+    }
+  };
+
+  const handleMakeAdmin = async (userId: string) => {
+    try {
+      // Check if user already has admin role
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (existingRole) {
+        toast.info("Usuário já é admin");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: "admin" });
+
+      if (error) throw error;
+      
+      toast.success("Usuário promovido a admin");
+      loadAllData();
+    } catch (error) {
+      console.error("Error making admin:", error);
+      toast.error("Erro ao promover usuário");
+    }
+  };
+
+  const handleSelectExercises = (newExercises: Exercise[]) => {
+    setSelectedExercises(prev => [...prev, ...newExercises]);
+  };
+
+  const handleRemoveExercise = (exerciseId: string) => {
+    setSelectedExercises(prev => prev.filter(e => e.id !== exerciseId));
   };
 
   const tabs = [
@@ -229,7 +291,7 @@ export default function Admin() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-background text-foreground shadow-sm border border-border"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -263,31 +325,13 @@ export default function Admin() {
                 u.full_name.toLowerCase().includes(searchQuery.toLowerCase())
               )
               .map((userData) => (
-                <Card key={userData.id} className="bg-card border-border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-purple flex items-center justify-center">
-                          <span className="text-lg font-bold text-white">
-                            {userData.full_name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-foreground">{userData.full_name}</h3>
-                            {getRoleBadge(userData.role || "user")}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {userData.workouts_count || 0} treinos atribuídos
-                          </p>
-                        </div>
-                      </div>
-                      <button className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center">
-                        <Plus className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <UserDetailCard
+                  key={userData.id}
+                  user={userData}
+                  onAssignWorkout={handleAssignWorkout}
+                  onCreateWorkout={handleCreateWorkout}
+                  onMakeAdmin={handleMakeAdmin}
+                />
               ))}
           </div>
         )}
@@ -325,7 +369,7 @@ export default function Admin() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground">Planos de Treino</h2>
               <Button 
-                className="bg-primary text-primary-foreground font-bold"
+                className="bg-lime text-black font-bold hover:bg-lime/90"
                 onClick={() => navigate("/create-workout")}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -343,21 +387,21 @@ export default function Admin() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-                            <span className="text-lg font-bold text-primary-foreground">
+                          <div className="w-12 h-12 rounded-xl bg-lime flex items-center justify-center">
+                            <span className="text-lg font-bold text-black">
                               {workout.division_letter || "A"}
                             </span>
                           </div>
                           <div>
                             <h3 className="font-bold text-foreground">{workout.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {workout.muscle_groups?.slice(0, 2).join(" e ")}
+                              {workout.description || workout.muscle_groups?.slice(0, 2).join(" e ")}
                             </p>
                             <div className="flex gap-1.5 mt-1">
                               <Badge variant="secondary" className="text-xs">
-                                Avançado
+                                {workout.category || "Avançado"}
                               </Badge>
-                              <Badge className="bg-primary text-primary-foreground text-xs">
+                              <Badge className="bg-lime text-black text-xs">
                                 {workout.muscle_groups?.[0] || "Geral"}
                               </Badge>
                               <Badge className="bg-orange text-white text-xs">
@@ -387,7 +431,7 @@ export default function Admin() {
           <>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground">Exercícios</h2>
-              <Button className="bg-primary text-primary-foreground font-bold">
+              <Button className="bg-lime text-black font-bold hover:bg-lime/90">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Exercício
               </Button>
@@ -403,8 +447,16 @@ export default function Admin() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-card-hover flex items-center justify-center">
-                            <Target className="h-6 w-6 text-muted-foreground" />
+                          <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
+                            {exercise.image_url ? (
+                              <img 
+                                src={exercise.image_url} 
+                                alt={exercise.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Target className="h-6 w-6 text-muted-foreground" />
+                            )}
                           </div>
                           <div>
                             <h3 className="font-bold text-foreground">{exercise.name}</h3>
@@ -429,6 +481,38 @@ export default function Admin() {
           </>
         )}
       </div>
+
+      {/* Modals */}
+      <AssignWorkoutModal
+        isOpen={assignModalOpen}
+        onClose={() => {
+          setAssignModalOpen(false);
+          setSelectedUser(null);
+          loadAllData();
+        }}
+        user={selectedUser}
+      />
+
+      <CreateWorkoutModal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setSelectedUser(null);
+          setSelectedExercises([]);
+          loadAllData();
+        }}
+        user={selectedUser}
+        onOpenExercisePicker={() => setExercisePickerOpen(true)}
+        selectedExercises={selectedExercises}
+        onRemoveExercise={handleRemoveExercise}
+      />
+
+      <ExercisePickerModal
+        isOpen={exercisePickerOpen}
+        onClose={() => setExercisePickerOpen(false)}
+        onSelectExercises={handleSelectExercises}
+        selectedCount={selectedExercises.length}
+      />
     </div>
   );
 }

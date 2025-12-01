@@ -32,6 +32,8 @@ import AllWorkouts from "./pages/AllWorkouts";
 import WorkoutPlayer from "./pages/WorkoutPlayer";
 import WorkoutComplete from "./pages/WorkoutComplete";
 import Admin from "./pages/Admin";
+import WorkoutCategories from "./pages/WorkoutCategories";
+import StretchingList from "./pages/StretchingList";
 
 const queryClient = new QueryClient();
 
@@ -264,6 +266,28 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Category Routes */}
+            <Route
+              path="/workouts/categories"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WorkoutCategories />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workouts/category/:category"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <StretchingList />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
