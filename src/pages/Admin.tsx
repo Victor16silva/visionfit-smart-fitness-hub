@@ -27,6 +27,7 @@ import UserDetailCard from "@/components/admin/UserDetailCard";
 import AssignWorkoutModal from "@/components/admin/AssignWorkoutModal";
 import CreateWorkoutModal from "@/components/admin/CreateWorkoutModal";
 import ExercisePickerModal from "@/components/admin/ExercisePickerModal";
+import ExerciseFormModal from "@/components/admin/ExerciseFormModal";
 import { toast } from "sonner";
 
 interface User {
@@ -75,8 +76,10 @@ export default function Admin() {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
+  const [exerciseFormOpen, setExerciseFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
 
   const stats = {
     users: users.length,
@@ -429,9 +432,43 @@ export default function Admin() {
         {/* Exercises Tab */}
         {activeTab === "exercises" && (
           <>
+            {/* Filters */}
+            <div className="flex gap-2 mb-4">
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="w-24 bg-card border-border">
+                  <SelectValue placeholder="Nível" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="Iniciante">Iniciante</SelectItem>
+                  <SelectItem value="Intermediário">Intermediário</SelectItem>
+                  <SelectItem value="Avançado">Avançado</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={focusFilter} onValueChange={setFocusFilter}>
+                <SelectTrigger className="flex-1 bg-card border-border">
+                  <SelectValue placeholder="Área de Foco" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="Peito">Peito</SelectItem>
+                  <SelectItem value="Costas">Costas</SelectItem>
+                  <SelectItem value="Pernas">Pernas</SelectItem>
+                  <SelectItem value="Ombros">Ombros</SelectItem>
+                  <SelectItem value="Braços">Braços</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-foreground">Exercícios</h2>
-              <Button className="bg-lime text-black font-bold hover:bg-lime/90">
+              <Button 
+                className="bg-lime text-black font-bold hover:bg-lime/90"
+                onClick={() => {
+                  setEditingExercise(null);
+                  setExerciseFormOpen(true);
+                }}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Exercício
               </Button>
@@ -447,7 +484,7 @@ export default function Admin() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
+                          <div className="w-14 h-14 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
                             {exercise.image_url ? (
                               <img 
                                 src={exercise.image_url} 
@@ -459,17 +496,55 @@ export default function Admin() {
                             )}
                           </div>
                           <div>
-                            <h3 className="font-bold text-foreground">{exercise.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {exercise.muscle_groups?.join(", ")}
-                            </p>
+                            <h3 className="font-bold text-foreground mb-1">{exercise.name}</h3>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
+                                <Badge 
+                                  key={idx} 
+                                  variant="secondary" 
+                                  className="text-xs bg-muted text-foreground"
+                                >
+                                  {mg}
+                                </Badge>
+                              ))}
+                              {exercise.difficulty && (
+                                <Badge className="text-xs bg-muted text-foreground">
+                                  {exercise.difficulty}
+                                </Badge>
+                              )}
+                              <Badge className="bg-lime text-black text-xs">
+                                {exercise.muscle_groups?.[0] || "Geral"}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center">
+                          <button 
+                            className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-muted transition-colors"
+                            onClick={() => {
+                              setEditingExercise(exercise);
+                              setExerciseFormOpen(true);
+                            }}
+                          >
                             <Pencil className="h-4 w-4 text-muted-foreground" />
                           </button>
-                          <button className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center">
+                          <button 
+                            className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                            onClick={async () => {
+                              if (confirm("Tem certeza que deseja excluir este exercício?")) {
+                                const { error } = await supabase
+                                  .from("exercises")
+                                  .delete()
+                                  .eq("id", exercise.id);
+                                if (error) {
+                                  toast.error("Erro ao excluir exercício");
+                                } else {
+                                  toast.success("Exercício excluído");
+                                  loadAllData();
+                                }
+                              }
+                            }}
+                          >
                             <Trash2 className="h-4 w-4 text-muted-foreground" />
                           </button>
                         </div>
@@ -512,6 +587,16 @@ export default function Admin() {
         onClose={() => setExercisePickerOpen(false)}
         onSelectExercises={handleSelectExercises}
         selectedCount={selectedExercises.length}
+      />
+
+      <ExerciseFormModal
+        isOpen={exerciseFormOpen}
+        onClose={() => {
+          setExerciseFormOpen(false);
+          setEditingExercise(null);
+        }}
+        exercise={editingExercise}
+        onSuccess={loadAllData}
       />
     </div>
   );
