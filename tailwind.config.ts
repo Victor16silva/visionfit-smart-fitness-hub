@@ -48,6 +48,7 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+          hover: "hsl(var(--muted))",
         },
         lime: {
           DEFAULT: "hsl(var(--lime))",
