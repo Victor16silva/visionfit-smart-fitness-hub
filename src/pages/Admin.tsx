@@ -676,84 +676,83 @@ export default function Admin() {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-3">
                   {filteredExercises.map((exercise) => (
-                    <Card key={exercise.id} className="bg-card border-border">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
-                              {exercise.image_url ? (
-                                <img 
-                                  src={exercise.image_url} 
-                                  alt={exercise.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <Target className="h-6 w-6 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-foreground mb-1">{exercise.name}</h3>
-                              <div className="flex gap-1.5 flex-wrap">
-                                {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
-                                  <Badge 
-                                    key={idx} 
-                                    variant="secondary" 
-                                    className="text-xs bg-muted text-foreground"
-                                  >
-                                    {mg}
-                                  </Badge>
-                                ))}
-                                {exercise.difficulty && (
-                                  <Badge className="text-xs bg-muted text-foreground">
-                                    {exercise.difficulty}
-                                  </Badge>
-                                )}
-                                {exercise.equipment && (
-                                  <Badge className="bg-lime text-black text-xs">
-                                    {exercise.equipment}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button 
-                              className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
-                              onClick={() => {
-                                setEditingExercise(exercise);
-                                setExerciseFormOpen(true);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4 text-blue-400" />
-                            </button>
-                            <button 
-                              className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center hover:bg-red-500/30 transition-colors"
-                              onClick={async () => {
-                                if (confirm("Tem certeza que deseja excluir este exercício?")) {
-                                  const { error } = await supabase
-                                    .from("exercises")
-                                    .delete()
-                                    .eq("id", exercise.id);
-                                  if (error) {
-                                    toast.error("Erro ao excluir exercício");
-                                  } else {
-                                    toast.success("Exercício excluído");
-                                    loadAllData();
-                                  }
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-400" />
-                            </button>
+                    <div 
+                      key={exercise.id} 
+                      className="flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:border-lime/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* GIF/Image as cover */}
+                        <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden flex items-center justify-center flex-shrink-0">
+                          {exercise.image_url ? (
+                            <img 
+                              src={exercise.image_url} 
+                              alt={exercise.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Target className="h-7 w-7 text-muted-foreground" />
+                          )}
+                        </div>
+                        
+                        {/* Exercise info */}
+                        <div>
+                          <h3 className="font-bold text-foreground text-base mb-2">{exercise.name}</h3>
+                          <div className="flex gap-2 flex-wrap">
+                            {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
+                              <Badge 
+                                key={idx} 
+                                variant="outline" 
+                                className="text-xs px-2.5 py-0.5 border-border text-muted-foreground"
+                              >
+                                {mg}
+                              </Badge>
+                            ))}
+                            {exercise.equipment && (
+                              <Badge className="bg-lime text-black text-xs px-2.5 py-0.5">
+                                {exercise.equipment}
+                              </Badge>
+                            )}
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                      
+                      {/* Actions */}
+                      <div className="flex items-center gap-3">
+                        <button 
+                          className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            setEditingExercise(exercise);
+                            setExerciseFormOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </button>
+                        <button 
+                          className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-400"
+                          onClick={async () => {
+                            if (confirm("Tem certeza que deseja excluir este exercício?")) {
+                              const { error } = await supabase
+                                .from("exercises")
+                                .delete()
+                                .eq("id", exercise.id);
+                              if (error) {
+                                toast.error("Erro ao excluir exercício");
+                              } else {
+                                toast.success("Exercício excluído");
+                                loadAllData();
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
                   ))}
                   {filteredExercises.length === 0 && (
-                    <p className="col-span-full text-center text-muted-foreground py-8">
+                    <p className="text-center text-muted-foreground py-8">
                       Nenhum exercício encontrado
                     </p>
                   )}
