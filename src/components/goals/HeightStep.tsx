@@ -74,9 +74,9 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
 
       <div className="flex-1 relative flex items-center justify-center">
         {/* Selection indicator lines */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 w-48 pointer-events-none z-20">
-          <div className="absolute -top-6 w-full h-[2px] bg-[#dc2626]" />
-          <div className="absolute top-6 w-full h-[2px] bg-[#dc2626]" />
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-48 pointer-events-none z-20">
+          <div className="absolute -top-[26px] w-full h-[2px] bg-[#dc2626]" />
+          <div className="absolute top-[26px] w-full h-[2px] bg-[#dc2626]" />
         </div>
 
         <div
