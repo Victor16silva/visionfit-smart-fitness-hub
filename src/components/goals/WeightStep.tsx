@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Slider } from "@/components/ui/slider";
+import { useRef, useEffect, useCallback } from "react";
 
 interface WeightStepProps {
   value: number;
@@ -8,75 +8,118 @@ interface WeightStepProps {
 
 export function WeightStep({ value, onChange }: WeightStepProps) {
   const minWeight = 30;
-  const maxWeight = 200;
+  const maxWeight = 150;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const calculateValueFromPosition = useCallback((clientX: number) => {
+    if (!containerRef.current) return value;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const newValue = Math.round(minWeight + percentage * (maxWeight - minWeight));
+    return newValue;
+  }, [value, minWeight, maxWeight]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    isDragging.current = true;
+    containerRef.current?.setPointerCapture(e.pointerId);
+    onChange(calculateValueFromPosition(e.clientX));
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    onChange(calculateValueFromPosition(e.clientX));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    isDragging.current = false;
+    containerRef.current?.releasePointerCapture(e.pointerId);
+  };
+
+  const progress = (value - minWeight) / (maxWeight - minWeight);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-8"
+      className="space-y-8 h-full flex flex-col"
     >
       <div className="text-center">
         <h1 className="text-2xl font-black text-foreground mb-2">
           Qual é seu peso atual?
         </h1>
         <p className="text-muted-foreground text-sm">
-          Você pode alterar isso depois
+          Arraste para ajustar
         </p>
       </div>
 
-      <div className="flex flex-col items-center justify-center py-8">
+      {/* Weight Display */}
+      <div className="flex-1 flex flex-col items-center justify-center">
         <motion.div 
-          className="text-center mb-8"
+          className="text-center mb-12"
           key={value}
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.9, opacity: 0.5 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 300 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <span className="text-7xl font-black text-lime">{value}</span>
-          <span className="text-2xl text-muted-foreground ml-2">kg</span>
+          <span className="text-3xl text-lime ml-2">Kg</span>
         </motion.div>
 
-        {/* Weight slider */}
-        <div className="w-full px-4">
-          <Slider
-            value={[value]}
-            onValueChange={(vals) => onChange(vals[0])}
-            min={minWeight}
-            max={maxWeight}
-            step={1}
-            className="w-full"
-          />
-          
-          {/* Scale markers */}
-          <div className="flex justify-between mt-4 text-xs text-muted-foreground">
-            <span>{minWeight}kg</span>
-            <span>{Math.round((minWeight + maxWeight) / 2)}kg</span>
-            <span>{maxWeight}kg</span>
-          </div>
-        </div>
+        {/* Ruler Slider */}
+        <div 
+          ref={containerRef}
+          className="w-full px-4 cursor-pointer touch-none select-none"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+        >
+          <div className="relative h-24">
+            {/* Ruler marks */}
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between items-end">
+              {Array.from({ length: 61 }, (_, i) => {
+                const markValue = minWeight + Math.round(i * (maxWeight - minWeight) / 60);
+                const isMajor = markValue % 10 === 0;
+                const isMedium = markValue % 5 === 0 && !isMajor;
+                const markProgress = i / 60;
+                const isActive = markProgress <= progress;
+                
+                return (
+                  <div
+                    key={i}
+                    className={`transition-all duration-150 rounded-full ${
+                      isActive ? "bg-lime" : "bg-muted-foreground/30"
+                    }`}
+                    style={{
+                      width: isMajor ? 3 : 2,
+                      height: isMajor ? 48 : isMedium ? 32 : 20,
+                    }}
+                  />
+                );
+              })}
+            </div>
 
-        {/* Visual weight indicator */}
-        <div className="mt-8 flex items-end gap-1 h-20">
-          {Array.from({ length: 30 }, (_, i) => {
-            const progress = (value - minWeight) / (maxWeight - minWeight);
-            const barProgress = i / 29;
-            const isActive = barProgress <= progress;
-            const height = Math.abs(i - 15) < 5 ? 60 + (5 - Math.abs(i - 15)) * 8 : 60;
-            
-            return (
-              <motion.div
-                key={i}
-                className={`w-1.5 rounded-full transition-colors ${
-                  isActive ? "bg-lime" : "bg-muted"
-                }`}
-                initial={{ height: 20 }}
-                animate={{ height }}
-                transition={{ delay: i * 0.02 }}
-              />
-            );
-          })}
+            {/* Current position indicator */}
+            <motion.div 
+              className="absolute top-1/2 -translate-y-1/2 w-1 h-16 bg-lime rounded-full shadow-lg shadow-lime/50"
+              style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }}
+              layoutId="weight-indicator"
+            >
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-lime rounded-full" />
+            </motion.div>
+          </div>
+
+          {/* Scale numbers */}
+          <div className="flex justify-between mt-4 text-sm text-muted-foreground font-medium">
+            <span>{minWeight}</span>
+            <span>{Math.round((minWeight + maxWeight) / 4)}</span>
+            <span>{Math.round((minWeight + maxWeight) / 2)}</span>
+            <span>{Math.round((minWeight + maxWeight) * 3 / 4)}</span>
+            <span>{maxWeight}</span>
+          </div>
         </div>
       </div>
     </motion.div>
