@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Target, Dumbbell, Scale, Heart, Zap } from "lucide-react";
 
 interface GoalsStepProps {
   value: string[];
@@ -8,11 +7,11 @@ interface GoalsStepProps {
 }
 
 const fitnessGoals = [
-  { id: "lose_weight", label: "Perder Peso", icon: Scale, description: "Queimar gordura e emagrecer" },
-  { id: "build_muscle", label: "Ganhar Massa", icon: Dumbbell, description: "Hipertrofia muscular" },
-  { id: "get_fit", label: "Condicionamento", icon: Heart, description: "Melhorar saúde geral" },
-  { id: "increase_strength", label: "Força", icon: Zap, description: "Aumentar força máxima" },
-  { id: "flexibility", label: "Flexibilidade", icon: Target, description: "Melhorar mobilidade" },
+  { id: "lose_weight", label: "Perder Peso", emoji: "⚖️", description: "Queimar gordura e emagrecer" },
+  { id: "build_muscle", label: "Ganhar Massa", emoji: "💎", description: "Hipertrofia muscular" },
+  { id: "get_fit", label: "Condicionamento", emoji: "❤️", description: "Melhorar saúde geral" },
+  { id: "increase_strength", label: "Força", emoji: "⚡", description: "Aumentar força máxima" },
+  { id: "flexibility", label: "Flexibilidade", emoji: "🎯", description: "Melhorar mobilidade" },
 ];
 
 export function GoalsStep({ value, onChange }: GoalsStepProps) {
@@ -42,7 +41,6 @@ export function GoalsStep({ value, onChange }: GoalsStepProps) {
 
       <div className="grid grid-cols-2 gap-3">
         {fitnessGoals.map((goal, index) => {
-          const Icon = goal.icon;
           const isSelected = value.includes(goal.id);
           
           return (
@@ -62,13 +60,13 @@ export function GoalsStep({ value, onChange }: GoalsStepProps) {
               >
                 <div className="flex flex-col items-center text-center gap-2">
                   <motion.div 
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      isSelected ? "bg-lime text-black" : "bg-muted"
+                    className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl ${
+                      isSelected ? "bg-lime" : "bg-muted"
                     }`}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Icon className="w-6 h-6" />
+                    {goal.emoji}
                   </motion.div>
                   <div>
                     <h3 className="font-bold text-sm text-foreground">{goal.label}</h3>
