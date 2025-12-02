@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Target, Dumbbell, Scale, Heart, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Target, Dumbbell, Scale, Heart, Zap, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,6 +35,38 @@ export default function Goals() {
   const [bodyType, setBodyType] = useState<string>("");
   const [trainingLevel, setTrainingLevel] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [loadingGoals, setLoadingGoals] = useState(true);
+
+  useEffect(() => {
+    const loadExistingGoals = async () => {
+      if (!user) {
+        setLoadingGoals(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("user_goals")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setSelectedGoals(data.fitness_goals || []);
+          setBodyType(data.body_type || "");
+          setTrainingLevel(data.training_level || "");
+        }
+      } catch (error) {
+        console.error("Error loading goals:", error);
+      } finally {
+        setLoadingGoals(false);
+      }
+    };
+
+    loadExistingGoals();
+  }, [user]);
 
   const toggleGoal = (goalId: string) => {
     setSelectedGoals((prev) =>
@@ -66,18 +98,41 @@ export default function Goals() {
       return;
     }
 
+    if (!user) {
+      toast({ title: "Você precisa estar logado", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
     try {
-      // In a real app, you'd save this to a goals/preferences table
-      // For now, we'll show success and navigate
+      const { error } = await supabase
+        .from("user_goals")
+        .upsert({
+          user_id: user.id,
+          fitness_goals: selectedGoals,
+          body_type: bodyType,
+          training_level: trainingLevel,
+        }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
       toast({ title: "Objetivos salvos com sucesso!" });
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error saving goals:", error);
       toast({ title: "Erro ao salvar objetivos", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
+
+  if (loadingGoals) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-lime" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

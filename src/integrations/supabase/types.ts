@@ -229,6 +229,36 @@ export type Database = {
           },
         ]
       }
+      user_goals: {
+        Row: {
+          body_type: string | null
+          created_at: string
+          fitness_goals: string[]
+          id: string
+          training_level: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_type?: string | null
+          created_at?: string
+          fitness_goals?: string[]
+          id?: string
+          training_level?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_type?: string | null
+          created_at?: string
+          fitness_goals?: string[]
+          id?: string
+          training_level?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
