@@ -92,10 +92,6 @@ export function AgeStep({ value, onChange }: AgeStepProps) {
         </div>
       </div>
 
-      <div className="text-center">
-        <span className="text-5xl font-black text-lime">{value}</span>
-        <span className="text-xl text-muted-foreground ml-2">anos</span>
-      </div>
     </motion.div>
   );
 }
