@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
+import bodyEctomorph from "@/assets/body-ectomorph.png";
+import bodyMesomorph from "@/assets/body-mesomorph.png";
+import bodyEndomorph from "@/assets/body-endomorph.png";
 
 interface BodyTypeStepProps {
   value: string;
@@ -7,9 +10,9 @@ interface BodyTypeStepProps {
 }
 
 const bodyTypes = [
-  { id: "ectomorph", label: "Ectomorfo", description: "Magro, dificuldade em ganhar peso", emoji: "🏃" },
-  { id: "mesomorph", label: "Mesomorfo", description: "Atlético, facilidade em ganhar músculo", emoji: "💪" },
-  { id: "endomorph", label: "Endomorfo", description: "Tendência a ganhar peso", emoji: "🐻" },
+  { id: "ectomorph", label: "Ectomorfo", description: "Magro, dificuldade em ganhar peso", image: bodyEctomorph },
+  { id: "mesomorph", label: "Mesomorfo", description: "Atlético, facilidade em ganhar músculo", image: bodyMesomorph },
+  { id: "endomorph", label: "Endomorfo", description: "Tendência a ganhar peso", image: bodyEndomorph },
 ];
 
 export function BodyTypeStep({ value, onChange }: BodyTypeStepProps) {
@@ -50,13 +53,17 @@ export function BodyTypeStep({ value, onChange }: BodyTypeStepProps) {
               >
                 <div className="flex items-center gap-4">
                   <motion.div 
-                    className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl ${
-                      isSelected ? "bg-purple" : "bg-muted"
+                    className={`w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden ${
+                      isSelected ? "bg-purple/20" : "bg-muted"
                     }`}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    {type.emoji}
+                    <img 
+                      src={type.image} 
+                      alt={type.label} 
+                      className="w-14 h-14 object-contain"
+                    />
                   </motion.div>
                   <div className="flex-1">
                     <h3 className="font-bold text-foreground">{type.label}</h3>
