@@ -372,389 +372,396 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background pb-8">
       {/* Header */}
-      <div className="px-4 pt-6 pb-4">
-        <div className="flex items-center gap-4 mb-2">
-          <button 
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-card-hover transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-foreground" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-black text-foreground">Painel Admin</h1>
-            <p className="text-sm text-muted-foreground">Master Admin - Gerencie treinos e exercícios</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="px-4 mb-6">
-        <div className="grid grid-cols-4 gap-2">
-          <Card className="bg-card border-border">
-            <CardContent className="p-3 text-center">
-              <Users className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
-              <p className="text-xl font-black text-foreground">{stats.users}</p>
-              <p className="text-xs text-muted-foreground">Usuários</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border">
-            <CardContent className="p-3 text-center">
-              <Calendar className="h-5 w-5 text-lime mx-auto mb-1" />
-              <p className="text-xl font-black text-foreground">{stats.programs}</p>
-              <p className="text-xs text-muted-foreground">Programas</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border">
-            <CardContent className="p-3 text-center">
-              <Dumbbell className="h-5 w-5 text-purple mx-auto mb-1" />
-              <p className="text-xl font-black text-foreground">{stats.workouts}</p>
-              <p className="text-xs text-muted-foreground">Treinos</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-card border-border">
-            <CardContent className="p-3 text-center">
-              <Target className="h-5 w-5 text-orange mx-auto mb-1" />
-              <p className="text-xl font-black text-foreground">{stats.exercises}</p>
-              <p className="text-xs text-muted-foreground">Exercícios</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="px-4 mb-4">
-        <div className="grid grid-cols-4 gap-1 p-1 bg-card rounded-xl">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSearchQuery("");
-                setLevelFilter("");
-                setFocusFilter("");
-              }}
-              className={`flex flex-col items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === tab.id
-                  ? "bg-background text-foreground shadow-sm border border-border"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+      <div className="px-4 md:px-6 lg:px-8 pt-6 pb-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-4 mb-2">
+            <button 
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors"
             >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
+              <ArrowLeft className="h-5 w-5 text-foreground" />
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="px-4 mb-4">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 bg-card border-border rounded-xl"
-          />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="px-4">
-        {/* Users Tab */}
-        {activeTab === "users" && (
-          <div className="space-y-3">
-            {users
-              .filter((u) => 
-                u.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((userData) => (
-                <UserDetailCard
-                  key={userData.id}
-                  user={userData}
-                  onAssignWorkout={handleAssignWorkout}
-                  onCreateWorkout={handleCreateWorkout}
-                  onMakeAdmin={handleMakeAdmin}
-                />
-              ))}
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black text-foreground">Painel Admin</h1>
+              <p className="text-sm text-muted-foreground">Master Admin - Gerencie treinos e exercícios</p>
+            </div>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Programs Tab */}
-        {activeTab === "programs" && (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground">Programas de Treino</h2>
-              <Button 
-                className="bg-lime text-black font-bold hover:bg-lime/90"
-                onClick={() => {
-                  setEditingProgram(null);
-                  setProgramModalOpen(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Programa
-              </Button>
+      <div className="px-4 md:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Stats Cards */}
+          <div className="mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <Users className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
+                  <p className="text-2xl md:text-3xl font-black text-foreground">{stats.users}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Usuários</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <Calendar className="h-6 w-6 text-lime mx-auto mb-2" />
+                  <p className="text-2xl md:text-3xl font-black text-foreground">{stats.programs}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Programas</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <Dumbbell className="h-6 w-6 text-purple mx-auto mb-2" />
+                  <p className="text-2xl md:text-3xl font-black text-foreground">{stats.workouts}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Treinos</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-card border-border">
+                <CardContent className="p-4 text-center">
+                  <Target className="h-6 w-6 text-orange mx-auto mb-2" />
+                  <p className="text-2xl md:text-3xl font-black text-foreground">{stats.exercises}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Exercícios</p>
+                </CardContent>
+              </Card>
             </div>
+          </div>
 
-            <div className="space-y-3">
-              {filteredPrograms.map((program) => (
-                <Card 
-                  key={program.id} 
-                  className="bg-card border-border cursor-pointer hover:border-lime/50 transition-all"
+          {/* Tabs */}
+          <div className="mb-4">
+            <div className="grid grid-cols-4 gap-1 p-1 bg-card rounded-xl">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
                   onClick={() => {
-                    setEditingProgram(program);
-                    setProgramModalOpen(true);
+                    setActiveTab(tab.id);
+                    setSearchQuery("");
+                    setLevelFilter("");
+                    setFocusFilter("");
                   }}
+                  className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-2 md:py-3 px-2 md:px-4 rounded-lg text-xs md:text-sm font-medium transition-all ${
+                    activeTab === tab.id
+                      ? "bg-background text-foreground shadow-sm border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center">
-                          <Calendar className="h-6 w-6 text-lime" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-foreground">{program.name}</h3>
-                            {program.is_recommended && (
-                              <Badge className="bg-amber-500/20 text-amber-500 text-xs">Recomendado</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {program.category || "Geral"} • {program.workouts_count || 0} treinos
-                          </p>
-                          {program.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{program.description}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-muted transition-colors"
-                          onClick={(e) => { e.stopPropagation(); setEditingProgram(program); setProgramModalOpen(true); }}
-                        >
-                          <Pencil className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                        <button 
-                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-destructive/20 transition-colors"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (confirm("Excluir este programa e todos os treinos dentro dele?")) {
-                              await supabase.from("workout_programs").delete().eq("id", program.id);
-                              toast.success("Programa excluído");
-                              loadAllData();
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <tab.icon className="h-4 w-4 md:h-5 md:w-5" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.label.slice(0, 4)}</span>
+                </button>
               ))}
-              {filteredPrograms.length === 0 && (
-                <div className="text-center py-12">
-                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">Nenhum programa encontrado</p>
-                  <p className="text-sm text-muted-foreground mt-1">Crie um programa para organizar treinos por dias da semana</p>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="mb-4">
+            <div className="relative max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 bg-card border-border rounded-xl"
+              />
+            </div>
+          </div>
+
+          {/* Content */}
+          <div>
+            {/* Users Tab */}
+            {activeTab === "users" && (
+              <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
+                {users
+                  .filter((u) => 
+                    u.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map((userData) => (
+                    <UserDetailCard
+                      key={userData.id}
+                      user={userData}
+                      onAssignWorkout={handleAssignWorkout}
+                      onCreateWorkout={handleCreateWorkout}
+                      onMakeAdmin={handleMakeAdmin}
+                    />
+                  ))}
+              </div>
+            )}
+
+            {/* Programs Tab */}
+            {activeTab === "programs" && (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg md:text-xl font-bold text-foreground">Programas de Treino</h2>
+                  <Button 
+                    className="bg-lime text-black font-bold hover:bg-lime/90"
+                    onClick={() => {
+                      setEditingProgram(null);
+                      setProgramModalOpen(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Programa
+                  </Button>
                 </div>
-              )}
-            </div>
-          </>
-        )}
 
-        {/* Workouts Tab */}
-        {activeTab === "workouts" && (
-          <>
-            <div className="flex gap-2 mb-4">
-              <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-28 bg-card border-border">
-                  <SelectValue placeholder="Nível" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="Iniciante">Iniciante</SelectItem>
-                  <SelectItem value="Intermediário">Intermediário</SelectItem>
-                  <SelectItem value="Avançado">Avançado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={focusFilter} onValueChange={setFocusFilter}>
-                <SelectTrigger className="flex-1 bg-card border-border">
-                  <SelectValue placeholder="Área de Foco" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="Peito">Peito</SelectItem>
-                  <SelectItem value="Costas">Costas</SelectItem>
-                  <SelectItem value="Pernas">Pernas</SelectItem>
-                  <SelectItem value="Ombros">Ombros</SelectItem>
-                  <SelectItem value="Braços">Braços</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground">Planos de Treino</h2>
-              <Button 
-                className="bg-lime text-black font-bold hover:bg-lime/90"
-                onClick={() => {
-                  setWorkoutSelectedExercises([]);
-                  setAdminWorkoutModalOpen(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Treino
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {filteredWorkouts.map((workout) => (
-                <WorkoutDetailCard
-                  key={workout.id}
-                  workout={workout}
-                  onEdit={handleEditWorkout}
-                  onDelete={handleDeleteWorkout}
-                />
-              ))}
-              {filteredWorkouts.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum treino encontrado
-                </p>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Exercises Tab */}
-        {activeTab === "exercises" && (
-          <>
-            {/* Filters */}
-            <div className="flex gap-2 mb-4">
-              <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-28 bg-card border-border">
-                  <SelectValue placeholder="Nível" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="Iniciante">Iniciante</SelectItem>
-                  <SelectItem value="Intermediário">Intermediário</SelectItem>
-                  <SelectItem value="Avançado">Avançado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={focusFilter} onValueChange={setFocusFilter}>
-                <SelectTrigger className="flex-1 bg-card border-border">
-                  <SelectValue placeholder="Área de Foco" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="Peito">Peito</SelectItem>
-                  <SelectItem value="Costas">Costas</SelectItem>
-                  <SelectItem value="Pernas">Pernas</SelectItem>
-                  <SelectItem value="Ombros">Ombros</SelectItem>
-                  <SelectItem value="Braços">Braços</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-foreground">Exercícios</h2>
-              <Button 
-                className="bg-lime text-black font-bold hover:bg-lime/90"
-                onClick={() => {
-                  setEditingExercise(null);
-                  setExerciseFormOpen(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Exercício
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {filteredExercises.map((exercise) => (
-                <Card key={exercise.id} className="bg-card border-border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
-                          {exercise.image_url ? (
-                            <img 
-                              src={exercise.image_url} 
-                              alt={exercise.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Target className="h-6 w-6 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-foreground mb-1">{exercise.name}</h3>
-                          <div className="flex gap-1.5 flex-wrap">
-                            {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
-                              <Badge 
-                                key={idx} 
-                                variant="secondary" 
-                                className="text-xs bg-muted text-foreground"
-                              >
-                                {mg}
-                              </Badge>
-                            ))}
-                            {exercise.difficulty && (
-                              <Badge className="text-xs bg-muted text-foreground">
-                                {exercise.difficulty}
-                              </Badge>
-                            )}
-                            {exercise.equipment && (
-                              <Badge className="bg-lime text-black text-xs">
-                                {exercise.equipment}
-                              </Badge>
-                            )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredPrograms.map((program) => (
+                    <Card 
+                      key={program.id} 
+                      className="bg-card border-border cursor-pointer hover:border-lime/50 transition-all"
+                      onClick={() => {
+                        setEditingProgram(program);
+                        setProgramModalOpen(true);
+                      }}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center">
+                              <Calendar className="h-6 w-6 text-lime" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-foreground">{program.name}</h3>
+                                {program.is_recommended && (
+                                  <Badge className="bg-amber-500/20 text-amber-500 text-xs">Recomendado</Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {program.category || "Geral"} • {program.workouts_count || 0} treinos
+                              </p>
+                              {program.description && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{program.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                              onClick={(e) => { e.stopPropagation(); setEditingProgram(program); setProgramModalOpen(true); }}
+                            >
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                            <button 
+                              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (confirm("Excluir este programa e todos os treinos dentro dele?")) {
+                                  await supabase.from("workout_programs").delete().eq("id", program.id);
+                                  toast.success("Programa excluído");
+                                  loadAllData();
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </button>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-muted transition-colors"
-                          onClick={() => {
-                            setEditingExercise(exercise);
-                            setExerciseFormOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                        <button 
-                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-destructive/20 transition-colors"
-                          onClick={async () => {
-                            if (confirm("Tem certeza que deseja excluir este exercício?")) {
-                              const { error } = await supabase
-                                .from("exercises")
-                                .delete()
-                                .eq("id", exercise.id);
-                              if (error) {
-                                toast.error("Erro ao excluir exercício");
-                              } else {
-                                toast.success("Exercício excluído");
-                                loadAllData();
-                              }
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {filteredPrograms.length === 0 && (
+                    <div className="col-span-full text-center py-12">
+                      <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">Nenhum programa encontrado</p>
+                      <p className="text-sm text-muted-foreground mt-1">Crie um programa para organizar treinos por dias da semana</p>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {filteredExercises.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum exercício encontrado
-                </p>
-              )}
-            </div>
-          </>
-        )}
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Workouts Tab */}
+            {activeTab === "workouts" && (
+              <>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Select value={levelFilter} onValueChange={setLevelFilter}>
+                    <SelectTrigger className="w-28 bg-card border-border">
+                      <SelectValue placeholder="Nível" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="Iniciante">Iniciante</SelectItem>
+                      <SelectItem value="Intermediário">Intermediário</SelectItem>
+                      <SelectItem value="Avançado">Avançado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={focusFilter} onValueChange={setFocusFilter}>
+                    <SelectTrigger className="flex-1 min-w-[120px] bg-card border-border">
+                      <SelectValue placeholder="Área de Foco" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="Peito">Peito</SelectItem>
+                      <SelectItem value="Costas">Costas</SelectItem>
+                      <SelectItem value="Pernas">Pernas</SelectItem>
+                      <SelectItem value="Ombros">Ombros</SelectItem>
+                      <SelectItem value="Braços">Braços</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg md:text-xl font-bold text-foreground">Planos de Treino</h2>
+                  <Button 
+                    className="bg-lime text-black font-bold hover:bg-lime/90"
+                    onClick={() => {
+                      setWorkoutSelectedExercises([]);
+                      setAdminWorkoutModalOpen(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Treino
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredWorkouts.map((workout) => (
+                    <WorkoutDetailCard
+                      key={workout.id}
+                      workout={workout}
+                      onEdit={handleEditWorkout}
+                      onDelete={handleDeleteWorkout}
+                    />
+                  ))}
+                  {filteredWorkouts.length === 0 && (
+                    <p className="col-span-full text-center text-muted-foreground py-8">
+                      Nenhum treino encontrado
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Exercises Tab */}
+            {activeTab === "exercises" && (
+              <>
+                {/* Filters */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Select value={levelFilter} onValueChange={setLevelFilter}>
+                    <SelectTrigger className="w-28 bg-card border-border">
+                      <SelectValue placeholder="Nível" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="Iniciante">Iniciante</SelectItem>
+                      <SelectItem value="Intermediário">Intermediário</SelectItem>
+                      <SelectItem value="Avançado">Avançado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={focusFilter} onValueChange={setFocusFilter}>
+                    <SelectTrigger className="flex-1 min-w-[120px] bg-card border-border">
+                      <SelectValue placeholder="Área de Foco" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="Peito">Peito</SelectItem>
+                      <SelectItem value="Costas">Costas</SelectItem>
+                      <SelectItem value="Pernas">Pernas</SelectItem>
+                      <SelectItem value="Ombros">Ombros</SelectItem>
+                      <SelectItem value="Braços">Braços</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg md:text-xl font-bold text-foreground">Exercícios</h2>
+                  <Button 
+                    className="bg-lime text-black font-bold hover:bg-lime/90"
+                    onClick={() => {
+                      setEditingExercise(null);
+                      setExerciseFormOpen(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Exercício
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredExercises.map((exercise) => (
+                    <Card key={exercise.id} className="bg-card border-border">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
+                              {exercise.image_url ? (
+                                <img 
+                                  src={exercise.image_url} 
+                                  alt={exercise.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Target className="h-6 w-6 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-foreground mb-1">{exercise.name}</h3>
+                              <div className="flex gap-1.5 flex-wrap">
+                                {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
+                                  <Badge 
+                                    key={idx} 
+                                    variant="secondary" 
+                                    className="text-xs bg-muted text-foreground"
+                                  >
+                                    {mg}
+                                  </Badge>
+                                ))}
+                                {exercise.difficulty && (
+                                  <Badge className="text-xs bg-muted text-foreground">
+                                    {exercise.difficulty}
+                                  </Badge>
+                                )}
+                                {exercise.equipment && (
+                                  <Badge className="bg-lime text-black text-xs">
+                                    {exercise.equipment}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+                              onClick={() => {
+                                setEditingExercise(exercise);
+                                setExerciseFormOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                            <button 
+                              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                              onClick={async () => {
+                                if (confirm("Tem certeza que deseja excluir este exercício?")) {
+                                  const { error } = await supabase
+                                    .from("exercises")
+                                    .delete()
+                                    .eq("id", exercise.id);
+                                  if (error) {
+                                    toast.error("Erro ao excluir exercício");
+                                  } else {
+                                    toast.success("Exercício excluído");
+                                    loadAllData();
+                                  }
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {filteredExercises.length === 0 && (
+                    <p className="col-span-full text-center text-muted-foreground py-8">
+                      Nenhum exercício encontrado
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* User Modals */}

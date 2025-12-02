@@ -39,19 +39,21 @@ import EditWorkout from "./pages/EditWorkout";
 const queryClient = new QueryClient();
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen w-full bg-background">
-    <main className="w-full">
-      <div className="max-w-md mx-auto">{children}</div>
+  <div className="min-h-screen w-full bg-background pb-20 md:pb-0">
+    <main className="w-full px-4 md:px-6 lg:px-8">
+      <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto">{children}</div>
     </main>
-    <BottomNav />
+    <div className="md:hidden">
+      <BottomNav />
+    </div>
   </div>
 );
 
 // Layout without BottomNav for full-screen pages
 const FullScreenLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen w-full bg-background">
-    <main className="w-full">
-      <div className="max-w-md mx-auto">{children}</div>
+    <main className="w-full px-4 md:px-6 lg:px-8">
+      <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto">{children}</div>
     </main>
   </div>
 );
