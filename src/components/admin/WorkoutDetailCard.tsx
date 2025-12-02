@@ -129,28 +129,28 @@ export default function WorkoutDetailCard({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button 
-              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+              className="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(workout);
               }}
               title="Editar treino"
             >
-              <Pencil className="h-4 w-4 text-foreground" />
+              <Pencil className="h-4 w-4 text-blue-400" />
             </button>
             <button 
-              className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center hover:bg-destructive/40 transition-colors"
+              className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center hover:bg-red-500/30 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(workout.id);
               }}
               title="Excluir treino"
             >
-              <Trash2 className="h-4 w-4 text-destructive" />
+              <Trash2 className="h-4 w-4 text-red-400" />
             </button>
-            <button className="text-muted-foreground ml-2">
+            <button className="text-muted-foreground ml-1">
               {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </button>
           </div>
