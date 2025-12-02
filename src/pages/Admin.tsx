@@ -376,7 +376,7 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-4 mb-2">
             <button 
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/dashboard")}
               className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors"
             >
               <ArrowLeft className="h-5 w-5 text-foreground" />
