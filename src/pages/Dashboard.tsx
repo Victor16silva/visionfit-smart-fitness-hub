@@ -6,6 +6,7 @@ import RecommendedWorkoutCard from "@/components/RecommendedWorkoutCard";
 import WeeklyChallengeCard from "@/components/WeeklyChallengeCard";
 import WarmupCard from "@/components/WarmupCard";
 import BodyFocusItem from "@/components/BodyFocusItem";
+import CurrentWorkoutCard from "@/components/CurrentWorkoutCard";
 import workoutDaily from "@/assets/workout-daily.jpg";
 import workoutFullbody from "@/assets/workout-fullbody.jpg";
 import workoutHiit from "@/assets/workout-hiit.jpg";
@@ -33,7 +34,6 @@ export default function Dashboard() {
     { name: "Pernas", image: muscleLegs, area: "pernas" },
   ];
 
-  // Performance data - week days
   const weekDays = [
     { day: "Seg", date: 1, active: true },
     { day: "Ter", date: 2, active: false },
@@ -66,6 +66,11 @@ export default function Dashboard() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-1">Olá, {userName}! 👋</h2>
           <p className="text-muted-foreground text-sm">É hora de desafiar seus limites.</p>
+        </div>
+
+        {/* Current Workout - NEW SECTION */}
+        <div className="mb-6">
+          <CurrentWorkoutCard />
         </div>
 
         {/* Performance - Week Days */}

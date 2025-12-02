@@ -34,6 +34,7 @@ import WorkoutComplete from "./pages/WorkoutComplete";
 import Admin from "./pages/Admin";
 import WorkoutCategories from "./pages/WorkoutCategories";
 import StretchingList from "./pages/StretchingList";
+import EditWorkout from "./pages/EditWorkout";
 
 const queryClient = new QueryClient();
 
@@ -223,6 +224,26 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <CreateWorkout />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edit-workout/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <EditWorkout />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout-session/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WorkoutSession />
                   </AppLayout>
                 </ProtectedRoute>
               }
