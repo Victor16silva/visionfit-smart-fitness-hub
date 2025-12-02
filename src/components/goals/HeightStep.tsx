@@ -92,24 +92,27 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center">
+      <div className="flex-1 flex items-center justify-center gap-8">
+        {/* Dial on the left */}
         <div 
           ref={containerRef}
-          className="relative w-80 h-44 cursor-pointer touch-none select-none"
+          className="relative w-48 h-48 cursor-pointer touch-none select-none"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
         >
-          <svg viewBox="-160 -150 320 160" className="w-full h-full overflow-visible">
+          <svg viewBox="-120 -120 160 160" className="w-full h-full overflow-visible">
+            {/* Background arc */}
             <path
-              d={`M -${arcRadius} 0 A ${arcRadius} ${arcRadius} 0 0 1 ${arcRadius} 0`}
+              d={`M -${arcRadius} 0 A ${arcRadius} ${arcRadius} 0 0 1 0 -${arcRadius}`}
               fill="none"
               stroke="currentColor"
               strokeWidth="3"
               className="text-muted/30"
             />
             
+            {/* Active arc */}
             <path
               d={`M -${arcRadius} 0 A ${arcRadius} ${arcRadius} 0 0 1 ${handleX} ${handleY}`}
               fill="none"
@@ -119,6 +122,7 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
               strokeLinecap="round"
             />
             
+            {/* Tick marks */}
             {ticks.map((tick, i) => (
               <line
                 key={i}
@@ -132,14 +136,7 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
               />
             ))}
             
-            <motion.g
-              animate={{ x: handleX, y: handleY }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              <circle cx={0} cy={0} r={16} className="fill-lime" />
-              <circle cx={0} cy={0} r={8} className="fill-background" />
-            </motion.g>
-            
+            {/* Needle line */}
             <motion.line
               x1={0}
               y1={0}
@@ -149,24 +146,36 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
               className="text-lime"
               strokeLinecap="round"
             />
+            
+            {/* Handle */}
+            <motion.g
+              animate={{ x: handleX, y: handleY }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <circle cx={0} cy={0} r={14} className="fill-lime" />
+              <circle cx={0} cy={0} r={6} className="fill-background" />
+            </motion.g>
           </svg>
         </div>
 
-        <motion.div 
-          className="text-center mt-8"
-          key={value}
-          initial={{ scale: 0.9, opacity: 0.5 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        >
-          <span className="text-7xl font-black text-foreground">{value}</span>
-          <span className="text-2xl text-muted-foreground ml-2">cm</span>
-        </motion.div>
-
-        <div className="flex justify-between w-72 mt-4 text-sm text-muted-foreground">
-          <span>{minHeight} cm</span>
-          <span>{maxHeight} cm</span>
+        {/* Value display on the right */}
+        <div className="flex flex-col items-start">
+          <motion.div 
+            key={value}
+            initial={{ scale: 0.9, opacity: 0.5 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          >
+            <span className="text-8xl font-black text-foreground">{value}</span>
+            <span className="text-3xl text-muted-foreground ml-1">cm</span>
+          </motion.div>
         </div>
+      </div>
+
+      {/* Range labels */}
+      <div className="flex justify-between w-72 mx-auto text-sm text-muted-foreground">
+        <span>{minHeight} cm</span>
+        <span>{maxHeight} cm</span>
       </div>
     </motion.div>
   );
