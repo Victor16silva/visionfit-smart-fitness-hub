@@ -535,14 +535,13 @@ export default function Admin() {
                           </div>
                           <div className="flex items-center gap-2">
                             <button 
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 transition-colors"
+                              className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
                               onClick={(e) => { e.stopPropagation(); setEditingProgram(program); setProgramModalOpen(true); }}
                             >
                               <Pencil className="h-4 w-4 text-blue-400" />
-                              <span className="text-xs text-blue-400 font-medium">Editar</span>
                             </button>
                             <button 
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-colors"
+                              className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center hover:bg-red-500/30 transition-colors"
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 if (confirm("Excluir este programa e todos os treinos dentro dele?")) {
@@ -553,7 +552,6 @@ export default function Admin() {
                               }}
                             >
                               <Trash2 className="h-4 w-4 text-red-400" />
-                              <span className="text-xs text-red-400 font-medium">Excluir</span>
                             </button>
                           </div>
                         </div>
@@ -722,17 +720,16 @@ export default function Admin() {
                           </div>
                           <div className="flex items-center gap-2">
                             <button 
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 transition-colors"
+                              className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
                               onClick={() => {
                                 setEditingExercise(exercise);
                                 setExerciseFormOpen(true);
                               }}
                             >
                               <Pencil className="h-4 w-4 text-blue-400" />
-                              <span className="text-xs text-blue-400 font-medium">Editar</span>
                             </button>
                             <button 
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-colors"
+                              className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center hover:bg-red-500/30 transition-colors"
                               onClick={async () => {
                                 if (confirm("Tem certeza que deseja excluir este exercício?")) {
                                   const { error } = await supabase
@@ -749,7 +746,6 @@ export default function Admin() {
                               }}
                             >
                               <Trash2 className="h-4 w-4 text-red-400" />
-                              <span className="text-xs text-red-400 font-medium">Excluir</span>
                             </button>
                           </div>
                         </div>
