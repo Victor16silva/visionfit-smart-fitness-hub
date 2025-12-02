@@ -166,23 +166,31 @@ export default function ExerciseFormModal({ isOpen, onClose, exercise, onSuccess
       if (formData.focusArea && formData.focusArea !== "Nenhuma" && !muscleGroups.includes(formData.focusArea)) muscleGroups.push(formData.focusArea);
       if (muscleGroups.length === 0) muscleGroups.push("Geral");
 
-      const exerciseData = {
-        name: formData.name,
-        muscle_groups: muscleGroups,
-        equipment: formData.equipment && formData.equipment !== "Nenhum" ? formData.equipment : null,
-        difficulty: formData.difficulty && formData.difficulty !== "Nenhuma" ? formData.difficulty : null,
-        description: formData.description || null,
-        image_url: formData.gifUrl || null,
-        video_url: formData.videoUrl || null,
-        created_by: user?.id
-      };
-
       if (isEditing && exercise) {
-        const { error } = await supabase.from("exercises").update(exerciseData).eq("id", exercise.id);
+        const updateData = {
+          name: formData.name,
+          muscle_groups: muscleGroups,
+          equipment: formData.equipment && formData.equipment !== "Nenhum" ? formData.equipment : null,
+          difficulty: formData.difficulty && formData.difficulty !== "Nenhuma" ? formData.difficulty : null,
+          description: formData.description || null,
+          image_url: formData.gifUrl || null,
+          video_url: formData.videoUrl || null,
+        };
+        const { error } = await supabase.from("exercises").update(updateData).eq("id", exercise.id);
         if (error) throw error;
         toast.success("Exercício atualizado com sucesso");
       } else {
-        const { error } = await supabase.from("exercises").insert(exerciseData);
+        const insertData = {
+          name: formData.name,
+          muscle_groups: muscleGroups,
+          equipment: formData.equipment && formData.equipment !== "Nenhum" ? formData.equipment : null,
+          difficulty: formData.difficulty && formData.difficulty !== "Nenhuma" ? formData.difficulty : null,
+          description: formData.description || null,
+          image_url: formData.gifUrl || null,
+          video_url: formData.videoUrl || null,
+          created_by: user?.id
+        };
+        const { error } = await supabase.from("exercises").insert(insertData);
         if (error) throw error;
         toast.success("Exercício criado com sucesso");
       }
