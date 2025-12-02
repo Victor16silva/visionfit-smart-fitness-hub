@@ -177,6 +177,7 @@ export type Database = {
           age: number | null
           avatar_url: string | null
           created_at: string
+          current_workout_id: string | null
           full_name: string
           gender: string | null
           id: string
@@ -188,6 +189,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          current_workout_id?: string | null
           full_name: string
           gender?: string | null
           id: string
@@ -199,6 +201,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          current_workout_id?: string | null
           full_name?: string
           gender?: string | null
           id?: string
@@ -206,7 +209,15 @@ export type Database = {
           updated_at?: string
           weight_kg?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_workout_id_fkey"
+            columns: ["current_workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

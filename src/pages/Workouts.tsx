@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, CalendarDays, Clock, Flame, ChevronLeft, ChevronRight, Dumbbell } from "lucide-react";
+import { Search, Clock, Flame, ChevronRight, Dumbbell, Check, Star } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
+import { toast } from "sonner";
 import workoutFullbody from "@/assets/workout-fullbody.jpg";
 
 interface WorkoutPlan {
@@ -19,6 +20,10 @@ interface WorkoutPlan {
   is_active: boolean;
   cover_image_url?: string;
   category?: string;
+  duration_minutes?: number;
+  calories?: number;
+  is_recommended?: boolean;
+  is_daily?: boolean;
 }
 
 const levels = ["Iniciante", "Intermediário", "Avançado"];
@@ -26,7 +31,9 @@ const levels = ["Iniciante", "Intermediário", "Avançado"];
 export default function Workouts() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [workouts, setWorkouts] = useState<WorkoutPlan[]>([]);
+  const [recommendedWorkouts, setRecommendedWorkouts] = useState<WorkoutPlan[]>([]);
+  const [myWorkouts, setMyWorkouts] = useState<WorkoutPlan[]>([]);
+  const [currentWorkoutId, setCurrentWorkoutId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
@@ -41,14 +48,33 @@ export default function Workouts() {
 
   const loadWorkouts = async () => {
     try {
-      const { data, error } = await supabase
+      // Load user's profile to get current workout
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("current_workout_id")
+        .eq("id", user?.id)
+        .single();
+
+      setCurrentWorkoutId(profileData?.current_workout_id || null);
+
+      // Load recommended workouts (created by admins with is_recommended = true)
+      const { data: recommended } = await supabase
+        .from("workout_plans")
+        .select("*")
+        .eq("is_recommended", true)
+        .order("created_at", { ascending: false });
+
+      setRecommendedWorkouts(recommended || []);
+
+      // Load user's assigned workouts
+      const { data: myData } = await supabase
         .from("workout_plans")
         .select("*")
         .eq("user_id", user?.id)
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setWorkouts(data || []);
+      setMyWorkouts(myData || []);
     } catch (error) {
       console.error("Error loading workouts:", error);
     } finally {
@@ -56,26 +82,44 @@ export default function Workouts() {
     }
   };
 
-  const dailyWorkout = {
-    id: "daily",
-    title: "Cardio Fitness",
-    duration: 45,
-    calories: 1450,
-    level: "Intermediário",
-    imageUrl: workoutFullbody,
-    division: "A"
+  const selectAsCurrentWorkout = async (workoutId: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ current_workout_id: workoutId })
+        .eq("id", user?.id);
+
+      if (error) throw error;
+
+      setCurrentWorkoutId(workoutId);
+      toast.success("Treino selecionado como atual!");
+    } catch (error) {
+      console.error("Error selecting workout:", error);
+      toast.error("Erro ao selecionar treino");
+    }
   };
 
-  const continueWorkouts = [
-    {
-      id: "1",
-      title: "Superior Peito Avan...",
-      duration: 45,
-      exercises: 6,
-      division: "E",
-      color: "bg-purple"
-    }
-  ];
+  const filteredRecommended = recommendedWorkouts.filter(w => {
+    const matchesSearch = w.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLevel = !selectedLevel || w.category === selectedLevel;
+    return matchesSearch && matchesLevel;
+  });
+
+  const filteredMyWorkouts = myWorkouts.filter(w => {
+    const matchesSearch = w.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLevel = !selectedLevel || w.category === selectedLevel;
+    return matchesSearch && matchesLevel;
+  });
+
+  const currentWorkout = [...myWorkouts, ...recommendedWorkouts].find(w => w.id === currentWorkoutId);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -112,145 +156,154 @@ export default function Workouts() {
         </div>
       </div>
 
-      <div className="px-4 space-y-4">
-        {/* Quick Actions */}
-        <Card 
-          className="bg-card border-border cursor-pointer hover:border-primary/50 transition-all"
-          onClick={() => navigate("/create-workout")}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-                <Plus className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h3 className="font-bold text-primary">Criar Novo</h3>
-                <p className="text-sm text-muted-foreground">Monte do zero</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="bg-card border-border cursor-pointer hover:border-primary/50 transition-all"
-          onClick={() => navigate("/preset-workouts")}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-card-hover border border-border flex items-center justify-center">
-                <CalendarDays className="h-6 w-6 text-foreground" />
-              </div>
-              <div>
-                <h3 className="font-bold text-foreground">Treinos do Mês</h3>
-                <p className="text-sm text-muted-foreground">Escolher categoria</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Treino do Dia */}
-      <div className="px-4 mt-6">
-        <SectionHeader title="Treino do Dia" />
-        
-        <Card className="relative overflow-hidden rounded-2xl border-0 mt-3">
-          <div className="relative h-[220px]">
-            <img 
-              src={dailyWorkout.imageUrl} 
-              alt={dailyWorkout.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-            
-            {/* Division Badge */}
-            <div className="absolute top-4 left-4">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-sm font-bold text-primary-foreground">{dailyWorkout.division}</span>
-              </div>
-            </div>
-
-            {/* Carousel Arrows */}
-            <div className="absolute top-4 right-4 flex gap-2">
-              <button className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center">
-                <ChevronLeft className="h-4 w-4 text-white" />
-              </button>
-              <button className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center">
-                <ChevronRight className="h-4 w-4 text-white" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="text-2xl font-black text-white mb-2">{dailyWorkout.title}</h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-1.5 text-white/90 text-sm">
-                  <Clock className="h-4 w-4" />
-                  <span>{dailyWorkout.duration} min</span>
+      {/* Current Workout Card */}
+      {currentWorkout && (
+        <div className="px-4 mb-6">
+          <SectionHeader title="Treino Atual" />
+          <Card className="mt-3 bg-gradient-to-br from-lime/20 to-lime/5 border-lime/30">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-lime/30 flex items-center justify-center">
+                    <span className="text-2xl font-black text-lime">{currentWorkout.division_letter || "A"}</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-foreground">{currentWorkout.name}</h3>
+                      <Check className="h-4 w-4 text-lime" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">{currentWorkout.muscle_groups?.join(", ")}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{currentWorkout.duration_minutes || 40} min</span>
+                      <span className="flex items-center gap-1"><Flame className="h-3 w-3 text-orange" />{currentWorkout.calories || 200} kcal</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/90 text-sm">
-                  <Flame className="h-4 w-4 text-orange" />
-                  <span>{dailyWorkout.calories} kcal</span>
-                </div>
-                <Badge className="bg-card-hover text-foreground border-0 font-medium">
-                  {dailyWorkout.level}
-                </Badge>
+                <Button 
+                  className="bg-lime text-black font-bold hover:bg-lime/90"
+                  onClick={() => navigate(`/workout-session/${currentWorkout.id}`)}
+                >
+                  Iniciar
+                </Button>
               </div>
-              
-              <Button 
-                className="w-full h-12 bg-primary text-primary-foreground font-bold text-base rounded-xl hover:bg-primary/90"
-                onClick={() => navigate(`/workout/${dailyWorkout.id}/play`)}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* My Workouts */}
+      {filteredMyWorkouts.length > 0 && (
+        <div className="px-4 mb-6">
+          <SectionHeader title="Meus Treinos" subtitle="Treinos atribuídos a você" />
+          <div className="space-y-3 mt-3">
+            {filteredMyWorkouts.map((workout) => (
+              <Card 
+                key={workout.id}
+                className={`bg-card border-border cursor-pointer transition-all ${
+                  workout.id === currentWorkoutId ? 'border-lime/50 bg-lime/5' : 'hover:border-primary/50'
+                }`}
               >
-                Iniciar Treino
-              </Button>
-            </div>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4" onClick={() => navigate(`/workout-session/${workout.id}`)}>
+                      <div className="w-12 h-12 rounded-xl bg-purple/20 flex items-center justify-center">
+                        <span className="text-lg font-bold text-purple">{workout.division_letter || "A"}</span>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-foreground">{workout.name}</h3>
+                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime" />}
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{workout.duration_minutes || 40} min</span>
+                          <span className="flex items-center gap-1"><Dumbbell className="h-3.5 w-3.5" />{workout.muscle_groups?.join(", ")}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {workout.id !== currentWorkoutId && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="border-lime/50 text-lime hover:bg-lime/10"
+                          onClick={() => selectAsCurrentWorkout(workout.id)}
+                        >
+                          Selecionar
+                        </Button>
+                      )}
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </Card>
-      </div>
+        </div>
+      )}
 
-      {/* Continue Evoluindo */}
-      <div className="px-4 mt-6">
+      {/* Recommended Workouts */}
+      <div className="px-4">
         <SectionHeader 
-          title="Continue Evoluindo" 
-          subtitle="Explore treinos intermediários"
+          title="Treinos Recomendados" 
+          subtitle="Escolha um treino para começar"
         />
         
         <div className="space-y-3 mt-3">
-          {continueWorkouts.map((workout) => (
-            <Card 
-              key={workout.id}
-              className="bg-card border-border cursor-pointer hover:border-primary/50 transition-all"
-              onClick={() => navigate(`/workout/${workout.id}`)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl ${workout.color} flex items-center justify-center`}>
-                      <Dumbbell className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-foreground">{workout.title}</h3>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {workout.duration} min
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Dumbbell className="h-3.5 w-3.5" />
-                          {workout.exercises} exercícios
-                        </span>
+          {filteredRecommended.length > 0 ? (
+            filteredRecommended.map((workout) => (
+              <Card 
+                key={workout.id}
+                className={`bg-card border-border cursor-pointer transition-all ${
+                  workout.id === currentWorkoutId ? 'border-lime/50 bg-lime/5' : 'hover:border-primary/50'
+                }`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4" onClick={() => navigate(`/workout-session/${workout.id}`)}>
+                      <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                        {workout.is_daily ? (
+                          <Star className="h-6 w-6 text-amber-500" />
+                        ) : (
+                          <Dumbbell className="h-6 w-6 text-amber-500" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-foreground">{workout.name}</h3>
+                          {workout.is_daily && <Badge className="bg-amber-500/20 text-amber-500 text-xs">Diário</Badge>}
+                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime" />}
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{workout.duration_minutes || 40} min</span>
+                          <span className="flex items-center gap-1"><Flame className="h-3.5 w-3.5 text-orange" />{workout.calories || 200} kcal</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{workout.muscle_groups?.join(", ")}</p>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                      <span className="text-xs font-bold text-primary-foreground">{workout.division}</span>
+                    <div className="flex items-center gap-2">
+                      {workout.id !== currentWorkoutId && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="border-lime/50 text-lime hover:bg-lime/10"
+                          onClick={() => selectAsCurrentWorkout(workout.id)}
+                        >
+                          Selecionar
+                        </Button>
+                      )}
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <Dumbbell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum treino recomendado disponível</p>
+              <p className="text-sm text-muted-foreground mt-1">Aguarde seu personal criar treinos para você</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
