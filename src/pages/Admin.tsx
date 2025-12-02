@@ -14,7 +14,8 @@ import {
   Search, 
   Plus,
   Pencil,
-  Trash2
+  Trash2,
+  Calendar
 } from "lucide-react";
 import {
   Select,
@@ -31,6 +32,7 @@ import AdminWorkoutModal from "@/components/admin/AdminWorkoutModal";
 import EditWorkoutModal from "@/components/admin/EditWorkoutModal";
 import ExercisePickerModal from "@/components/admin/ExercisePickerModal";
 import ExerciseFormModal from "@/components/admin/ExerciseFormModal";
+import WorkoutProgramModal from "@/components/admin/WorkoutProgramModal";
 import { toast } from "sonner";
 
 interface User {
@@ -66,7 +68,17 @@ interface Exercise {
   video_url?: string;
 }
 
-type TabType = "users" | "workouts" | "exercises";
+interface WorkoutProgram {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  is_recommended?: boolean;
+  progress_percent?: number;
+  workouts_count?: number;
+}
+
+type TabType = "users" | "programs" | "workouts" | "exercises";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -75,6 +87,7 @@ export default function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutPlan[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [programs, setPrograms] = useState<WorkoutProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("");
@@ -101,8 +114,13 @@ export default function Admin() {
   // Context for which picker is being used
   const [pickerContext, setPickerContext] = useState<"user" | "workout" | "edit">("user");
 
+  // Program modal states
+  const [programModalOpen, setProgramModalOpen] = useState(false);
+  const [editingProgram, setEditingProgram] = useState<WorkoutProgram | null>(null);
+
   const stats = {
     users: users.length,
+    programs: programs.length,
     workouts: workouts.length,
     exercises: exercises.length
   };
@@ -170,10 +188,29 @@ export default function Admin() {
 
       setUsers(usersWithDetails);
 
-      // Load workouts
+      // Load workout programs
+      const { data: programsData } = await supabase
+        .from("workout_programs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      // Get workout count for each program
+      const programsWithCounts = await Promise.all(
+        (programsData || []).map(async (program) => {
+          const { count } = await supabase
+            .from("workout_plans")
+            .select("*", { count: 'exact', head: true })
+            .eq("program_id", program.id);
+          return { ...program, workouts_count: count || 0 };
+        })
+      );
+      setPrograms(programsWithCounts);
+
+      // Load workouts (standalone, not in programs)
       const { data: workoutsData } = await supabase
         .from("workout_plans")
         .select("*")
+        .is("program_id", null)
         .order("created_at", { ascending: false });
 
       setWorkouts(workoutsData || []);
@@ -312,8 +349,14 @@ export default function Admin() {
     return matchesSearch && matchesLevel && matchesFocus;
   });
 
+  const filteredPrograms = programs.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
+
   const tabs = [
     { id: "users" as TabType, label: "Usuários", icon: Users },
+    { id: "programs" as TabType, label: "Programas", icon: Calendar },
     { id: "workouts" as TabType, label: "Treinos", icon: Dumbbell },
     { id: "exercises" as TabType, label: "Exercícios", icon: Target },
   ];
@@ -346,25 +389,32 @@ export default function Admin() {
 
       {/* Stats Cards */}
       <div className="px-4 mb-6">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2">
           <Card className="bg-card border-border">
-            <CardContent className="p-4 text-center">
-              <Users className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
-              <p className="text-2xl font-black text-foreground">{stats.users}</p>
+            <CardContent className="p-3 text-center">
+              <Users className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
+              <p className="text-xl font-black text-foreground">{stats.users}</p>
               <p className="text-xs text-muted-foreground">Usuários</p>
             </CardContent>
           </Card>
           <Card className="bg-card border-border">
-            <CardContent className="p-4 text-center">
-              <Dumbbell className="h-6 w-6 text-purple mx-auto mb-2" />
-              <p className="text-2xl font-black text-foreground">{stats.workouts}</p>
+            <CardContent className="p-3 text-center">
+              <Calendar className="h-5 w-5 text-lime mx-auto mb-1" />
+              <p className="text-xl font-black text-foreground">{stats.programs}</p>
+              <p className="text-xs text-muted-foreground">Programas</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-border">
+            <CardContent className="p-3 text-center">
+              <Dumbbell className="h-5 w-5 text-purple mx-auto mb-1" />
+              <p className="text-xl font-black text-foreground">{stats.workouts}</p>
               <p className="text-xs text-muted-foreground">Treinos</p>
             </CardContent>
           </Card>
           <Card className="bg-card border-border">
-            <CardContent className="p-4 text-center">
-              <Target className="h-6 w-6 text-orange mx-auto mb-2" />
-              <p className="text-2xl font-black text-foreground">{stats.exercises}</p>
+            <CardContent className="p-3 text-center">
+              <Target className="h-5 w-5 text-orange mx-auto mb-1" />
+              <p className="text-xl font-black text-foreground">{stats.exercises}</p>
               <p className="text-xs text-muted-foreground">Exercícios</p>
             </CardContent>
           </Card>
@@ -373,7 +423,7 @@ export default function Admin() {
 
       {/* Tabs */}
       <div className="px-4 mb-4">
-        <div className="grid grid-cols-3 gap-2 p-1 bg-card rounded-xl">
+        <div className="grid grid-cols-4 gap-1 p-1 bg-card rounded-xl">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -383,7 +433,7 @@ export default function Admin() {
                 setLevelFilter("");
                 setFocusFilter("");
               }}
-              className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
+              className={`flex flex-col items-center justify-center gap-1 py-2 px-2 rounded-lg text-xs font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-background text-foreground shadow-sm border border-border"
                   : "text-muted-foreground hover:text-foreground"
@@ -428,6 +478,90 @@ export default function Admin() {
                 />
               ))}
           </div>
+        )}
+
+        {/* Programs Tab */}
+        {activeTab === "programs" && (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-foreground">Programas de Treino</h2>
+              <Button 
+                className="bg-lime text-black font-bold hover:bg-lime/90"
+                onClick={() => {
+                  setEditingProgram(null);
+                  setProgramModalOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Programa
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {filteredPrograms.map((program) => (
+                <Card 
+                  key={program.id} 
+                  className="bg-card border-border cursor-pointer hover:border-lime/50 transition-all"
+                  onClick={() => {
+                    setEditingProgram(program);
+                    setProgramModalOpen(true);
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-lime/20 flex items-center justify-center">
+                          <Calendar className="h-6 w-6 text-lime" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-foreground">{program.name}</h3>
+                            {program.is_recommended && (
+                              <Badge className="bg-amber-500/20 text-amber-500 text-xs">Recomendado</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {program.category || "Geral"} • {program.workouts_count || 0} treinos
+                          </p>
+                          {program.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{program.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-muted transition-colors"
+                          onClick={(e) => { e.stopPropagation(); setEditingProgram(program); setProgramModalOpen(true); }}
+                        >
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                        <button 
+                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (confirm("Excluir este programa e todos os treinos dentro dele?")) {
+                              await supabase.from("workout_programs").delete().eq("id", program.id);
+                              toast.success("Programa excluído");
+                              loadAllData();
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {filteredPrograms.length === 0 && (
+                <div className="text-center py-12">
+                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">Nenhum programa encontrado</p>
+                  <p className="text-sm text-muted-foreground mt-1">Crie um programa para organizar treinos por dias da semana</p>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Workouts Tab */}
@@ -699,6 +833,17 @@ export default function Admin() {
         }}
         exercise={editingExercise}
         onSuccess={loadAllData}
+      />
+
+      {/* Workout Program Modal */}
+      <WorkoutProgramModal
+        isOpen={programModalOpen}
+        onClose={() => {
+          setProgramModalOpen(false);
+          setEditingProgram(null);
+        }}
+        onSuccess={loadAllData}
+        editingProgram={editingProgram}
       />
     </div>
   );
