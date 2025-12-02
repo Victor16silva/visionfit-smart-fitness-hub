@@ -317,44 +317,65 @@ export type Database = {
       }
       workout_plans: {
         Row: {
+          calories: number | null
           category: string | null
+          challenge_points: number | null
           cover_image_url: string | null
           created_at: string
           created_by: string | null
           description: string | null
           division_letter: string | null
+          duration_minutes: number | null
           id: string
           is_active: boolean | null
+          is_challenge: boolean | null
+          is_daily: boolean | null
+          is_recommended: boolean | null
           muscle_groups: string[]
           name: string
+          total_weight_kg: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          calories?: number | null
           category?: string | null
+          challenge_points?: number | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           division_letter?: string | null
+          duration_minutes?: number | null
           id?: string
           is_active?: boolean | null
+          is_challenge?: boolean | null
+          is_daily?: boolean | null
+          is_recommended?: boolean | null
           muscle_groups: string[]
           name: string
+          total_weight_kg?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          calories?: number | null
           category?: string | null
+          challenge_points?: number | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           division_letter?: string | null
+          duration_minutes?: number | null
           id?: string
           is_active?: boolean | null
+          is_challenge?: boolean | null
+          is_daily?: boolean | null
+          is_recommended?: boolean | null
           muscle_groups?: string[]
           name?: string
+          total_weight_kg?: number | null
           updated_at?: string
           user_id?: string
         }
