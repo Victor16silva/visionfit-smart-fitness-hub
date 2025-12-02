@@ -11,7 +11,7 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
   const maxHeight = 220;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
-  const itemHeight = 52;
+  const itemHeight = 48;
 
   const heights = Array.from(
     { length: maxHeight - minHeight + 1 },
@@ -39,6 +39,23 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
     }
   };
 
+  const getStyles = (height: number) => {
+    const isSelected = height === value;
+    const distance = Math.abs(height - value);
+    
+    if (isSelected) {
+      return { fontSize: '3rem', opacity: 1, fontWeight: 700 };
+    } else if (distance === 1) {
+      return { fontSize: '1.75rem', opacity: 0.9, fontWeight: 500 };
+    } else if (distance === 2) {
+      return { fontSize: '1.25rem', opacity: 0.6, fontWeight: 400 };
+    } else if (distance === 3) {
+      return { fontSize: '1rem', opacity: 0.4, fontWeight: 400 };
+    } else {
+      return { fontSize: '0.875rem', opacity: 0.25, fontWeight: 400 };
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -56,69 +73,49 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
       </div>
 
       <div className="flex-1 relative flex items-center justify-center">
-        {/* Gradient overlays */}
-        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
-        
         {/* Selection indicator lines */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-64 pointer-events-none z-20">
-          <div className="absolute -top-7 w-full h-0.5 bg-destructive" />
-          <div className="absolute top-7 w-full h-0.5 bg-destructive" />
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 w-48 pointer-events-none z-20">
+          <div className="absolute -top-6 w-full h-[2px] bg-[#dc2626]" />
+          <div className="absolute top-6 w-full h-[2px] bg-[#dc2626]" />
         </div>
 
         <div
           ref={scrollRef}
-          className="h-[320px] w-full overflow-y-auto scrollbar-hide snap-y snap-mandatory"
+          className="h-[340px] w-full overflow-y-auto scrollbar-hide"
           onScroll={handleScroll}
           style={{ scrollSnapType: 'y mandatory' }}
         >
-          <div className="py-[140px]">
+          <div style={{ paddingTop: '146px', paddingBottom: '146px' }}>
             {heights.map((height) => {
               const isSelected = height === value;
-              const distance = Math.abs(height - value);
-              
-              // Selected is biggest and brightest with "cm"
-              // Others get progressively smaller and more faded
-              let fontSize = '1.25rem';
-              let opacity = 0.25;
-              let fontWeight = 400;
-              
-              if (isSelected) {
-                fontSize = '3.5rem';
-                opacity = 1;
-                fontWeight = 700;
-              } else if (distance === 1) {
-                fontSize = '2rem';
-                opacity = 0.8;
-                fontWeight = 500;
-              } else if (distance === 2) {
-                fontSize = '1.5rem';
-                opacity = 0.5;
-                fontWeight = 400;
-              } else if (distance === 3) {
-                fontSize = '1.25rem';
-                opacity = 0.35;
-              }
+              const styles = getStyles(height);
               
               return (
-                <motion.div
+                <div
                   key={height}
-                  className="flex items-center justify-center snap-center cursor-pointer"
-                  style={{ height: itemHeight }}
+                  className="flex items-center justify-center cursor-pointer"
+                  style={{ 
+                    height: itemHeight,
+                    scrollSnapAlign: 'center',
+                    opacity: styles.opacity,
+                    transition: 'all 0.15s ease'
+                  }}
                   onClick={() => onChange(height)}
-                  animate={{ opacity }}
-                  transition={{ duration: 0.15 }}
                 >
                   <span 
-                    className="text-foreground flex items-baseline gap-1 transition-all duration-150"
-                    style={{ fontSize, fontWeight }}
+                    className="text-white flex items-baseline"
+                    style={{ 
+                      fontSize: styles.fontSize, 
+                      fontWeight: styles.fontWeight,
+                      transition: 'all 0.15s ease'
+                    }}
                   >
                     {height}
                     {isSelected && (
-                      <span className="text-xl text-muted-foreground font-normal">cm</span>
+                      <span className="text-base text-white/70 font-normal ml-1">cm</span>
                     )}
                   </span>
-                </motion.div>
+                </div>
               );
             })}
           </div>
