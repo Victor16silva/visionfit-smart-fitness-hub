@@ -12,6 +12,8 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const itemHeight = 48;
+  const containerHeight = 340;
+  const paddingTop = containerHeight / 2 - itemHeight / 2;
 
   const heights = Array.from(
     { length: maxHeight - minHeight + 1 },
@@ -21,7 +23,7 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
   useEffect(() => {
     if (scrollRef.current && !isScrolling) {
       const targetIndex = heights.indexOf(value);
-      const scrollPosition = targetIndex * itemHeight - scrollRef.current.clientHeight / 2 + itemHeight / 2;
+      const scrollPosition = targetIndex * itemHeight;
       scrollRef.current.scrollTop = scrollPosition;
     }
   }, [value, heights, isScrolling]);
@@ -30,8 +32,7 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
     if (scrollRef.current) {
       setIsScrolling(true);
       const scrollTop = scrollRef.current.scrollTop;
-      const centerPosition = scrollTop + scrollRef.current.clientHeight / 2;
-      const selectedIndex = Math.round((centerPosition - itemHeight / 2) / itemHeight);
+      const selectedIndex = Math.round(scrollTop / itemHeight);
       const clampedIndex = Math.max(0, Math.min(heights.length - 1, selectedIndex));
       onChange(heights[clampedIndex]);
       
@@ -81,11 +82,14 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
 
         <div
           ref={scrollRef}
-          className="h-[340px] w-full overflow-y-auto scrollbar-hide"
+          className="w-full overflow-y-auto scrollbar-hide"
           onScroll={handleScroll}
-          style={{ scrollSnapType: 'y mandatory' }}
+          style={{ 
+            height: containerHeight,
+            scrollSnapType: 'y mandatory' 
+          }}
         >
-          <div style={{ paddingTop: '146px', paddingBottom: '146px' }}>
+          <div style={{ paddingTop, paddingBottom: paddingTop }}>
             {heights.map((height) => {
               const isSelected = height === value;
               const styles = getStyles(height);
