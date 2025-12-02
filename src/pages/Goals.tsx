@@ -242,11 +242,13 @@ export default function Goals() {
     );
   }
 
+  const isLightStep = step === 2; // Age step has white background
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${isLightStep ? 'bg-white' : 'bg-background'}`}>
       <div className="p-4 flex items-center gap-4">
         {step < TOTAL_STEPS && (
-          <Button variant="ghost" size="icon" onClick={handleBack}>
+          <Button variant="ghost" size="icon" onClick={handleBack} className={isLightStep ? 'text-gray-900 hover:bg-gray-100' : ''}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
         )}
@@ -256,7 +258,7 @@ export default function Goals() {
               <motion.div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-colors ${
-                  i + 1 <= step ? "bg-lime" : "bg-muted"
+                  i + 1 <= step ? (isLightStep ? "bg-orange-500" : "bg-lime") : (isLightStep ? "bg-gray-200" : "bg-muted")
                 }`}
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
@@ -264,7 +266,7 @@ export default function Goals() {
               />
             ))}
           </div>
-          <p className="text-xs text-muted-foreground text-right mt-1">
+          <p className={`text-xs text-right mt-1 ${isLightStep ? 'text-gray-500' : 'text-muted-foreground'}`}>
             {step} de {TOTAL_STEPS}
           </p>
         </div>
@@ -354,7 +356,7 @@ export default function Goals() {
       {step < TOTAL_STEPS && (
         <div className="p-4">
           <Button
-            className="w-full bg-lime text-black hover:bg-lime/90 font-bold h-14"
+            className={`w-full font-bold h-14 ${isLightStep ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-lime text-black hover:bg-lime/90'}`}
             onClick={handleNext}
             disabled={!canProceed()}
           >
