@@ -3,13 +3,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Clock, Flame, ChevronRight, Dumbbell, Check, Star } from "lucide-react";
+import { Search, Clock, Flame, ChevronRight, Dumbbell, Check, Star, UserCheck } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import { toast } from "sonner";
-import workoutFullbody from "@/assets/workout-fullbody.jpg";
 
 interface WorkoutPlan {
   id: string;
@@ -24,6 +23,7 @@ interface WorkoutPlan {
   calories?: number;
   is_recommended?: boolean;
   is_daily?: boolean;
+  created_by?: string;
 }
 
 const levels = ["Iniciante", "Intermediário", "Avançado"];
@@ -32,7 +32,7 @@ export default function Workouts() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [recommendedWorkouts, setRecommendedWorkouts] = useState<WorkoutPlan[]>([]);
-  const [myWorkouts, setMyWorkouts] = useState<WorkoutPlan[]>([]);
+  const [personalizedWorkouts, setPersonalizedWorkouts] = useState<WorkoutPlan[]>([]);
   const [currentWorkoutId, setCurrentWorkoutId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,15 +66,16 @@ export default function Workouts() {
 
       setRecommendedWorkouts(recommended || []);
 
-      // Load user's assigned workouts
-      const { data: myData } = await supabase
+      // Load personalized workouts (assigned by trainer - has created_by that's different from user_id)
+      const { data: personalized } = await supabase
         .from("workout_plans")
         .select("*")
         .eq("user_id", user?.id)
         .eq("is_active", true)
+        .not("created_by", "is", null)
         .order("created_at", { ascending: false });
 
-      setMyWorkouts(myData || []);
+      setPersonalizedWorkouts(personalized || []);
     } catch (error) {
       console.error("Error loading workouts:", error);
     } finally {
@@ -105,13 +106,7 @@ export default function Workouts() {
     return matchesSearch && matchesLevel;
   });
 
-  const filteredMyWorkouts = myWorkouts.filter(w => {
-    const matchesSearch = w.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesLevel = !selectedLevel || w.category === selectedLevel;
-    return matchesSearch && matchesLevel;
-  });
-
-  const currentWorkout = [...myWorkouts, ...recommendedWorkouts].find(w => w.id === currentWorkoutId);
+  const currentWorkout = [...personalizedWorkouts, ...recommendedWorkouts].find(w => w.id === currentWorkoutId);
 
   if (loading) {
     return (
@@ -191,53 +186,64 @@ export default function Workouts() {
         </div>
       )}
 
-      {/* My Workouts */}
-      {filteredMyWorkouts.length > 0 && (
+      {/* Personalized Workouts Card */}
+      {personalizedWorkouts.length > 0 && (
         <div className="px-4 mb-6">
-          <SectionHeader title="Meus Treinos" subtitle="Treinos atribuídos a você" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
-            {filteredMyWorkouts.map((workout) => (
-              <Card 
-                key={workout.id}
-                className={`bg-card border-border cursor-pointer transition-all ${
-                  workout.id === currentWorkoutId ? 'border-lime/50 bg-lime/5' : 'hover:border-primary/50'
-                }`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1" onClick={() => navigate(`/workout-session/${workout.id}`)}>
-                      <div className="w-12 h-12 rounded-xl bg-purple/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg font-bold text-purple">{workout.division_letter || "A"}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-foreground truncate">{workout.name}</h3>
-                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime flex-shrink-0" />}
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{workout.duration_minutes || 40} min</span>
-                          <span className="flex items-center gap-1 truncate"><Dumbbell className="h-3.5 w-3.5 flex-shrink-0" />{workout.muscle_groups?.join(", ")}</span>
-                        </div>
-                      </div>
+          <Card className="bg-gradient-to-br from-purple/20 to-purple/5 border-purple/30 max-w-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <UserCheck className="h-5 w-5 text-purple" />
+                <span className="text-foreground">Treino Personalizado</span>
+                <Badge className="bg-purple/20 text-purple text-xs">Personal</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {personalizedWorkouts.map((workout) => (
+                <div
+                  key={workout.id}
+                  className={`flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer ${
+                    workout.id === currentWorkoutId 
+                      ? 'bg-lime/10 border border-lime/30' 
+                      : 'bg-background/50 hover:bg-background/80'
+                  }`}
+                  onClick={() => navigate(`/workout-session/${workout.id}`)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-purple/30 flex items-center justify-center">
+                      <span className="text-sm font-bold text-purple">{workout.division_letter || "A"}</span>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {workout.id !== currentWorkoutId && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="border-lime/50 text-lime hover:bg-lime/10"
-                          onClick={() => selectAsCurrentWorkout(workout.id)}
-                        >
-                          Selecionar
-                        </Button>
-                      )}
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-foreground">{workout.name}</h4>
+                        {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime" />}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{workout.duration_minutes || 40} min</span>
+                        <span>•</span>
+                        <span className="truncate max-w-[150px]">{workout.muscle_groups?.join(", ")}</span>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  <div className="flex items-center gap-2">
+                    {workout.id !== currentWorkoutId && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-lime/50 text-lime hover:bg-lime/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          selectAsCurrentWorkout(workout.id);
+                        }}
+                      >
+                        Selecionar
+                      </Button>
+                    )}
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       )}
 
