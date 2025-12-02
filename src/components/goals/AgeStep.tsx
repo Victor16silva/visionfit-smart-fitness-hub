@@ -54,7 +54,7 @@ export function AgeStep({ value, onChange }: AgeStepProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-6 h-full flex flex-col bg-white rounded-3xl mx-4 py-6"
+      className="space-y-6 h-full flex flex-col"
     >
       <div className="text-center">
         <h1 className="text-2xl font-black text-gray-900 mb-2">
