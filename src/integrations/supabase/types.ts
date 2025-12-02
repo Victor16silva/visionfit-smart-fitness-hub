@@ -177,6 +177,7 @@ export type Database = {
           age: number | null
           avatar_url: string | null
           created_at: string
+          current_program_id: string | null
           current_workout_id: string | null
           full_name: string
           gender: string | null
@@ -189,6 +190,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          current_program_id?: string | null
           current_workout_id?: string | null
           full_name: string
           gender?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          current_program_id?: string | null
           current_workout_id?: string | null
           full_name?: string
           gender?: string | null
@@ -210,6 +213,13 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_current_program_id_fkey"
+            columns: ["current_program_id"]
+            isOneToOne: false
+            referencedRelation: "workout_programs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_current_workout_id_fkey"
             columns: ["current_workout_id"]
@@ -334,6 +344,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           created_by: string | null
+          day_of_week: string | null
           description: string | null
           division_letter: string | null
           duration_minutes: number | null
@@ -344,6 +355,7 @@ export type Database = {
           is_recommended: boolean | null
           muscle_groups: string[]
           name: string
+          program_id: string | null
           total_weight_kg: number | null
           updated_at: string
           user_id: string
@@ -355,6 +367,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_week?: string | null
           description?: string | null
           division_letter?: string | null
           duration_minutes?: number | null
@@ -365,6 +378,7 @@ export type Database = {
           is_recommended?: boolean | null
           muscle_groups: string[]
           name: string
+          program_id?: string | null
           total_weight_kg?: number | null
           updated_at?: string
           user_id: string
@@ -376,6 +390,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_week?: string | null
           description?: string | null
           division_letter?: string | null
           duration_minutes?: number | null
@@ -386,7 +401,61 @@ export type Database = {
           is_recommended?: boolean | null
           muscle_groups?: string[]
           name?: string
+          program_id?: string | null
           total_weight_kg?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_plans_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "workout_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_programs: {
+        Row: {
+          category: string | null
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_recommended: boolean | null
+          name: string
+          progress_percent: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recommended?: boolean | null
+          name: string
+          progress_percent?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recommended?: boolean | null
+          name?: string
+          progress_percent?: number | null
           updated_at?: string
           user_id?: string
         }
