@@ -15,7 +15,8 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Calendar
+  Calendar,
+  GraduationCap
 } from "lucide-react";
 import {
   Select,
@@ -33,6 +34,9 @@ import EditWorkoutModal from "@/components/admin/EditWorkoutModal";
 import ExercisePickerModal from "@/components/admin/ExercisePickerModal";
 import ExerciseFormModal from "@/components/admin/ExerciseFormModal";
 import WorkoutProgramModal from "@/components/admin/WorkoutProgramModal";
+import StudentDetailCard from "@/components/admin/StudentDetailCard";
+import StudentReportModal from "@/components/admin/StudentReportModal";
+import SendMessageModal from "@/components/admin/SendMessageModal";
 import { toast } from "sonner";
 
 interface User {
@@ -78,13 +82,36 @@ interface WorkoutProgram {
   workouts_count?: number;
 }
 
-type TabType = "users" | "programs" | "workouts" | "exercises";
+interface Student {
+  id: string;
+  full_name: string;
+  email?: string;
+  goals?: {
+    gender?: string;
+    age?: number;
+    weight_kg?: number;
+    height_cm?: number;
+    fitness_goals?: string[];
+    body_type?: string;
+    training_level?: string;
+    photo_front_url?: string;
+    photo_back_url?: string;
+    photo_left_url?: string;
+    photo_right_url?: string;
+    trainer_request_date?: string;
+  };
+  current_program_id?: string;
+  current_program_name?: string;
+}
+
+type TabType = "students" | "users" | "programs" | "workouts" | "exercises";
 
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabType>("users");
+  const [activeTab, setActiveTab] = useState<TabType>("students");
   const [users, setUsers] = useState<User[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutPlan[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [programs, setPrograms] = useState<WorkoutProgram[]>([]);
@@ -118,7 +145,14 @@ export default function Admin() {
   const [programModalOpen, setProgramModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<WorkoutProgram | null>(null);
 
+  // Student modal states
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [studentForProgram, setStudentForProgram] = useState<string | null>(null);
+
   const stats = {
+    students: students.length,
     users: users.length,
     programs: programs.length,
     workouts: workouts.length,
@@ -157,6 +191,55 @@ export default function Admin() {
   const loadAllData = async () => {
     setLoading(true);
     try {
+      // Load students (users who requested a trainer)
+      const { data: goalsData } = await supabase
+        .from("user_goals")
+        .select("*")
+        .eq("trainer_requested", true)
+        .order("trainer_request_date", { ascending: false });
+
+      const studentsWithDetails = await Promise.all(
+        (goalsData || []).map(async (goal) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, full_name, current_program_id")
+            .eq("id", goal.user_id)
+            .maybeSingle();
+
+          let programName = null;
+          if (profile?.current_program_id) {
+            const { data: program } = await supabase
+              .from("workout_programs")
+              .select("name")
+              .eq("id", profile.current_program_id)
+              .maybeSingle();
+            programName = program?.name;
+          }
+
+          return {
+            id: goal.user_id,
+            full_name: profile?.full_name || "Usuário",
+            goals: {
+              gender: goal.gender,
+              age: goal.age,
+              weight_kg: goal.weight_kg,
+              height_cm: goal.height_cm,
+              fitness_goals: goal.fitness_goals,
+              body_type: goal.body_type,
+              training_level: goal.training_level,
+              photo_front_url: goal.photo_front_url,
+              photo_back_url: goal.photo_back_url,
+              photo_left_url: goal.photo_left_url,
+              photo_right_url: goal.photo_right_url,
+              trainer_request_date: goal.trainer_request_date,
+            },
+            current_program_id: profile?.current_program_id,
+            current_program_name: programName,
+          };
+        })
+      );
+      setStudents(studentsWithDetails);
+
       // Load users with auth data
       const { data: profilesData } = await supabase
         .from("profiles")
@@ -354,7 +437,62 @@ export default function Admin() {
     return matchesSearch;
   });
 
+  const filteredStudents = students.filter((s) => {
+    const matchesSearch = s.full_name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
+
+  // Student handlers
+  const handleViewReport = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (student) {
+      setSelectedStudent(student);
+      setReportModalOpen(true);
+    }
+  };
+
+  const handleCreateStudentProgram = (studentId: string) => {
+    setStudentForProgram(studentId);
+    setEditingProgram(null);
+    setProgramModalOpen(true);
+  };
+
+  const handleEditStudentProgram = async (studentId: string, programId: string) => {
+    const { data: program } = await supabase
+      .from("workout_programs")
+      .select("*")
+      .eq("id", programId)
+      .maybeSingle();
+    
+    if (program) {
+      setStudentForProgram(studentId);
+      setEditingProgram(program);
+      setProgramModalOpen(true);
+    }
+  };
+
+  const handleSendMessage = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (student) {
+      setSelectedStudent(student);
+      setMessageModalOpen(true);
+    }
+  };
+
+  const handleProgramSuccess = async () => {
+    if (studentForProgram && editingProgram) {
+      // If we created/edited a program for a student, assign it to them
+      await supabase
+        .from("profiles")
+        .update({ current_program_id: editingProgram.id })
+        .eq("id", studentForProgram);
+    }
+    setStudentForProgram(null);
+    loadAllData();
+  };
+
   const tabs = [
+    { id: "students" as TabType, label: "Alunos", icon: GraduationCap },
     { id: "users" as TabType, label: "Usuários", icon: Users },
     { id: "programs" as TabType, label: "Programas", icon: Calendar },
     { id: "workouts" as TabType, label: "Treinos", icon: Dumbbell },
@@ -393,7 +531,14 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
           <div className="mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+              <Card className="bg-card border-border border-lime/30">
+                <CardContent className="p-4 text-center">
+                  <GraduationCap className="h-6 w-6 text-lime mx-auto mb-2" />
+                  <p className="text-2xl md:text-3xl font-black text-foreground">{stats.students}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Alunos</p>
+                </CardContent>
+              </Card>
               <Card className="bg-card border-border">
                 <CardContent className="p-4 text-center">
                   <Users className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
@@ -403,7 +548,7 @@ export default function Admin() {
               </Card>
               <Card className="bg-card border-border">
                 <CardContent className="p-4 text-center">
-                  <Calendar className="h-6 w-6 text-lime mx-auto mb-2" />
+                  <Calendar className="h-6 w-6 text-blue mx-auto mb-2" />
                   <p className="text-2xl md:text-3xl font-black text-foreground">{stats.programs}</p>
                   <p className="text-xs md:text-sm text-muted-foreground">Programas</p>
                 </CardContent>
@@ -427,7 +572,7 @@ export default function Admin() {
 
           {/* Tabs */}
           <div className="mb-4">
-            <div className="grid grid-cols-4 gap-1 p-1 bg-card rounded-xl">
+            <div className="grid grid-cols-5 gap-1 p-1 bg-card rounded-xl overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -466,6 +611,44 @@ export default function Admin() {
 
           {/* Content */}
           <div>
+            {/* Students Tab */}
+            {activeTab === "students" && (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg md:text-xl font-bold text-foreground">
+                    Alunos que Solicitaram Treino
+                  </h2>
+                  <Badge variant="outline" className="bg-lime/10 text-lime border-lime">
+                    {filteredStudents.length} alunos
+                  </Badge>
+                </div>
+                
+                {filteredStudents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <GraduationCap className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-bold text-foreground mb-2">Nenhum aluno ainda</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Quando os usuários completarem o onboarding e clicarem em "Chamar Professor",<br/>
+                      eles aparecerão aqui para você criar o treino deles.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
+                    {filteredStudents.map((student) => (
+                      <StudentDetailCard
+                        key={student.id}
+                        student={student}
+                        onViewReport={handleViewReport}
+                        onCreateProgram={handleCreateStudentProgram}
+                        onEditProgram={handleEditStudentProgram}
+                        onSendMessage={handleSendMessage}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
             {/* Users Tab */}
             {activeTab === "users" && (
               <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
@@ -847,10 +1030,36 @@ export default function Admin() {
         onClose={() => {
           setProgramModalOpen(false);
           setEditingProgram(null);
+          setStudentForProgram(null);
         }}
-        onSuccess={loadAllData}
+        onSuccess={handleProgramSuccess}
         editingProgram={editingProgram}
+        studentId={studentForProgram}
       />
+
+      {/* Student Report Modal */}
+      <StudentReportModal
+        isOpen={reportModalOpen}
+        onClose={() => {
+          setReportModalOpen(false);
+          setSelectedStudent(null);
+        }}
+        student={selectedStudent}
+      />
+
+      {/* Send Message Modal */}
+      {selectedStudent && (
+        <SendMessageModal
+          isOpen={messageModalOpen}
+          onClose={() => {
+            setMessageModalOpen(false);
+            setSelectedStudent(null);
+          }}
+          studentId={selectedStudent.id}
+          studentName={selectedStudent.full_name}
+          onSuccess={loadAllData}
+        />
+      )}
     </div>
   );
 }
