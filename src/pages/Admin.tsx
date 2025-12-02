@@ -24,8 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import UserDetailCard from "@/components/admin/UserDetailCard";
+import WorkoutDetailCard from "@/components/admin/WorkoutDetailCard";
 import AssignWorkoutModal from "@/components/admin/AssignWorkoutModal";
 import CreateWorkoutModal from "@/components/admin/CreateWorkoutModal";
+import AdminWorkoutModal from "@/components/admin/AdminWorkoutModal";
+import EditWorkoutModal from "@/components/admin/EditWorkoutModal";
 import ExercisePickerModal from "@/components/admin/ExercisePickerModal";
 import ExerciseFormModal from "@/components/admin/ExerciseFormModal";
 import { toast } from "sonner";
@@ -48,6 +51,8 @@ interface WorkoutPlan {
   category?: string;
   division_letter?: string;
   description?: string;
+  user_id?: string;
+  created_by?: string;
 }
 
 interface Exercise {
@@ -56,6 +61,9 @@ interface Exercise {
   muscle_groups: string[];
   difficulty?: string;
   image_url?: string;
+  equipment?: string;
+  description?: string;
+  video_url?: string;
 }
 
 type TabType = "users" | "workouts" | "exercises";
@@ -72,14 +80,26 @@ export default function Admin() {
   const [levelFilter, setLevelFilter] = useState<string>("");
   const [focusFilter, setFocusFilter] = useState<string>("");
 
-  // Modal states
+  // User modal states
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
-  const [exerciseFormOpen, setExerciseFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [userSelectedExercises, setUserSelectedExercises] = useState<Exercise[]>([]);
+  const [userExercisePickerOpen, setUserExercisePickerOpen] = useState(false);
+
+  // Workout modal states
+  const [adminWorkoutModalOpen, setAdminWorkoutModalOpen] = useState(false);
+  const [editWorkoutModalOpen, setEditWorkoutModalOpen] = useState(false);
+  const [editingWorkout, setEditingWorkout] = useState<WorkoutPlan | null>(null);
+  const [workoutSelectedExercises, setWorkoutSelectedExercises] = useState<Exercise[]>([]);
+  const [workoutExercisePickerOpen, setWorkoutExercisePickerOpen] = useState(false);
+
+  // Exercise modal states
+  const [exerciseFormOpen, setExerciseFormOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+
+  // Context for which picker is being used
+  const [pickerContext, setPickerContext] = useState<"user" | "workout" | "edit">("user");
 
   const stats = {
     users: users.length,
@@ -172,6 +192,7 @@ export default function Admin() {
     }
   };
 
+  // User handlers
   const handleAssignWorkout = (userId: string) => {
     const foundUser = users.find(u => u.id === userId);
     if (foundUser) {
@@ -184,14 +205,13 @@ export default function Admin() {
     const foundUser = users.find(u => u.id === userId);
     if (foundUser) {
       setSelectedUser(foundUser);
-      setSelectedExercises([]);
+      setUserSelectedExercises([]);
       setCreateModalOpen(true);
     }
   };
 
   const handleMakeAdmin = async (userId: string) => {
     try {
-      // Check if user already has admin role
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("id")
@@ -218,13 +238,79 @@ export default function Admin() {
     }
   };
 
-  const handleSelectExercises = (newExercises: Exercise[]) => {
-    setSelectedExercises(prev => [...prev, ...newExercises]);
+  // Workout handlers
+  const handleEditWorkout = (workout: WorkoutPlan) => {
+    setEditingWorkout(workout);
+    setWorkoutSelectedExercises([]);
+    setEditWorkoutModalOpen(true);
   };
 
-  const handleRemoveExercise = (exerciseId: string) => {
-    setSelectedExercises(prev => prev.filter(e => e.id !== exerciseId));
+  const handleDeleteWorkout = async (workoutId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este treino?")) return;
+
+    try {
+      // First delete workout exercises
+      await supabase
+        .from("workout_exercises")
+        .delete()
+        .eq("workout_plan_id", workoutId);
+
+      // Then delete the workout
+      const { error } = await supabase
+        .from("workout_plans")
+        .delete()
+        .eq("id", workoutId);
+
+      if (error) throw error;
+      
+      toast.success("Treino excluído com sucesso");
+      loadAllData();
+    } catch (error) {
+      console.error("Error deleting workout:", error);
+      toast.error("Erro ao excluir treino");
+    }
   };
+
+  // Exercise picker handlers based on context
+  const handleOpenExercisePicker = (context: "user" | "workout" | "edit") => {
+    setPickerContext(context);
+    if (context === "user") {
+      setUserExercisePickerOpen(true);
+    } else {
+      setWorkoutExercisePickerOpen(true);
+    }
+  };
+
+  const handleSelectExercises = (newExercises: Exercise[]) => {
+    if (pickerContext === "user") {
+      setUserSelectedExercises(prev => [...prev, ...newExercises]);
+    } else {
+      setWorkoutSelectedExercises(prev => [...prev, ...newExercises]);
+    }
+  };
+
+  const handleRemoveUserExercise = (exerciseId: string) => {
+    setUserSelectedExercises(prev => prev.filter(e => e.id !== exerciseId));
+  };
+
+  const handleRemoveWorkoutExercise = (exerciseId: string) => {
+    setWorkoutSelectedExercises(prev => prev.filter(e => e.id !== exerciseId));
+  };
+
+  // Filter helpers
+  const filteredWorkouts = workouts.filter((w) => {
+    const matchesSearch = w.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLevel = !levelFilter || levelFilter === "all" || w.category === levelFilter;
+    const matchesFocus = !focusFilter || focusFilter === "all" || w.muscle_groups?.includes(focusFilter);
+    return matchesSearch && matchesLevel && matchesFocus;
+  });
+
+  const filteredExercises = exercises.filter((e) => {
+    const matchesSearch = e.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLevel = !levelFilter || levelFilter === "all" || e.difficulty === levelFilter;
+    const matchesFocus = !focusFilter || focusFilter === "all" || e.muscle_groups?.includes(focusFilter);
+    return matchesSearch && matchesLevel && matchesFocus;
+  });
 
   const tabs = [
     { id: "users" as TabType, label: "Usuários", icon: Users },
@@ -291,7 +377,12 @@ export default function Admin() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSearchQuery("");
+                setLevelFilter("");
+                setFocusFilter("");
+              }}
               className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-background text-foreground shadow-sm border border-border"
@@ -344,10 +435,10 @@ export default function Admin() {
           <>
             <div className="flex gap-2 mb-4">
               <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-24 bg-card border-border">
+                <SelectTrigger className="w-28 bg-card border-border">
                   <SelectValue placeholder="Nível" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="Iniciante">Iniciante</SelectItem>
                   <SelectItem value="Intermediário">Intermediário</SelectItem>
@@ -358,7 +449,7 @@ export default function Admin() {
                 <SelectTrigger className="flex-1 bg-card border-border">
                   <SelectValue placeholder="Área de Foco" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="Peito">Peito</SelectItem>
                   <SelectItem value="Costas">Costas</SelectItem>
@@ -373,7 +464,10 @@ export default function Admin() {
               <h2 className="text-lg font-bold text-foreground">Planos de Treino</h2>
               <Button 
                 className="bg-lime text-black font-bold hover:bg-lime/90"
-                onClick={() => navigate("/create-workout")}
+                onClick={() => {
+                  setWorkoutSelectedExercises([]);
+                  setAdminWorkoutModalOpen(true);
+                }}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Treino
@@ -381,50 +475,19 @@ export default function Admin() {
             </div>
 
             <div className="space-y-3">
-              {workouts
-                .filter((w) => 
-                  w.name.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-                .map((workout) => (
-                  <Card key={workout.id} className="bg-card border-border">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-lime flex items-center justify-center">
-                            <span className="text-lg font-bold text-black">
-                              {workout.division_letter || "A"}
-                            </span>
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-foreground">{workout.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {workout.description || workout.muscle_groups?.slice(0, 2).join(" e ")}
-                            </p>
-                            <div className="flex gap-1.5 mt-1">
-                              <Badge variant="secondary" className="text-xs">
-                                {workout.category || "Avançado"}
-                              </Badge>
-                              <Badge className="bg-lime text-black text-xs">
-                                {workout.muscle_groups?.[0] || "Geral"}
-                              </Badge>
-                              <Badge className="bg-orange text-white text-xs">
-                                Destaque
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center">
-                            <Pencil className="h-4 w-4 text-muted-foreground" />
-                          </button>
-                          <button className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center">
-                            <Trash2 className="h-4 w-4 text-muted-foreground" />
-                          </button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              {filteredWorkouts.map((workout) => (
+                <WorkoutDetailCard
+                  key={workout.id}
+                  workout={workout}
+                  onEdit={handleEditWorkout}
+                  onDelete={handleDeleteWorkout}
+                />
+              ))}
+              {filteredWorkouts.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhum treino encontrado
+                </p>
+              )}
             </div>
           </>
         )}
@@ -435,7 +498,7 @@ export default function Admin() {
             {/* Filters */}
             <div className="flex gap-2 mb-4">
               <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger className="w-24 bg-card border-border">
+                <SelectTrigger className="w-28 bg-card border-border">
                   <SelectValue placeholder="Nível" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -475,89 +538,92 @@ export default function Admin() {
             </div>
 
             <div className="space-y-3">
-              {exercises
-                .filter((e) => 
-                  e.name.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-                .map((exercise) => (
-                  <Card key={exercise.id} className="bg-card border-border">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
-                            {exercise.image_url ? (
-                              <img 
-                                src={exercise.image_url} 
-                                alt={exercise.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <Target className="h-6 w-6 text-muted-foreground" />
+              {filteredExercises.map((exercise) => (
+                <Card key={exercise.id} className="bg-card border-border">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
+                          {exercise.image_url ? (
+                            <img 
+                              src={exercise.image_url} 
+                              alt={exercise.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Target className="h-6 w-6 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-foreground mb-1">{exercise.name}</h3>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
+                              <Badge 
+                                key={idx} 
+                                variant="secondary" 
+                                className="text-xs bg-muted text-foreground"
+                              >
+                                {mg}
+                              </Badge>
+                            ))}
+                            {exercise.difficulty && (
+                              <Badge className="text-xs bg-muted text-foreground">
+                                {exercise.difficulty}
+                              </Badge>
+                            )}
+                            {exercise.equipment && (
+                              <Badge className="bg-lime text-black text-xs">
+                                {exercise.equipment}
+                              </Badge>
                             )}
                           </div>
-                          <div>
-                            <h3 className="font-bold text-foreground mb-1">{exercise.name}</h3>
-                            <div className="flex gap-1.5 flex-wrap">
-                              {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
-                                <Badge 
-                                  key={idx} 
-                                  variant="secondary" 
-                                  className="text-xs bg-muted text-foreground"
-                                >
-                                  {mg}
-                                </Badge>
-                              ))}
-                              {exercise.difficulty && (
-                                <Badge className="text-xs bg-muted text-foreground">
-                                  {exercise.difficulty}
-                                </Badge>
-                              )}
-                              <Badge className="bg-lime text-black text-xs">
-                                {exercise.muscle_groups?.[0] || "Geral"}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-muted transition-colors"
-                            onClick={() => {
-                              setEditingExercise(exercise);
-                              setExerciseFormOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4 text-muted-foreground" />
-                          </button>
-                          <button 
-                            className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-destructive/20 transition-colors"
-                            onClick={async () => {
-                              if (confirm("Tem certeza que deseja excluir este exercício?")) {
-                                const { error } = await supabase
-                                  .from("exercises")
-                                  .delete()
-                                  .eq("id", exercise.id);
-                                if (error) {
-                                  toast.error("Erro ao excluir exercício");
-                                } else {
-                                  toast.success("Exercício excluído");
-                                  loadAllData();
-                                }
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-muted-foreground" />
-                          </button>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <div className="flex items-center gap-2">
+                        <button 
+                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-muted transition-colors"
+                          onClick={() => {
+                            setEditingExercise(exercise);
+                            setExerciseFormOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                        <button 
+                          className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                          onClick={async () => {
+                            if (confirm("Tem certeza que deseja excluir este exercício?")) {
+                              const { error } = await supabase
+                                .from("exercises")
+                                .delete()
+                                .eq("id", exercise.id);
+                              if (error) {
+                                toast.error("Erro ao excluir exercício");
+                              } else {
+                                toast.success("Exercício excluído");
+                                loadAllData();
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {filteredExercises.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhum exercício encontrado
+                </p>
+              )}
             </div>
           </>
         )}
       </div>
 
-      {/* Modals */}
+      {/* User Modals */}
       <AssignWorkoutModal
         isOpen={assignModalOpen}
         onClose={() => {
@@ -573,22 +639,58 @@ export default function Admin() {
         onClose={() => {
           setCreateModalOpen(false);
           setSelectedUser(null);
-          setSelectedExercises([]);
+          setUserSelectedExercises([]);
           loadAllData();
         }}
         user={selectedUser}
-        onOpenExercisePicker={() => setExercisePickerOpen(true)}
-        selectedExercises={selectedExercises}
-        onRemoveExercise={handleRemoveExercise}
+        onOpenExercisePicker={() => handleOpenExercisePicker("user")}
+        selectedExercises={userSelectedExercises}
+        onRemoveExercise={handleRemoveUserExercise}
+      />
+
+      {/* Workout Modals */}
+      <AdminWorkoutModal
+        isOpen={adminWorkoutModalOpen}
+        onClose={() => {
+          setAdminWorkoutModalOpen(false);
+          setWorkoutSelectedExercises([]);
+        }}
+        onOpenExercisePicker={() => handleOpenExercisePicker("workout")}
+        selectedExercises={workoutSelectedExercises}
+        onRemoveExercise={handleRemoveWorkoutExercise}
+        onSuccess={loadAllData}
+      />
+
+      <EditWorkoutModal
+        isOpen={editWorkoutModalOpen}
+        onClose={() => {
+          setEditWorkoutModalOpen(false);
+          setEditingWorkout(null);
+          setWorkoutSelectedExercises([]);
+        }}
+        workout={editingWorkout}
+        onOpenExercisePicker={() => handleOpenExercisePicker("edit")}
+        selectedExercises={workoutSelectedExercises}
+        onRemoveExercise={handleRemoveWorkoutExercise}
+        onSuccess={loadAllData}
+      />
+
+      {/* Exercise Pickers */}
+      <ExercisePickerModal
+        isOpen={userExercisePickerOpen}
+        onClose={() => setUserExercisePickerOpen(false)}
+        onSelectExercises={handleSelectExercises}
+        selectedCount={userSelectedExercises.length}
       />
 
       <ExercisePickerModal
-        isOpen={exercisePickerOpen}
-        onClose={() => setExercisePickerOpen(false)}
+        isOpen={workoutExercisePickerOpen}
+        onClose={() => setWorkoutExercisePickerOpen(false)}
         onSelectExercises={handleSelectExercises}
-        selectedCount={selectedExercises.length}
+        selectedCount={workoutSelectedExercises.length}
       />
 
+      {/* Exercise Form Modal */}
       <ExerciseFormModal
         isOpen={exerciseFormOpen}
         onClose={() => {
