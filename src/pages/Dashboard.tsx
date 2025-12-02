@@ -7,6 +7,7 @@ import WeeklyChallengeCard from "@/components/WeeklyChallengeCard";
 import WarmupCard from "@/components/WarmupCard";
 import BodyFocusItem from "@/components/BodyFocusItem";
 import CurrentWorkoutCard from "@/components/CurrentWorkoutCard";
+import PerformanceCalendar from "@/components/PerformanceCalendar";
 import workoutDaily from "@/assets/workout-daily.jpg";
 import workoutFullbody from "@/assets/workout-fullbody.jpg";
 import workoutHiit from "@/assets/workout-hiit.jpg";
@@ -32,14 +33,6 @@ export default function Dashboard() {
     { name: "Peito", image: muscleChest, area: "peito" },
     { name: "Abdômen", image: muscleAbs, area: "abdomen" },
     { name: "Pernas", image: muscleLegs, area: "pernas" },
-  ];
-
-  const weekDays = [
-    { day: "Seg", date: 1, active: true },
-    { day: "Ter", date: 2, active: false },
-    { day: "Qua", date: 3, active: false },
-    { day: "Qui", date: 4, active: false },
-    { day: "Sex", date: 5, active: false },
   ];
 
   return (
@@ -68,12 +61,12 @@ export default function Dashboard() {
           <p className="text-muted-foreground text-sm md:text-base">É hora de desafiar seus limites.</p>
         </div>
 
-        {/* Current Workout - NEW SECTION */}
+        {/* Current Workout */}
         <div className="mb-6">
           <CurrentWorkoutCard />
         </div>
 
-        {/* Performance - Week Days */}
+        {/* Performance Calendar - Real-time */}
         <div className="mb-6">
           <SectionHeader 
             title="Meu Desempenho" 
@@ -81,20 +74,8 @@ export default function Dashboard() {
             actionLink="/progress"
             showBar={false}
           />
-          <div className="flex gap-2 md:gap-3 mt-3 max-w-md">
-            {weekDays.map((item, index) => (
-              <button
-                key={index}
-                className={`flex-1 py-3 md:py-4 rounded-xl text-center transition-all ${
-                  item.active 
-                    ? 'bg-lime text-black' 
-                    : 'bg-card border border-border text-foreground'
-                }`}
-              >
-                <div className="text-xs md:text-sm opacity-70 mb-0.5">{item.day}</div>
-                <div className="text-xl md:text-2xl font-bold">{item.date}</div>
-              </button>
-            ))}
+          <div className="mt-3">
+            <PerformanceCalendar />
           </div>
         </div>
       </div>
