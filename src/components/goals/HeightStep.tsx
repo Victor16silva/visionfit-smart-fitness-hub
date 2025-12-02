@@ -11,7 +11,7 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
   const maxHeight = 220;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
-  const itemHeight = 56;
+  const itemHeight = 52;
 
   const heights = Array.from(
     { length: maxHeight - minHeight + 1 },
@@ -57,8 +57,8 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
 
       <div className="flex-1 relative flex items-center justify-center">
         {/* Gradient overlays */}
-        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
         
         {/* Selection indicator lines */}
         <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 w-64 pointer-events-none z-20">
@@ -75,39 +75,29 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
           <div className="py-[140px]">
             {heights.map((height) => {
               const isSelected = height === value;
-              const distance = height - value; // positive = below selected, negative = above
+              const distance = Math.abs(height - value);
               
-              // Values below selected get progressively larger
-              // Selected value is medium, values above are smaller
-              let fontSize = '1.5rem';
-              let opacity = 0.3;
+              // Selected is biggest and brightest with "cm"
+              // Others get progressively smaller and more faded
+              let fontSize = '1.25rem';
+              let opacity = 0.25;
               let fontWeight = 400;
               
               if (isSelected) {
-                fontSize = '2rem';
+                fontSize = '3.5rem';
                 opacity = 1;
                 fontWeight = 700;
               } else if (distance === 1) {
-                fontSize = '2.5rem';
+                fontSize = '2rem';
                 opacity = 0.8;
-                fontWeight = 700;
-              } else if (distance === 2) {
-                fontSize = '3.5rem';
-                opacity = 1;
-                fontWeight = 800;
-              } else if (distance >= 3) {
-                fontSize = '4rem';
-                opacity = 0;
-              } else if (distance === -1) {
-                fontSize = '1.75rem';
-                opacity = 0.6;
                 fontWeight = 500;
-              } else if (distance === -2) {
+              } else if (distance === 2) {
                 fontSize = '1.5rem';
-                opacity = 0.4;
-              } else if (distance <= -3) {
+                opacity = 0.5;
+                fontWeight = 400;
+              } else if (distance === 3) {
                 fontSize = '1.25rem';
-                opacity = 0.2;
+                opacity = 0.35;
               }
               
               return (
@@ -124,7 +114,7 @@ export function HeightStep({ value, onChange }: HeightStepProps) {
                     style={{ fontSize, fontWeight }}
                   >
                     {height}
-                    {distance === 2 && (
+                    {isSelected && (
                       <span className="text-xl text-muted-foreground font-normal">cm</span>
                     )}
                   </span>
