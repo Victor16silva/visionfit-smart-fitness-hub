@@ -35,6 +35,7 @@ import Admin from "./pages/Admin";
 import WorkoutCategories from "./pages/WorkoutCategories";
 import StretchingList from "./pages/StretchingList";
 import EditWorkout from "./pages/EditWorkout";
+import BodyFocusWorkouts from "./pages/BodyFocusWorkouts";
 
 const queryClient = new QueryClient();
 
@@ -308,6 +309,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <StretchingList />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workouts/focus/:area"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <BodyFocusWorkouts />
                   </AppLayout>
                 </ProtectedRoute>
               }

@@ -85,7 +85,7 @@ export default function Dashboard() {
         <SectionHeader 
           title="Recomendados" 
           actionText="Ver Todos"
-          actionLink="/workouts"
+          actionLink="/workouts/categories"
         />
         <div className="mt-3">
           <RecommendedWorkoutCard workouts={recommendedWorkouts} />

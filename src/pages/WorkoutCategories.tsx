@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bookmark } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Bookmark, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import workoutFullbody from "@/assets/workout-fullbody.jpg";
+import workoutDaily from "@/assets/workout-daily.jpg";
+import workoutHiit from "@/assets/workout-hiit.jpg";
 
 interface Workout {
   id: string;
@@ -10,10 +13,29 @@ interface Workout {
   muscle_groups: string[];
   category?: string;
   cover_image_url?: string;
-  description?: string;
+  duration_minutes?: number;
+  challenge_points?: number;
 }
 
 const levels = ["Iniciante", "Intermediário", "Avançado"];
+
+// Mock data for demonstration
+const mockWorkoutsByLevel: Record<string, Workout[]> = {
+  iniciante: [
+    { id: "1", name: "Leg Day Power Boost", category: "Iniciante", duration_minutes: 30, cover_image_url: workoutDaily, muscle_groups: ["pernas"] },
+    { id: "2", name: "Abs Core Básico", category: "Iniciante", duration_minutes: 30, cover_image_url: workoutFullbody, muscle_groups: ["abdomen"] },
+    { id: "3", name: "Learn the Basic of Training", category: "Iniciante", duration_minutes: 25, cover_image_url: workoutHiit, muscle_groups: ["fullbody"] },
+  ],
+  intermediário: [
+    { id: "4", name: "Chest Burnout Full Exercise", category: "Intermediário", duration_minutes: 45, cover_image_url: workoutFullbody, muscle_groups: ["peito"] },
+    { id: "5", name: "Chest Definition", category: "Intermediário", duration_minutes: 30, cover_image_url: workoutHiit, muscle_groups: ["peito"] },
+    { id: "6", name: "HIIT Cardio Blast", category: "Intermediário", duration_minutes: 35, cover_image_url: workoutDaily, muscle_groups: ["cardio"] },
+  ],
+  avançado: [
+    { id: "7", name: "Superior Peito Avançado", category: "Avançado", duration_minutes: 40, cover_image_url: workoutFullbody, challenge_points: 50, muscle_groups: ["peito"] },
+    { id: "8", name: "Full Body Extreme", category: "Avançado", duration_minutes: 60, cover_image_url: workoutHiit, muscle_groups: ["fullbody"] },
+  ],
+};
 
 export default function WorkoutCategories() {
   const navigate = useNavigate();
@@ -36,20 +58,43 @@ export default function WorkoutCategories() {
       const { data, error } = await supabase
         .from("workout_plans")
         .select("*")
+        .eq("is_recommended", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setWorkouts(data || []);
+      
+      if (data && data.length > 0) {
+        setWorkouts(data);
+      } else {
+        // Use mock data if no data from DB
+        const allMock = [
+          ...mockWorkoutsByLevel.iniciante,
+          ...mockWorkoutsByLevel.intermediário,
+          ...mockWorkoutsByLevel.avançado,
+        ];
+        setWorkouts(allMock);
+      }
     } catch (error) {
       console.error("Error loading workouts:", error);
+      const allMock = [
+        ...mockWorkoutsByLevel.iniciante,
+        ...mockWorkoutsByLevel.intermediário,
+        ...mockWorkoutsByLevel.avançado,
+      ];
+      setWorkouts(allMock);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredWorkouts = workouts.filter(w => 
-    w.category?.toLowerCase() === selectedLevel.toLowerCase()
-  );
+  const getWorkoutsByLevel = (level: string) => {
+    const dbWorkouts = workouts.filter(w => 
+      w.category?.toLowerCase() === level.toLowerCase()
+    );
+    
+    if (dbWorkouts.length > 0) return dbWorkouts;
+    return mockWorkoutsByLevel[level.toLowerCase()] || [];
+  };
 
   const WorkoutCard = ({ workout }: { workout: Workout }) => (
     <div 
@@ -72,12 +117,18 @@ export default function WorkoutCategories() {
         )}
       </div>
       
+      {/* Points badge */}
+      {workout.challenge_points && (
+        <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-lime/90 rounded-full">
+          <span className="text-xs font-bold text-black">🏆 +{workout.challenge_points}</span>
+        </div>
+      )}
+
       {/* Bookmark button */}
       <button 
         className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-colors"
         onClick={(e) => {
           e.stopPropagation();
-          // TODO: Toggle favorite
         }}
       >
         <Bookmark className="h-4 w-4 text-white" />
@@ -87,7 +138,7 @@ export default function WorkoutCategories() {
       <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
         <h4 className="text-white font-bold text-sm mb-1 line-clamp-1">{workout.name}</h4>
         <p className="text-white/70 text-xs">
-          30 minutes • {workout.category || "Iniciante"}
+          {workout.duration_minutes || 30} minutes • {workout.category || "Iniciante"}
         </p>
       </div>
     </div>
@@ -100,7 +151,7 @@ export default function WorkoutCategories() {
         <div className="flex items-center gap-4 mb-6">
           <button 
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-card-hover transition-colors"
+            className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
@@ -108,15 +159,15 @@ export default function WorkoutCategories() {
         </div>
 
         {/* Level tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {levels.map((level) => (
             <button
               key={level}
               onClick={() => setSelectedLevel(level)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                 selectedLevel === level
                   ? 'bg-lime text-black'
-                  : 'bg-card border border-border text-foreground hover:bg-card-hover'
+                  : 'bg-card border border-border text-foreground hover:bg-muted'
               }`}
             >
               {level}
@@ -132,68 +183,26 @@ export default function WorkoutCategories() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Iniciante section */}
-          <div className="px-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground">INICIANTE</h2>
-              <button className="text-sm text-muted-foreground hover:text-foreground">
-                View All &gt;
-              </button>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {workouts
-                .filter(w => w.category?.toLowerCase() === 'iniciante')
-                .slice(0, 5)
-                .map((workout) => (
-                  <WorkoutCard key={workout.id} workout={workout} />
-                ))}
-              {workouts.filter(w => w.category?.toLowerCase() === 'iniciante').length === 0 && (
-                <p className="text-muted-foreground text-sm py-4">Nenhum treino encontrado</p>
-              )}
-            </div>
-          </div>
-
-          {/* Intermediário section */}
-          <div className="px-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground">INTERMEDIÁRIO</h2>
-              <button className="text-sm text-muted-foreground hover:text-foreground">
-                View All &gt;
-              </button>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {workouts
-                .filter(w => w.category?.toLowerCase() === 'intermediário')
-                .slice(0, 5)
-                .map((workout) => (
-                  <WorkoutCard key={workout.id} workout={workout} />
-                ))}
-              {workouts.filter(w => w.category?.toLowerCase() === 'intermediário').length === 0 && (
-                <p className="text-muted-foreground text-sm py-4">Nenhum treino encontrado</p>
-              )}
-            </div>
-          </div>
-
-          {/* Avançado section */}
-          <div className="px-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground">AVANÇADO</h2>
-              <button className="text-sm text-muted-foreground hover:text-foreground">
-                View All &gt;
-              </button>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-              {workouts
-                .filter(w => w.category?.toLowerCase() === 'avançado')
-                .slice(0, 5)
-                .map((workout) => (
-                  <WorkoutCard key={workout.id} workout={workout} />
-                ))}
-              {workouts.filter(w => w.category?.toLowerCase() === 'avançado').length === 0 && (
-                <p className="text-muted-foreground text-sm py-4">Nenhum treino encontrado</p>
-              )}
-            </div>
-          </div>
+          {levels.map((level) => {
+            const levelWorkouts = getWorkoutsByLevel(level);
+            if (levelWorkouts.length === 0) return null;
+            
+            return (
+              <div key={level} className="px-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-bold text-foreground">{level.toUpperCase()}</h2>
+                  <button className="text-sm text-muted-foreground hover:text-lime transition-colors">
+                    View All &gt;
+                  </button>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  {levelWorkouts.slice(0, 5).map((workout) => (
+                    <WorkoutCard key={workout.id} workout={workout} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
