@@ -11,7 +11,7 @@ export default function BodyFocusItem({ name, imageUrl, area }: BodyFocusItemPro
 
   return (
     <button
-      onClick={() => navigate(`/workouts/focus/${area}`)}
+      onClick={() => navigate(`/workouts/focus/${area.toLowerCase()}`)}
       className="flex flex-col items-center gap-2 group"
     >
       <div className="w-16 h-16 rounded-full overflow-hidden bg-muted border-2 border-transparent group-hover:border-lime transition-all duration-300">
