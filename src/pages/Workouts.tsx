@@ -3,11 +3,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, Clock, Flame, ChevronRight, ChevronDown, Dumbbell, Check, Star, UserCheck, Calendar } from "lucide-react";
+import { Search, Clock, Flame, ChevronRight, Dumbbell, Check, Star, UserCheck } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import { toast } from "sonner";
 
@@ -38,16 +37,6 @@ interface WorkoutPlan {
 
 const levels = ["Iniciante", "Intermediário", "Avançado"];
 
-const dayTranslations: Record<string, string> = {
-  "monday": "Segunda",
-  "tuesday": "Terça",
-  "wednesday": "Quarta",
-  "thursday": "Quinta",
-  "friday": "Sexta",
-  "saturday": "Sábado",
-  "sunday": "Domingo",
-};
-
 const defaultWorkoutImages = [workoutDaily, workoutFullbody, workoutHiit, workoutStretching, categoryHipertrofia, categoryDefinicao];
 
 const getWorkoutImage = (workout: WorkoutPlan, index: number) => {
@@ -64,7 +53,6 @@ export default function Workouts() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
-  const [personalizedOpen, setPersonalizedOpen] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -220,98 +208,32 @@ export default function Workouts() {
         </div>
       )}
 
-      {/* Personalized Workouts - Collapsible Card */}
+      {/* Personalized Workouts - Card that navigates to program detail */}
       {personalizedWorkouts.length > 0 && (
         <div className="px-4 mb-6">
           <SectionHeader title="Treino Personalizado" subtitle="Montado pelo seu Personal" />
-          <Collapsible open={personalizedOpen} onOpenChange={setPersonalizedOpen} className="mt-3">
-            <Card className="bg-gradient-to-br from-purple/20 to-purple/5 border-purple/30 max-w-2xl">
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-purple/10 transition-colors pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-purple/30 flex items-center justify-center">
-                        <UserCheck className="h-6 w-6 text-purple" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg text-foreground flex items-center gap-2">
-                          Meu Programa
-                          <Badge className="bg-purple/20 text-purple text-xs">Personal</Badge>
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">{personalizedWorkouts.length} treino(s) • Clique para expandir</p>
-                      </div>
-                    </div>
-                    <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${personalizedOpen ? 'rotate-180' : ''}`} />
+          <Card 
+            className="mt-3 bg-gradient-to-br from-purple/20 to-purple/5 border-purple/30 max-w-2xl cursor-pointer hover:border-purple/50 transition-all"
+            onClick={() => navigate("/program/personalized")}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-purple/30 flex items-center justify-center">
+                    <UserCheck className="h-6 w-6 text-purple" />
                   </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0 space-y-2">
-                  {personalizedWorkouts.map((workout, index) => (
-                    <div
-                      key={workout.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-all cursor-pointer ${
-                        workout.id === currentWorkoutId 
-                          ? 'bg-lime/10 border border-lime/30' 
-                          : 'bg-background/50 hover:bg-background/80'
-                      }`}
-                      onClick={() => navigate(`/workout-session/${workout.id}`)}
-                    >
-                      {/* Image */}
-                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                        <img 
-                          src={getWorkoutImage(workout, index)} 
-                          alt={workout.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      {/* Letter Badge */}
-                      <div className="w-10 h-10 rounded-lg bg-purple/30 flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-purple">{workout.division_letter || "A"}</span>
-                      </div>
-                      
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-foreground">{workout.name}</h4>
-                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime" />}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                          {workout.day_of_week && (
-                            <Badge variant="outline" className="text-xs border-purple/30 text-purple">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {dayTranslations[workout.day_of_week.toLowerCase()] || workout.day_of_week}
-                            </Badge>
-                          )}
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{workout.duration_minutes || 40} min</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">{workout.muscle_groups?.join(", ")}</p>
-                      </div>
-                      
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {workout.id !== currentWorkoutId && (
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="border-lime/50 text-lime hover:bg-lime/10 hidden sm:flex"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              selectAsCurrentWorkout(workout.id);
-                            }}
-                          >
-                            Selecionar
-                          </Button>
-                        )}
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
+                  <div>
+                    <CardTitle className="text-lg text-foreground flex items-center gap-2">
+                      Meu Programa
+                      <Badge className="bg-purple/20 text-purple text-xs">Personal</Badge>
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">{personalizedWorkouts.length} treino(s)</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
