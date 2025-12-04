@@ -97,7 +97,7 @@ export default function Dashboard() {
         <SectionHeader 
           title="Área de Foco" 
           actionText="Ver Todos"
-          actionLink="/workouts"
+          actionLink="/body-focus"
         />
         <div className="flex gap-4 mt-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide md:grid md:grid-cols-4 md:mx-0 md:px-0 md:overflow-visible">
           {muscleGroups.map((group, index) => (
