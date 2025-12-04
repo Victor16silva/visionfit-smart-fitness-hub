@@ -37,6 +37,8 @@ import StretchingList from "./pages/StretchingList";
 import EditWorkout from "./pages/EditWorkout";
 import BodyFocusWorkouts from "./pages/BodyFocusWorkouts";
 import AllBodyFocus from "./pages/AllBodyFocus";
+import ProgramDetail from "./pages/ProgramDetail";
+import WorkoutDetail from "./pages/WorkoutDetail";
 
 const queryClient = new QueryClient();
 
@@ -330,6 +332,26 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <AllBodyFocus />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/program/:programId"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProgramDetail />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workout-detail/:workoutId"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <WorkoutDetail />
                   </AppLayout>
                 </ProtectedRoute>
               }
