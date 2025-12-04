@@ -36,6 +36,7 @@ import WorkoutCategories from "./pages/WorkoutCategories";
 import StretchingList from "./pages/StretchingList";
 import EditWorkout from "./pages/EditWorkout";
 import BodyFocusWorkouts from "./pages/BodyFocusWorkouts";
+import AllBodyFocus from "./pages/AllBodyFocus";
 
 const queryClient = new QueryClient();
 
@@ -319,6 +320,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <BodyFocusWorkouts />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/body-focus"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AllBodyFocus />
                   </AppLayout>
                 </ProtectedRoute>
               }
