@@ -3,13 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { X, Info, ArrowLeftRight, Plus, Check, ChevronLeft, Pause, Play, Timer } from "lucide-react";
+import { X, Info, ArrowLeftRight, Plus, Check, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import RestModal from "@/components/RestModal";
 
 interface Exercise {
   id: string;
@@ -54,7 +54,7 @@ export default function WorkoutSession() {
   const [setsData, setSetsData] = useState<{ [key: string]: SetData[] }>({});
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   const [restTimer, setRestTimer] = useState<number | null>(null);
-  const [isRestPaused, setIsRestPaused] = useState(false);
+  const [showRestModal, setShowRestModal] = useState(false);
   const [workoutLogId, setWorkoutLogId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showExerciseList, setShowExerciseList] = useState(false);
@@ -77,17 +77,18 @@ export default function WorkoutSession() {
     loadWorkout();
   }, [id, user]);
 
-  // Rest timer
+  // Rest timer with modal
   useEffect(() => {
-    if (restTimer === null || isRestPaused) return;
+    if (restTimer === null) return;
     if (restTimer === 0) {
+      setShowRestModal(false);
       setRestTimer(null);
       toast({ title: "Descanso terminado!", description: "Hora da próxima série!" });
       return;
     }
     const timer = setTimeout(() => setRestTimer(restTimer - 1), 1000);
     return () => clearTimeout(timer);
-  }, [restTimer, isRestPaused]);
+  }, [restTimer]);
 
   const loadWorkout = async () => {
     try {
@@ -162,7 +163,7 @@ export default function WorkoutSession() {
       const exercise = exercises.find((ex) => ex.id === exerciseId);
       if (exercise) {
         setRestTimer(exercise.rest_seconds);
-        setIsRestPaused(false);
+        setShowRestModal(true);
       }
       // Move to next set
       if (setIndex < newSetsData[exerciseId].length - 1) {
@@ -171,16 +172,14 @@ export default function WorkoutSession() {
     }
   };
 
-  const handleUpdateSet = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: number) => {
-    const newSetsData = { ...setsData };
-    newSetsData[exerciseId][setIndex][field] = value;
-    setSetsData(newSetsData);
+  const handleSkipRest = () => {
+    setShowRestModal(false);
+    setRestTimer(null);
   };
 
   const handleNextExercise = () => {
     const currentEx = exercises[currentExerciseIndex];
     if (currentEx) {
-      // Check if all sets are completed
       const allSetsCompleted = setsData[currentEx.id]?.every(s => s.completed);
       if (allSetsCompleted) {
         setCompletedExercises(prev => new Set([...prev, currentEx.id]));
@@ -191,6 +190,7 @@ export default function WorkoutSession() {
       setCurrentExerciseIndex(currentExerciseIndex + 1);
       setCurrentSetIndex(0);
       setRestTimer(null);
+      setShowRestModal(false);
     } else {
       setShowReport(true);
     }
@@ -221,7 +221,6 @@ export default function WorkoutSession() {
         })
         .eq("id", workoutLogId);
 
-      // Save exercise logs
       for (const exercise of exercises) {
         const sets = setsData[exercise.id] || [];
         for (let i = 0; i < sets.length; i++) {
@@ -284,199 +283,204 @@ export default function WorkoutSession() {
   const progress = totalSets > 0 ? (completedSetsCount / totalSets) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white flex flex-col">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-border/20">
+      <header className="flex items-center justify-between p-4 border-b border-border/10">
         <button 
           onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center"
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
         >
           <X className="h-6 w-6" />
         </button>
         
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="bg-[#2a2a2a] text-white border-0 rounded-full px-4"
-            onClick={() => setShowReport(true)}
-          >
-            Estatísticas
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="bg-[#2a2a2a] text-white border-0 rounded-full px-4"
-            onClick={() => setShowExerciseList(true)}
-          >
-            Lista de exercícios
-          </Button>
-        </div>
+        <h1 className="text-lg font-bold uppercase tracking-wide">
+          Treino {workout?.division_letter?.toUpperCase() || ""}
+        </h1>
+
+        <button 
+          onClick={() => setShowExerciseList(true)}
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+        >
+          <Info className="h-5 w-5" />
+        </button>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-32">
-        {currentExercise && (
-          <div className="p-4">
-            {/* Exercise Counter */}
-            <p className="text-muted-foreground text-sm mb-3">
-              Exercício {currentExerciseIndex + 1}/{exercises.length}
-            </p>
-
-            {/* Exercise Card */}
-            <div className="flex gap-4 mb-4">
-              <div className="w-32 h-32 rounded-xl overflow-hidden bg-white flex-shrink-0">
-                {currentExercise.exercise.image_url ? (
-                  <img
-                    src={currentExercise.exercise.image_url}
-                    alt={currentExercise.exercise.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <span className="text-4xl font-bold text-primary">
-                      {currentExerciseIndex + 1}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold mb-1">
-                      {currentExercise.exercise.name}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {currentExercise.exercise.muscle_groups?.join(", ")}
-                    </p>
-                  </div>
-                  <button className="w-8 h-8 rounded-full border border-border flex items-center justify-center">
-                    <Info className="h-4 w-4" />
-                  </button>
+      {/* Main Content - Exercise List Style */}
+      <div className="flex-1 overflow-y-auto">
+        {exercises.map((exercise, index) => {
+          const isCurrentExercise = index === currentExerciseIndex;
+          const exerciseSets = setsData[exercise.id] || [];
+          const allSetsCompleted = exerciseSets.every(s => s.completed);
+          const isCompleted = completedExercises.has(exercise.id) || allSetsCompleted;
+          
+          return (
+            <div key={exercise.id} className="border-b border-border/10">
+              {/* Exercise Row */}
+              <button
+                onClick={() => handleSelectExercise(index)}
+                className={`w-full p-4 flex items-center gap-4 transition-all ${
+                  isCurrentExercise ? "bg-white/5" : ""
+                }`}
+              >
+                {/* Checkbox */}
+                <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${
+                  isCompleted ? "bg-green-500 border-green-500" : "border-border/30"
+                }`}>
+                  {isCompleted && <Check className="h-5 w-5 text-white" />}
                 </div>
-              </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 mb-6">
-              <Button
-                variant="secondary"
-                className="flex-1 bg-[#2a2a2a] text-white border-0 rounded-full"
-              >
-                <ArrowLeftRight className="h-4 w-4 mr-2" />
-                Substituir
-              </Button>
-              <Button
-                variant="secondary"
-                className="flex-1 bg-[#2a2a2a] text-white border-0 rounded-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nota
-              </Button>
-            </div>
-
-            {/* Sets List */}
-            <div className="space-y-3">
-              {currentSets.map((set, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setCurrentSetIndex(index);
-                    if (!set.completed) {
-                      handleSetComplete(currentExercise.id, index);
-                    }
-                  }}
-                  className={`w-full p-4 rounded-xl flex items-center justify-between transition-all ${
-                    index === currentSetIndex && !set.completed
-                      ? "bg-[#2a2a2a] border-2 border-orange"
-                      : set.completed
-                      ? "bg-[#2a2a2a] border border-transparent"
-                      : "bg-[#2a2a2a] border border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">{set.reps}</span>
-                      <span className="text-muted-foreground">reps</span>
-                    </div>
-                    <span className="text-muted-foreground">•</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">{set.weight}</span>
-                      <span className="text-muted-foreground">kg</span>
-                    </div>
-                  </div>
-                  {set.completed && (
-                    <div className="w-8 h-8 rounded-full bg-orange flex items-center justify-center">
-                      <Check className="h-5 w-5 text-white" />
+                {/* Exercise Image */}
+                <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/10 flex-shrink-0">
+                  {exercise.exercise.image_url ? (
+                    <img
+                      src={exercise.exercise.image_url}
+                      alt={exercise.exercise.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-2xl font-bold text-primary">{index + 1}</span>
                     </div>
                   )}
+                </div>
+
+                {/* Exercise Info */}
+                <div className="flex-1 text-left">
+                  <h3 className={`font-semibold ${isCompleted ? "text-muted-foreground line-through" : "text-white"}`}>
+                    {exercise.exercise.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {exercise.sets}× {exercise.reps_min} a {exercise.reps_max}
+                  </p>
+                </div>
+
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+
+              {/* Rest Timer Row */}
+              <div className="px-4 py-3 flex items-center justify-between border-t border-border/5 bg-black/20">
+                <span className="text-sm font-medium">{formatTime(exercise.rest_seconds)}</span>
+                <span className="text-sm text-muted-foreground">(Descanso entre séries)</span>
+                <button 
+                  onClick={() => {
+                    setRestTimer(exercise.rest_seconds);
+                    setShowRestModal(true);
+                  }}
+                  className="text-[#3498db]"
+                >
+                  <Play className="h-6 w-6 fill-current" />
                 </button>
-              ))}
-            </div>
-
-            {/* Notes */}
-            {currentExercise.notes && (
-              <div className="mt-4 p-4 bg-[#2a2a2a] rounded-xl">
-                <p className="text-sm text-muted-foreground">
-                  💡 {currentExercise.notes}
-                </p>
               </div>
-            )}
+
+              {/* Expanded Exercise Detail (if current) */}
+              {isCurrentExercise && (
+                <div className="p-4 bg-[#1a1a1a] space-y-4">
+                  {/* Action Buttons */}
+                  <div className="flex gap-3">
+                    <Button
+                      variant="secondary"
+                      className="flex-1 bg-[#2a2a2a] text-white border-0 rounded-full"
+                    >
+                      <ArrowLeftRight className="h-4 w-4 mr-2" />
+                      Substituir
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="flex-1 bg-[#2a2a2a] text-white border-0 rounded-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nota
+                    </Button>
+                  </div>
+
+                  {/* Sets Grid */}
+                  <div className="space-y-3">
+                    {currentSets.map((set, setIdx) => (
+                      <button
+                        key={setIdx}
+                        onClick={() => handleSetComplete(currentExercise.id, setIdx)}
+                        className={`w-full p-4 rounded-xl flex items-center justify-between transition-all ${
+                          setIdx === currentSetIndex && !set.completed
+                            ? "bg-[#2a2a2a] ring-2 ring-orange"
+                            : "bg-[#2a2a2a]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold text-orange">{set.reps}</span>
+                            <span className="text-muted-foreground">reps</span>
+                          </div>
+                          <span className="text-muted-foreground">•</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold">{set.weight}</span>
+                            <span className="text-muted-foreground">kg</span>
+                          </div>
+                        </div>
+                        {set.completed && (
+                          <div className="w-10 h-10 rounded-full bg-orange flex items-center justify-center">
+                            <Check className="h-6 w-6 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Completed Section */}
+        {completedExercises.size > 0 && (
+          <div className="p-4">
+            <h3 className="text-green-500 font-semibold mb-3">Concluídos</h3>
+            <div className="space-y-2">
+              {exercises
+                .filter(ex => completedExercises.has(ex.id))
+                .map((exercise, index) => (
+                  <div key={exercise.id} className="flex items-center gap-4 p-3 rounded-xl bg-white/5">
+                    <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
+                      <Check className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10">
+                      {exercise.exercise.image_url && (
+                        <img
+                          src={exercise.exercise.image_url}
+                          alt={exercise.exercise.name}
+                          className="w-full h-full object-cover opacity-70"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-muted-foreground">{exercise.exercise.name}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {exercise.sets}× {exercise.reps_min} a {exercise.reps_max}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Bottom Section */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#3d2a1a] to-[#2a1f15] p-4 pb-8">
-        {restTimer !== null ? (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <button 
-                className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center"
-                onClick={() => setRestTimer(15)}
-              >
-                <Timer className="h-5 w-5" />
-              </button>
-              <div className="text-center">
-                <p className="text-5xl font-bold">{restTimer}</p>
-                <p className="text-muted-foreground">Prepare-se!</p>
-              </div>
-              <button 
-                className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center"
-                onClick={() => setIsRestPaused(!isRestPaused)}
-              >
-                {isRestPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="text-center mb-4">
-            <p className="text-2xl font-bold">Vamos lá!</p>
-            <p className="text-muted-foreground flex items-center justify-center gap-2">
-              <Timer className="h-4 w-4" />
-              {formatTime(elapsedTime)}
-            </p>
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          {currentExerciseIndex > 0 && (
-            <Button
-              variant="outline"
-              className="w-14 h-14 rounded-full border-orange text-orange p-0"
-              onClick={handlePreviousExercise}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-          )}
-          <Button
-            className="flex-1 h-14 rounded-full bg-orange hover:bg-orange/90 text-white font-bold text-lg"
-            onClick={handleNextExercise}
-          >
-            Próximo
-          </Button>
-        </div>
+      {/* Bottom Button */}
+      <div className="p-4 pb-8 bg-[#0a0a0a] border-t border-border/10">
+        <Button
+          className="w-full h-14 rounded-xl bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white font-bold text-lg border border-border/20"
+          onClick={handleFinishWorkout}
+        >
+          Finalizar treino
+        </Button>
       </div>
+
+      {/* Rest Modal */}
+      <RestModal 
+        isOpen={showRestModal}
+        restTime={restTimer || 0}
+        onClose={() => setShowRestModal(false)}
+        onSkip={handleSkipRest}
+      />
 
       {/* Exercise List Sheet */}
       <Sheet open={showExerciseList} onOpenChange={setShowExerciseList}>
