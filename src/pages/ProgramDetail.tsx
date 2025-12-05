@@ -35,17 +35,28 @@ interface WorkoutProgram {
   progress_percent?: number;
 }
 
-const dayTranslations: Record<string, string> = {
-  "monday": "Segunda",
-  "tuesday": "Terça",
-  "wednesday": "Quarta",
-  "thursday": "Quinta",
-  "friday": "Sexta",
-  "saturday": "Sábado",
-  "sunday": "Domingo",
+const dayOrder = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+const dayNames: Record<string, string> = {
+  "monday": "Segunda-feira",
+  "tuesday": "Terça-feira",
+  "wednesday": "Quarta-feira",
+  "thursday": "Quinta-feira",
+  "friday": "Sexta-feira",
+};
+
+const letterToDay: Record<string, string> = {
+  "a": "monday",
+  "b": "tuesday",
+  "c": "wednesday",
+  "d": "thursday",
 };
 
 const defaultImages = [workoutDaily, workoutFullbody, categoryHipertrofia];
+
+const getTodayDayOfWeek = (): string => {
+  const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  return days[new Date().getDay()];
+};
 
 export default function ProgramDetail() {
   const { programId } = useParams();
@@ -181,53 +192,81 @@ export default function ProgramDetail() {
         
         <div className="space-y-3">
           {workouts.length > 0 ? (
-            workouts.map((workout, index) => (
-              <button
-                key={workout.id}
-                onClick={() => navigate(`/workout-detail/${workout.id}`)}
-                className="w-full bg-card hover:bg-muted/50 rounded-xl p-4 border border-border transition-all flex items-center gap-4"
-              >
-                {/* Workout Image */}
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                  <img 
-                    src={getWorkoutImage(workout, index)}
-                    alt={workout.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+            // Filter only A-D workouts and sort by day order
+            workouts
+              .filter(w => ["a", "b", "c", "d"].includes((w.division_letter || "").toLowerCase()))
+              .sort((a, b) => {
+                const letterA = (a.division_letter || "a").toLowerCase();
+                const letterB = (b.division_letter || "b").toLowerCase();
+                const dayA = letterToDay[letterA] || "monday";
+                const dayB = letterToDay[letterB] || "monday";
+                return dayOrder.indexOf(dayA) - dayOrder.indexOf(dayB);
+              })
+              .map((workout, index) => {
+                const letter = (workout.division_letter || String.fromCharCode(65 + index)).toLowerCase();
+                const workoutDay = letterToDay[letter] || dayOrder[index];
+                const today = getTodayDayOfWeek();
+                const isToday = workoutDay === today;
+                
+                return (
+                  <button
+                    key={workout.id}
+                    onClick={() => navigate(`/workout-detail/${workout.id}`)}
+                    className={`w-full rounded-xl p-4 border transition-all flex items-center gap-4 ${
+                      isToday 
+                        ? "bg-primary/10 border-primary ring-2 ring-primary/30" 
+                        : "bg-card hover:bg-muted/50 border-border"
+                    }`}
+                  >
+                    {/* Workout Image */}
+                    <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                      <img 
+                        src={getWorkoutImage(workout, index)}
+                        alt={workout.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-                {/* Division Letter */}
-                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg font-black text-primary">
-                    {workout.division_letter || String.fromCharCode(65 + index)}
-                  </span>
-                </div>
+                    {/* Division Letter */}
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      isToday ? "bg-primary" : "bg-primary/20"
+                    }`}>
+                      <span className={`text-lg font-black ${isToday ? "text-primary-foreground" : "text-primary"}`}>
+                        {workout.division_letter?.toUpperCase() || String.fromCharCode(65 + index)}
+                      </span>
+                    </div>
 
-                {/* Workout Info */}
-                <div className="flex-1 text-left min-w-0">
-                  <h4 className="font-semibold text-foreground">
-                    Treino {workout.division_letter || String.fromCharCode(65 + index)}
-                  </h4>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {workout.muscle_groups?.join(", ") || workout.name}
-                  </p>
-                  <div className="flex items-center gap-3 mt-1">
-                    {workout.day_of_week && (
-                      <Badge variant="outline" className="text-xs border-primary/30 text-primary">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {dayTranslations[workout.day_of_week.toLowerCase()] || workout.day_of_week}
-                      </Badge>
-                    )}
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {workout.duration_minutes || 40} min
-                    </span>
-                  </div>
-                </div>
+                    {/* Workout Info */}
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-foreground">
+                          Treino {workout.division_letter?.toUpperCase() || String.fromCharCode(65 + index)}
+                        </h4>
+                        {isToday && (
+                          <Badge className="bg-primary text-primary-foreground text-xs">
+                            Hoje
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {workout.muscle_groups?.join(", ") || workout.name}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <Badge variant="outline" className={`text-xs ${isToday ? "border-primary text-primary" : "border-primary/30 text-primary"}`}>
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {dayNames[workoutDay] || "Segunda-feira"}
+                        </Badge>
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {workout.duration_minutes || 40} min
+                        </span>
+                      </div>
+                    </div>
 
-                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              </button>
-            ))
+                    <ChevronRight className={`h-5 w-5 flex-shrink-0 ${isToday ? "text-primary" : "text-muted-foreground"}`} />
+                  </button>
+                );
+              })
           ) : (
             <div className="text-center py-12 bg-card rounded-xl border border-border">
               <p className="text-muted-foreground mb-4">Nenhum treino cadastrado ainda</p>
