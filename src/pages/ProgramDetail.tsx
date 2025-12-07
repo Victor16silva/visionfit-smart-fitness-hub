@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Clock, Calendar, ChevronRight, Dumbbell, Target, TrendingUp } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, ChevronRight, Dumbbell, CalendarDays, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
@@ -157,75 +157,63 @@ export default function ProgramDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-foreground" />
-            </button>
-            <h1 className="text-xl font-bold text-foreground">{program?.name || "Meu Programa"}</h1>
-          </div>
+      {/* Header - Fixed overlap issue */}
+      <div className="sticky top-0 z-10 bg-background border-b border-border">
+        <div className="flex items-center gap-4 p-4">
+          <button 
+            onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5 text-foreground" />
+          </button>
+          <h1 className="text-xl font-bold text-foreground truncate">{program?.name || "Meu Programa"}</h1>
         </div>
       </div>
 
-      {/* Program Info Card - Enhanced */}
+      {/* Program Info Card - Without cover image */}
       <div className="p-4">
         <div className="bg-gradient-to-br from-card via-card to-primary/5 rounded-2xl p-5 border border-border overflow-hidden relative">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 z-10">
-              <h2 className="text-xl font-bold text-primary mb-1">
-                {program?.name || "Treino Personalizado"}
-              </h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                {program?.category || "Hipertrofia"} • Personalizado
-              </p>
-              
-              {/* Stats Row */}
-              <div className="flex flex-wrap gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <Dumbbell className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Treinos</p>
-                    <p className="text-sm font-semibold text-foreground">{filteredWorkouts.length} por semana</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-orange/20 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-orange" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Duração</p>
-                    <p className="text-sm font-semibold text-foreground">~{Math.round(totalDuration / filteredWorkouts.length || 40)} min</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
-                <span className="text-primary text-sm font-medium">
-                  Progresso {program?.progress_percent || 0}%
-                </span>
-              </div>
-              <Progress 
-                value={program?.progress_percent || 0} 
-                className="h-2 bg-muted"
-              />
-            </div>
+          <div className="z-10">
+            <h2 className="text-xl font-bold text-primary mb-1">
+              {program?.name || "Treino Personalizado"}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {program?.category || "Hipertrofia"} • Personalizado
+            </p>
             
-            <div className="w-28 h-28 flex-shrink-0 rounded-xl overflow-hidden ml-4">
-              <img 
-                src={program?.cover_image_url || categoryHipertrofia}
-                alt="Program"
-                className="w-full h-full object-cover"
-              />
+            {/* Stats Row */}
+            <div className="flex flex-wrap gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Dumbbell className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Treinos</p>
+                  <p className="text-sm font-semibold text-foreground">{filteredWorkouts.length} por semana</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-orange/20 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-orange" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Duração</p>
+                  <p className="text-sm font-semibold text-foreground">~{Math.round(totalDuration / filteredWorkouts.length || 40)} min</p>
+                </div>
+              </div>
             </div>
+
+            {/* Progress */}
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span className="text-primary text-sm font-medium">
+                Progresso {program?.progress_percent || 0}%
+              </span>
+            </div>
+            <Progress 
+              value={program?.progress_percent || 0} 
+              className="h-2 bg-muted"
+            />
           </div>
 
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-2xl" />
@@ -253,7 +241,7 @@ export default function ProgramDetail() {
       {/* Workout Days Section - Renamed to Rotina de Treino */}
       <div className="px-4 mt-4">
         <div className="flex items-center gap-2 mb-4">
-          <Target className="h-5 w-5 text-primary" />
+          <CalendarDays className="h-5 w-5 text-primary" />
           <h3 className="text-lg font-bold text-foreground">Rotina de Treino</h3>
         </div>
         
