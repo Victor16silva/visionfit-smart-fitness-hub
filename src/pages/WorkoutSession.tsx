@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { X, Info, ArrowLeftRight, Plus, Check, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { X, Info, ArrowLeftRight, Plus, Check, ChevronRight, Play, Edit2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import RestModal from "@/components/RestModal";
+import ExerciseDetailModal from "@/components/ExerciseDetailModal";
+import SubstituteExerciseModal from "@/components/SubstituteExerciseModal";
+import EditSetModal from "@/components/EditSetModal";
 
 interface Exercise {
   id: string;
@@ -26,6 +27,7 @@ interface Exercise {
     image_url: string;
     muscle_groups: string[];
     equipment: string;
+    description?: string;
   };
 }
 
@@ -58,8 +60,13 @@ export default function WorkoutSession() {
   const [workoutLogId, setWorkoutLogId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showExerciseList, setShowExerciseList] = useState(false);
-  const [showReport, setShowReport] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  
+  // New modals
+  const [showExerciseDetail, setShowExerciseDetail] = useState(false);
+  const [showSubstitute, setShowSubstitute] = useState(false);
+  const [showEditSet, setShowEditSet] = useState(false);
+  const [editingSetIndex, setEditingSetIndex] = useState<number>(0);
 
   // Elapsed time counter
   useEffect(() => {
@@ -105,7 +112,7 @@ export default function WorkoutSession() {
         .from("workout_exercises")
         .select(`
           *,
-          exercise:exercises(id, name, image_url, muscle_groups, equipment)
+          exercise:exercises(id, name, image_url, muscle_groups, equipment, description)
         `)
         .eq("workout_plan_id", id)
         .order("order_index");
@@ -165,7 +172,6 @@ export default function WorkoutSession() {
         setRestTimer(exercise.rest_seconds);
         setShowRestModal(true);
       }
-      // Move to next set
       if (setIndex < newSetsData[exerciseId].length - 1) {
         setCurrentSetIndex(setIndex + 1);
       }
@@ -177,36 +183,45 @@ export default function WorkoutSession() {
     setRestTimer(null);
   };
 
-  const handleNextExercise = () => {
-    const currentEx = exercises[currentExerciseIndex];
-    if (currentEx) {
-      const allSetsCompleted = setsData[currentEx.id]?.every(s => s.completed);
-      if (allSetsCompleted) {
-        setCompletedExercises(prev => new Set([...prev, currentEx.id]));
-      }
-    }
-
-    if (currentExerciseIndex < exercises.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1);
-      setCurrentSetIndex(0);
-      setRestTimer(null);
-      setShowRestModal(false);
-    } else {
-      setShowReport(true);
-    }
-  };
-
-  const handlePreviousExercise = () => {
-    if (currentExerciseIndex > 0) {
-      setCurrentExerciseIndex(currentExerciseIndex - 1);
-      setCurrentSetIndex(0);
-    }
-  };
-
   const handleSelectExercise = (index: number) => {
     setCurrentExerciseIndex(index);
     setCurrentSetIndex(0);
     setShowExerciseList(false);
+  };
+
+  const handleOpenEditSet = (setIndex: number) => {
+    setEditingSetIndex(setIndex);
+    setShowEditSet(true);
+  };
+
+  const handleSaveSet = (reps: number, weight: number) => {
+    const currentEx = exercises[currentExerciseIndex];
+    if (!currentEx) return;
+    
+    const newSetsData = { ...setsData };
+    newSetsData[currentEx.id][editingSetIndex].reps = reps;
+    newSetsData[currentEx.id][editingSetIndex].weight = weight;
+    setSetsData(newSetsData);
+  };
+
+  const handleSubstituteExercise = (newExercise: { id: string; name: string; image_url?: string; muscle_groups: string[]; equipment?: string }) => {
+    const currentEx = exercises[currentExerciseIndex];
+    if (!currentEx) return;
+
+    const updatedExercises = [...exercises];
+    updatedExercises[currentExerciseIndex] = {
+      ...currentEx,
+      exercise_id: newExercise.id,
+      exercise: {
+        id: newExercise.id,
+        name: newExercise.name,
+        image_url: newExercise.image_url || "",
+        muscle_groups: newExercise.muscle_groups,
+        equipment: newExercise.equipment || "",
+      },
+    };
+    setExercises(updatedExercises);
+    toast({ title: "Exercício substituído!" });
   };
 
   const handleFinishWorkout = async () => {
@@ -246,24 +261,14 @@ export default function WorkoutSession() {
           duration: elapsedTime,
           calories: Math.floor(elapsedTime / 60) * 8,
           exercises: exercises.length,
+          workoutName: workout?.name || "Treino",
+          muscleGroups: workout?.muscle_groups || [],
         }
       });
     } catch (error) {
       console.error("Error finishing workout:", error);
       navigate("/dashboard");
     }
-  };
-
-  const calculateMuscleFatigue = () => {
-    const fatigue: { [key: string]: number } = {};
-    exercises.forEach(ex => {
-      const isCompleted = completedExercises.has(ex.id);
-      ex.exercise.muscle_groups?.forEach(muscle => {
-        if (!fatigue[muscle]) fatigue[muscle] = 0;
-        if (isCompleted) fatigue[muscle] += 30;
-      });
-    });
-    return fatigue;
   };
 
   if (loading) {
@@ -280,15 +285,14 @@ export default function WorkoutSession() {
     return acc + (setsData[ex.id]?.filter(s => s.completed).length || 0);
   }, 0);
   const totalSets = exercises.reduce((acc, ex) => acc + ex.sets, 0);
-  const progress = totalSets > 0 ? (completedSetsCount / totalSets) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-border/10">
+      <header className="flex items-center justify-between p-4 border-b border-border/10 sticky top-0 bg-background z-20">
         <button 
           onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
         >
           <X className="h-6 w-6" />
         </button>
@@ -299,14 +303,14 @@ export default function WorkoutSession() {
 
         <button 
           onClick={() => setShowExerciseList(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
         >
           <Info className="h-5 w-5" />
         </button>
       </header>
 
-      {/* Main Content - Exercise List Style */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto pb-32">
         {exercises.map((exercise, index) => {
           const isCurrentExercise = index === currentExerciseIndex;
           const exerciseSets = setsData[exercise.id] || [];
@@ -319,18 +323,18 @@ export default function WorkoutSession() {
               <button
                 onClick={() => handleSelectExercise(index)}
                 className={`w-full p-4 flex items-center gap-4 transition-all ${
-                  isCurrentExercise ? "bg-white/5" : ""
+                  isCurrentExercise ? "bg-muted/30" : ""
                 }`}
               >
                 {/* Checkbox */}
                 <div className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${
-                  isCompleted ? "bg-green-500 border-green-500" : "border-border/30"
+                  isCompleted ? "bg-primary border-primary" : "border-border/30"
                 }`}>
-                  {isCompleted && <Check className="h-5 w-5 text-white" />}
+                  {isCompleted && <Check className="h-5 w-5 text-primary-foreground" />}
                 </div>
 
                 {/* Exercise Image */}
-                <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/10 flex-shrink-0">
+                <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted flex-shrink-0">
                   {exercise.exercise.image_url ? (
                     <img
                       src={exercise.exercise.image_url}
@@ -338,15 +342,15 @@ export default function WorkoutSession() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-full h-full flex items-center justify-center bg-card">
                       <span className="text-2xl font-bold text-primary">{index + 1}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Exercise Info */}
-                <div className="flex-1 text-left">
-                  <h3 className={`font-semibold ${isCompleted ? "text-muted-foreground line-through" : "text-white"}`}>
+                <div className="flex-1 text-left min-w-0">
+                  <h3 className={`font-semibold truncate ${isCompleted ? "text-muted-foreground line-through" : "text-foreground"}`}>
                     {exercise.exercise.name}
                   </h3>
                   <p className="text-sm text-muted-foreground">
@@ -354,120 +358,100 @@ export default function WorkoutSession() {
                   </p>
                 </div>
 
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
               </button>
-
-              {/* Rest Timer Row */}
-              <div className="px-4 py-3 flex items-center justify-between border-t border-border/5 bg-black/20">
-                <span className="text-sm font-medium">{formatTime(exercise.rest_seconds)}</span>
-                <span className="text-sm text-muted-foreground">(Descanso entre séries)</span>
-                <button 
-                  onClick={() => {
-                    setRestTimer(exercise.rest_seconds);
-                    setShowRestModal(true);
-                  }}
-                  className="text-[#3498db]"
-                >
-                  <Play className="h-6 w-6 fill-current" />
-                </button>
-              </div>
 
               {/* Expanded Exercise Detail (if current) */}
               {isCurrentExercise && (
-                <div className="p-4 bg-[#1a1a1a] space-y-4">
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <Button
-                      variant="secondary"
-                      className="flex-1 bg-[#2a2a2a] text-white border-0 rounded-full"
+                <div className="bg-muted/20">
+                  {/* Rest Timer Row */}
+                  <div className="px-4 py-3 flex items-center justify-between border-t border-border/5">
+                    <span className="text-sm font-medium">{formatTime(exercise.rest_seconds)}</span>
+                    <span className="text-sm text-muted-foreground">(Descanso entre séries)</span>
+                    <button 
+                      onClick={() => {
+                        setRestTimer(exercise.rest_seconds);
+                        setShowRestModal(true);
+                      }}
+                      className="text-blue-400"
                     >
-                      <ArrowLeftRight className="h-4 w-4 mr-2" />
-                      Substituir
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      className="flex-1 bg-[#2a2a2a] text-white border-0 rounded-full"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nota
-                    </Button>
+                      <Play className="h-6 w-6 fill-current" />
+                    </button>
                   </div>
 
-                  {/* Sets Grid */}
-                  <div className="space-y-3">
-                    {currentSets.map((set, setIdx) => (
-                      <button
-                        key={setIdx}
-                        onClick={() => handleSetComplete(currentExercise.id, setIdx)}
-                        className={`w-full p-4 rounded-xl flex items-center justify-between transition-all ${
-                          setIdx === currentSetIndex && !set.completed
-                            ? "bg-[#2a2a2a] ring-2 ring-orange"
-                            : "bg-[#2a2a2a]"
-                        }`}
+                  <div className="p-4 space-y-4">
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
+                      <Button
+                        variant="secondary"
+                        className="flex-1 bg-card text-foreground border-0 rounded-full"
+                        onClick={() => setShowSubstitute(true)}
                       >
-                        <div className="flex items-center gap-6">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-orange">{set.reps}</span>
-                            <span className="text-muted-foreground">reps</span>
-                          </div>
-                          <span className="text-muted-foreground">•</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold">{set.weight}</span>
-                            <span className="text-muted-foreground">kg</span>
-                          </div>
+                        <ArrowLeftRight className="h-4 w-4 mr-2" />
+                        Substituir
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="flex-1 bg-card text-foreground border-0 rounded-full"
+                        onClick={() => setShowExerciseDetail(true)}
+                      >
+                        <Info className="h-4 w-4 mr-2" />
+                        Detalhes
+                      </Button>
+                    </div>
+
+                    {/* Sets Grid */}
+                    <div className="space-y-3">
+                      {currentSets.map((set, setIdx) => (
+                        <div
+                          key={setIdx}
+                          className={`w-full p-4 rounded-xl flex items-center justify-between transition-all ${
+                            setIdx === currentSetIndex && !set.completed
+                              ? "bg-card ring-2 ring-orange"
+                              : "bg-card"
+                          }`}
+                        >
+                          <button
+                            onClick={() => handleOpenEditSet(setIdx)}
+                            className="flex items-center gap-6 flex-1"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold text-orange">{set.reps}</span>
+                              <span className="text-muted-foreground">reps</span>
+                            </div>
+                            <span className="text-muted-foreground">•</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold text-foreground">{set.weight}</span>
+                              <span className="text-muted-foreground">kg</span>
+                            </div>
+                            <Edit2 className="h-4 w-4 text-muted-foreground ml-2" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleSetComplete(currentExercise.id, setIdx)}
+                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                              set.completed 
+                                ? "bg-orange" 
+                                : "bg-muted hover:bg-muted/70"
+                            }`}
+                          >
+                            <Check className={`h-6 w-6 ${set.completed ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                          </button>
                         </div>
-                        {set.completed && (
-                          <div className="w-10 h-10 rounded-full bg-orange flex items-center justify-center">
-                            <Check className="h-6 w-6 text-white" />
-                          </div>
-                        )}
-                      </button>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           );
         })}
-
-        {/* Completed Section */}
-        {completedExercises.size > 0 && (
-          <div className="p-4">
-            <h3 className="text-green-500 font-semibold mb-3">Concluídos</h3>
-            <div className="space-y-2">
-              {exercises
-                .filter(ex => completedExercises.has(ex.id))
-                .map((exercise, index) => (
-                  <div key={exercise.id} className="flex items-center gap-4 p-3 rounded-xl bg-white/5">
-                    <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
-                      <Check className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10">
-                      {exercise.exercise.image_url && (
-                        <img
-                          src={exercise.exercise.image_url}
-                          alt={exercise.exercise.name}
-                          className="w-full h-full object-cover opacity-70"
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-muted-foreground">{exercise.exercise.name}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {exercise.sets}× {exercise.reps_min} a {exercise.reps_max}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Bottom Button */}
-      <div className="p-4 pb-8 bg-[#0a0a0a] border-t border-border/10">
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-8 bg-background border-t border-border/10">
         <Button
-          className="w-full h-14 rounded-xl bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white font-bold text-lg border border-border/20"
+          className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg"
           onClick={handleFinishWorkout}
         >
           Finalizar treino
@@ -482,11 +466,39 @@ export default function WorkoutSession() {
         onSkip={handleSkipRest}
       />
 
+      {/* Exercise Detail Modal */}
+      <ExerciseDetailModal
+        isOpen={showExerciseDetail}
+        onClose={() => setShowExerciseDetail(false)}
+        exercise={currentExercise?.exercise || null}
+      />
+
+      {/* Substitute Exercise Modal */}
+      <SubstituteExerciseModal
+        isOpen={showSubstitute}
+        onClose={() => setShowSubstitute(false)}
+        currentExercise={currentExercise ? {
+          id: currentExercise.exercise_id,
+          name: currentExercise.exercise.name,
+          muscle_groups: currentExercise.exercise.muscle_groups,
+        } : null}
+        onSubstitute={handleSubstituteExercise}
+      />
+
+      {/* Edit Set Modal */}
+      <EditSetModal
+        isOpen={showEditSet}
+        onClose={() => setShowEditSet(false)}
+        reps={currentSets[editingSetIndex]?.reps || 8}
+        weight={currentSets[editingSetIndex]?.weight || 0}
+        onSave={handleSaveSet}
+      />
+
       {/* Exercise List Sheet */}
       <Sheet open={showExerciseList} onOpenChange={setShowExerciseList}>
-        <SheetContent side="bottom" className="h-[85vh] bg-[#1a1a1a] border-0 rounded-t-3xl">
+        <SheetContent side="bottom" className="h-[85vh] bg-card border-0 rounded-t-3xl">
           <SheetHeader className="pb-4">
-            <SheetTitle className="text-white">Lista de exercícios</SheetTitle>
+            <SheetTitle className="text-foreground">Lista de exercícios</SheetTitle>
           </SheetHeader>
           <div className="space-y-2 overflow-y-auto max-h-[calc(85vh-120px)] pb-8">
             {exercises.map((exercise, index) => {
@@ -500,10 +512,10 @@ export default function WorkoutSession() {
                   className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
                     index === currentExerciseIndex 
                       ? "bg-orange/20 border border-orange" 
-                      : "bg-[#2a2a2a]"
+                      : "bg-muted"
                   }`}
                 >
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-white flex-shrink-0">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-background flex-shrink-0">
                     {exercise.exercise.image_url ? (
                       <img
                         src={exercise.exercise.image_url}
@@ -511,13 +523,13 @@ export default function WorkoutSession() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <div className="w-full h-full bg-card flex items-center justify-center">
                         <span className="text-xl font-bold">{index + 1}</span>
                       </div>
                     )}
                   </div>
                   <div className="flex-1 text-left">
-                    <h4 className="font-semibold text-white">{exercise.exercise.name}</h4>
+                    <h4 className="font-semibold text-foreground">{exercise.exercise.name}</h4>
                     <p className="text-sm text-muted-foreground">
                       {exercise.sets}x {exercise.reps_min}-{exercise.reps_max}
                     </p>
@@ -532,89 +544,6 @@ export default function WorkoutSession() {
           </div>
         </SheetContent>
       </Sheet>
-
-      {/* Report/Stats Dialog */}
-      <Dialog open={showReport} onOpenChange={setShowReport}>
-        <DialogContent className="bg-[#1a1a1a] border-0 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Relatório</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* Progress */}
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Progresso</span>
-                <span>{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-            </div>
-
-            {/* Exercises */}
-            <div>
-              <h3 className="font-semibold mb-3">Exercícios executados</h3>
-              <div className="bg-[#2a2a2a] rounded-xl p-3 space-y-3">
-                {exercises.map((exercise, index) => {
-                  const allSetsCompleted = setsData[exercise.id]?.every(s => s.completed);
-                  return (
-                    <div key={exercise.id} className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-white flex-shrink-0">
-                        {exercise.exercise.image_url ? (
-                          <img
-                            src={exercise.exercise.image_url}
-                            alt={exercise.exercise.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <span className="font-bold">{index + 1}</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className="flex-1 text-sm">{exercise.exercise.name}</span>
-                      <Checkbox 
-                        checked={allSetsCompleted}
-                        className="w-6 h-6 border-2 data-[state=checked]:bg-orange data-[state=checked]:border-orange"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Muscle Fatigue */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Fadiga Muscular</h3>
-                <Info className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="space-y-3">
-                {Object.entries(calculateMuscleFatigue()).map(([muscle, value]) => (
-                  <div key={muscle}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{muscle}</span>
-                      <span>{value}%</span>
-                    </div>
-                    <div className="h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-orange to-yellow-500 rounded-full"
-                        style={{ width: `${Math.min(value, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Button
-              className="w-full h-14 rounded-full bg-orange hover:bg-orange/90 text-white font-bold"
-              onClick={handleFinishWorkout}
-            >
-              Finalizar Treino
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
