@@ -4,6 +4,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Clock, Flame, Weight, MoreVertical, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ExerciseDetailModal } from "@/components/ExerciseDetailModal";
+import { SubstituteExerciseModal } from "@/components/SubstituteExerciseModal";
 
 interface Exercise {
   id: string;
@@ -43,6 +51,10 @@ export default function WorkoutDetail() {
   const [workout, setWorkout] = useState<WorkoutPlan | null>(null);
   const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [selectedWorkoutExercise, setSelectedWorkoutExercise] = useState<WorkoutExercise | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showSubstituteModal, setShowSubstituteModal] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -60,7 +72,7 @@ export default function WorkoutDetail() {
         .select("*")
         .eq("id", workoutId)
         .single();
-      
+
       setWorkout(workoutData);
 
       // Load exercises for this workout
@@ -72,13 +84,43 @@ export default function WorkoutDetail() {
         `)
         .eq("workout_plan_id", workoutId)
         .order("order_index", { ascending: true });
-      
+
       setExercises(exercisesData || []);
     } catch (error) {
       console.error("Error loading workout:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubstitute = async (newExerciseId: string) => {
+    if (!selectedWorkoutExercise) return;
+
+    try {
+      const { error } = await supabase
+        .from("workout_exercises")
+        .update({ exercise_id: newExerciseId })
+        .eq("id", selectedWorkoutExercise.id);
+
+      if (error) throw error;
+
+      // Reload workout data
+      await loadWorkoutData();
+      setShowSubstituteModal(false);
+      setSelectedWorkoutExercise(null);
+    } catch (error) {
+      console.error("Error substituting exercise:", error);
+    }
+  };
+
+  const handleViewDetails = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setShowDetailModal(true);
+  };
+
+  const handleOpenSubstitute = (workoutExercise: WorkoutExercise) => {
+    setSelectedWorkoutExercise(workoutExercise);
+    setShowSubstituteModal(true);
   };
 
   if (loading) {
@@ -191,9 +233,27 @@ export default function WorkoutDetail() {
                 </div>
 
                 {/* Menu */}
-                <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground">
-                  <MoreVertical className="h-5 w-5" />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors">
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-card border-border">
+                    <DropdownMenuItem
+                      onClick={() => item.exercise && handleViewDetails(item.exercise)}
+                      className="cursor-pointer"
+                    >
+                      Ver detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleOpenSubstitute(item)}
+                      className="cursor-pointer"
+                    >
+                      Substituir exercício
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ))
           ) : (
@@ -218,7 +278,7 @@ export default function WorkoutDetail() {
             <h3 className="text-lg font-bold text-foreground mb-3">Músculos alvo</h3>
             <div className="flex flex-wrap gap-2">
               {workout.muscle_groups.map((muscle, index) => (
-                <span 
+                <span
                   key={index}
                   className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                 >
@@ -229,6 +289,24 @@ export default function WorkoutDetail() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {selectedExercise && (
+        <ExerciseDetailModal
+          exercise={selectedExercise}
+          open={showDetailModal}
+          onOpenChange={setShowDetailModal}
+        />
+      )}
+
+      {selectedWorkoutExercise?.exercise && (
+        <SubstituteExerciseModal
+          open={showSubstituteModal}
+          onOpenChange={setShowSubstituteModal}
+          currentExercise={selectedWorkoutExercise.exercise}
+          onSubstitute={handleSubstitute}
+        />
+      )}
     </div>
   );
 }
