@@ -25,6 +25,7 @@ interface Exercise {
     id: string;
     name: string;
     image_url: string;
+    video_url?: string;
     muscle_groups: string[];
     equipment: string;
     description?: string;
@@ -112,7 +113,7 @@ export default function WorkoutSession() {
         .from("workout_exercises")
         .select(`
           *,
-          exercise:exercises(id, name, image_url, muscle_groups, equipment, description)
+          exercise:exercises(id, name, image_url, video_url, muscle_groups, equipment, description)
         `)
         .eq("workout_plan_id", id)
         .order("order_index");
