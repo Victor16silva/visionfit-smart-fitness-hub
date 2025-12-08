@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { Search } from "lucide-react";
@@ -30,17 +30,12 @@ export default function SubstituteExerciseModal({
   onSubstitute 
 }: SubstituteExerciseModalProps) {
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [hasLoaded, setHasLoaded] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && currentExercise) {
-      loadSimilarExercises();
-    }
-  }, [isOpen, currentExercise]);
-
-  const loadSimilarExercises = async () => {
-    if (!currentExercise) return;
+  const loadSimilarExercises = useCallback(async () => {
+    if (!currentExercise || hasLoaded) return;
     
     setLoading(true);
     try {
@@ -53,12 +48,27 @@ export default function SubstituteExerciseModal({
 
       if (error) throw error;
       setExercises(data || []);
+      setHasLoaded(true);
     } catch (error) {
       console.error("Error loading exercises:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentExercise, hasLoaded]);
+
+  useEffect(() => {
+    if (isOpen && currentExercise && !hasLoaded) {
+      loadSimilarExercises();
+    }
+  }, [isOpen, currentExercise, hasLoaded, loadSimilarExercises]);
+
+  // Reset when exercise changes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasLoaded(false);
+      setSearchQuery("");
+    }
+  }, [isOpen]);
 
   const filteredExercises = exercises.filter(ex => 
     ex.name.toLowerCase().includes(searchQuery.toLowerCase())

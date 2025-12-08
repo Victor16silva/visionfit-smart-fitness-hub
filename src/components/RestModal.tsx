@@ -1,7 +1,6 @@
-import { useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Timer, X } from "lucide-react";
+import { Timer } from "lucide-react";
 
 interface RestModalProps {
   isOpen: boolean;
@@ -10,7 +9,7 @@ interface RestModalProps {
   onSkip: () => void;
 }
 
-export default function RestModal({ isOpen, restTime, onClose, onSkip }: RestModalProps) {
+export default function RestModal({ isOpen, restTime, onSkip }: RestModalProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -18,15 +17,13 @@ export default function RestModal({ isOpen, restTime, onClose, onSkip }: RestMod
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-[#2a2a2a] border-0 rounded-3xl p-8">
-        <button 
-          onClick={onClose}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-6 w-6" />
-        </button>
-
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent 
+        className="sm:max-w-md bg-[#2a2a2a] border-0 rounded-3xl p-8"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <div className="flex flex-col items-center text-center">
           {/* Timer Icon */}
           <div className="w-20 h-20 rounded-full bg-[#3498db] flex items-center justify-center mb-6">
