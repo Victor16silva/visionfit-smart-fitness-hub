@@ -3,7 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { X, Info, ArrowLeftRight, Plus, Check, ChevronRight, Play, Edit2 } from "lucide-react";
+import { X, ArrowLeftRight, Check, ChevronRight, Play, Edit2, List, MoreVertical, ZoomIn, Info } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,6 +74,8 @@ export default function WorkoutSession() {
   const [showSubstitute, setShowSubstitute] = useState(false);
   const [showEditSet, setShowEditSet] = useState(false);
   const [editingSetIndex, setEditingSetIndex] = useState<number>(0);
+  const [substituteFromListIndex, setSubstituteFromListIndex] = useState<number | null>(null);
+  const [showImageViewer, setShowImageViewer] = useState(false);
 
   // Elapsed time counter
   useEffect(() => {
@@ -306,7 +314,7 @@ export default function WorkoutSession() {
           onClick={() => setShowExerciseList(true)}
           className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
         >
-          <Info className="h-5 w-5" />
+          <List className="h-5 w-5" />
         </button>
       </header>
 
@@ -335,19 +343,33 @@ export default function WorkoutSession() {
                 </div>
 
                 {/* Exercise Image */}
-                <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (exercise.exercise.image_url) {
+                      setCurrentExerciseIndex(index);
+                      setShowImageViewer(true);
+                    }
+                  }}
+                  className="w-20 h-20 rounded-xl overflow-hidden bg-muted flex-shrink-0 relative group"
+                >
                   {exercise.exercise.image_url ? (
-                    <img
-                      src={exercise.exercise.image_url}
-                      alt={exercise.exercise.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <>
+                      <img
+                        src={exercise.exercise.image_url}
+                        alt={exercise.exercise.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <ZoomIn className="h-5 w-5 text-white" />
+                      </div>
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-card">
                       <span className="text-2xl font-bold text-primary">{index + 1}</span>
                     </div>
                   )}
-                </div>
+                </button>
 
                 {/* Exercise Info */}
                 <div className="flex-1 text-left min-w-0">
@@ -507,44 +529,97 @@ export default function WorkoutSession() {
               const allSetsCompleted = setsData[exercise.id]?.every(s => s.completed);
               
               return (
-                <button
+                <div
                   key={exercise.id}
-                  onClick={() => handleSelectExercise(index)}
                   className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all ${
                     index === currentExerciseIndex 
                       ? "bg-orange/20 border border-orange" 
                       : "bg-muted"
                   }`}
                 >
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-background flex-shrink-0">
-                    {exercise.exercise.image_url ? (
-                      <img
-                        src={exercise.exercise.image_url}
-                        alt={exercise.exercise.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-card flex items-center justify-center">
-                        <span className="text-xl font-bold">{index + 1}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="font-semibold text-foreground">{exercise.exercise.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {exercise.sets}x {exercise.reps_min}-{exercise.reps_max}
-                    </p>
-                  </div>
-                  <Checkbox 
-                    checked={allSetsCompleted || isCompleted}
-                    className="w-6 h-6 border-2 data-[state=checked]:bg-orange data-[state=checked]:border-orange"
-                  />
-                </button>
+                  <button
+                    onClick={() => handleSelectExercise(index)}
+                    className="flex items-center gap-4 flex-1"
+                  >
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-background flex-shrink-0">
+                      {exercise.exercise.image_url ? (
+                        <img
+                          src={exercise.exercise.image_url}
+                          alt={exercise.exercise.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-card flex items-center justify-center">
+                          <span className="text-xl font-bold">{index + 1}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h4 className="font-semibold text-foreground">{exercise.exercise.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {exercise.sets} séries
+                      </p>
+                    </div>
+                  </button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-background transition-colors">
+                        <MoreVertical className="h-5 w-5 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-card border-border">
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSubstituteFromListIndex(index);
+                          setCurrentExerciseIndex(index);
+                          setShowExerciseList(false);
+                          setTimeout(() => setShowSubstitute(true), 100);
+                        }}
+                        className="gap-2"
+                      >
+                        <ArrowLeftRight className="h-4 w-4" />
+                        Substituir
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setCurrentExerciseIndex(index);
+                          setShowExerciseList(false);
+                          setTimeout(() => setShowExerciseDetail(true), 100);
+                        }}
+                        className="gap-2"
+                      >
+                        <Info className="h-4 w-4" />
+                        Ver detalhes
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               );
             })}
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Image Viewer Modal */}
+      {showImageViewer && currentExercise?.exercise.image_url && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowImageViewer(false)}
+        >
+          <button 
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"
+            onClick={() => setShowImageViewer(false)}
+          >
+            <X className="h-6 w-6 text-white" />
+          </button>
+          <img
+            src={currentExercise.exercise.image_url}
+            alt={currentExercise.exercise.name}
+            className="max-w-full max-h-[80vh] object-contain rounded-xl"
+          />
+        </div>
+      )}
     </div>
   );
 }
