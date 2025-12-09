@@ -273,7 +273,7 @@ export default function Admin() {
             phone: authData?.user?.user_metadata?.phone,
             role: roleData?.role || "user",
             workouts_count: count || 0,
-            is_active: authData?.user?.banned_until ? false : true
+            is_active: true
           };
         })
       );
@@ -395,30 +395,30 @@ export default function Admin() {
     }
   };
 
-  const handleMakeNutritionist = async (userId: string) => {
+  const handleMakeMaster = async (userId: string) => {
     try {
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("id")
         .eq("user_id", userId)
-        .eq("role", "nutritionist")
+        .eq("role", "master")
         .maybeSingle();
 
       if (existingRole) {
-        toast.info("Usuário já é nutricionista");
+        toast.info("Usuário já é master");
         return;
       }
 
       const { error } = await supabase
         .from("user_roles")
-        .insert({ user_id: userId, role: "nutritionist" });
+        .insert({ user_id: userId, role: "master" });
 
       if (error) throw error;
 
-      toast.success("Usuário promovido a Nutricionista");
+      toast.success("Usuário promovido a Master");
       loadAllData();
     } catch (error) {
-      console.error("Error making nutritionist:", error);
+      console.error("Error making master:", error);
       toast.error("Erro ao promover usuário");
     }
   };
@@ -756,7 +756,7 @@ export default function Admin() {
                       onCreateWorkout={handleCreateWorkout}
                       onMakeAdmin={handleMakeAdmin}
                       onMakeTrainer={handleMakeTrainer}
-                      onMakeNutritionist={handleMakeNutritionist}
+                      onMakeMaster={handleMakeMaster}
                       onToggleActive={handleToggleActive}
                     />
                   ))}
