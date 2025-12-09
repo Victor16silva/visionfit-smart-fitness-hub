@@ -76,12 +76,22 @@ export default function Profile() {
       const { data } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user?.id)
-        .in("role", ["admin", "master", "personal"])
-        .maybeSingle();
+        .eq("user_id", user?.id);
 
-      setUserRole(data?.role || "");
-      setIsAdmin(!!data);
+      const roles = data?.map(r => r.role) || [];
+      
+      // Set highest priority role for display
+      if (roles.includes("master")) {
+        setUserRole("master");
+      } else if (roles.includes("admin")) {
+        setUserRole("admin");
+      } else if (roles.includes("personal")) {
+        setUserRole("personal");
+      } else {
+        setUserRole("");
+      }
+      
+      setIsAdmin(roles.includes("admin") || roles.includes("master") || roles.includes("personal"));
     } catch (error) {
       console.error("Error checking admin status:", error);
     }
