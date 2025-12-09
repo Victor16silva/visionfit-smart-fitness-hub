@@ -77,7 +77,7 @@ export default function Profile() {
         .from("user_roles")
         .select("role")
         .eq("user_id", user?.id)
-        .in("role", ["admin", "master", "personal", "nutritionist"])
+        .in("role", ["admin", "master", "personal"])
         .maybeSingle();
 
       setUserRole(data?.role || "");
@@ -226,8 +226,8 @@ export default function Profile() {
               </Card>
             )}
 
-            {/* Vision Nutri - For nutritionists AND admin/master */}
-            {(userRole === "nutritionist" || userRole === "admin" || userRole === "master") && (
+            {/* Vision Nutri - For admin/master only */}
+            {(userRole === "admin" || userRole === "master") && (
               <Card
                 className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 cursor-pointer hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
                 onClick={() => navigate("/vision-nutri")}

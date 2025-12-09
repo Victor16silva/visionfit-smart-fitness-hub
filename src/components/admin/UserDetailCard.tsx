@@ -23,7 +23,7 @@ interface UserDetailCardProps {
   onCreateWorkout: (userId: string) => void;
   onMakeAdmin: (userId: string) => void;
   onMakeTrainer?: (userId: string) => void;
-  onMakeNutritionist?: (userId: string) => void;
+  onMakeMaster?: (userId: string) => void;
   onToggleActive?: (userId: string, isActive: boolean) => void;
 }
 
@@ -33,7 +33,7 @@ export default function UserDetailCard({
   onCreateWorkout,
   onMakeAdmin,
   onMakeTrainer,
-  onMakeNutritionist,
+  onMakeMaster,
   onToggleActive
 }: UserDetailCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -151,17 +151,17 @@ export default function UserDetailCard({
                     Trainer
                   </Button>
                 )}
-                {onMakeNutritionist && (
+                {onMakeMaster && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-green-500 text-green-500 font-bold hover:bg-green-500/10 h-10"
+                    className="border-purple text-purple font-bold hover:bg-purple/10 h-10"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onMakeNutritionist(user.id);
+                      onMakeMaster(user.id);
                     }}
                   >
-                    Nutri
+                    Master
                   </Button>
                 )}
               </div>
