@@ -16,7 +16,7 @@ export default function UserOnboarding() {
   const [step, setStep] = useState(1);
   const [gender, setGender] = useState<string>("");
   const [age, setAge] = useState<number>(35);
-  const [weight, setWeight] = useState<number>(54);
+  const [weight, setWeight] = useState<number>(65);
   const [loading, setLoading] = useState(false);
   const [dragStartY, setDragStartY] = useState<number | null>(null);
   const [dragStartValue, setDragStartValue] = useState<number>(0);
@@ -99,7 +99,7 @@ export default function UserOnboarding() {
     if (dragStartY === null) return;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const deltaY = dragStartY - clientY;
-    const newWeight = Math.max(40, Math.min(150, dragStartValue + Math.floor(deltaY / 5)));
+    const newWeight = Math.max(15, Math.min(200, dragStartValue + Math.floor(deltaY / 3)));
     setWeight(newWeight);
   };
 
@@ -261,60 +261,111 @@ export default function UserOnboarding() {
               </p>
             </div>
 
-            <div className="relative h-80 flex flex-col items-center justify-center">
-              {/* Display do peso */}
-              <motion.div
-                key={`weight-${weight}`}
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="mb-12"
-              >
-                <div className="text-8xl font-bold text-primary/80">
-                  {weight}
-                  <span className="text-3xl text-muted-foreground ml-3">Kg</span>
-                </div>
-              </motion.div>
+            <div className="relative h-96 flex flex-col items-center justify-center">
+              {/* Círculo animado com gradiente */}
+              <div className="relative w-72 h-72 flex items-center justify-center">
+                {/* Círculo de fundo */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90">
+                  <circle
+                    cx="144"
+                    cy="144"
+                    r="120"
+                    fill="none"
+                    stroke="hsl(var(--muted-foreground) / 0.1)"
+                    strokeWidth="12"
+                  />
+                  {/* Arco de progresso animado */}
+                  <motion.circle
+                    cx="144"
+                    cy="144"
+                    r="120"
+                    fill="none"
+                    stroke="url(#gradient)"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 120}`}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 120 }}
+                    animate={{
+                      strokeDashoffset: 2 * Math.PI * 120 * (1 - ((weight - 15) / 185))
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 100,
+                      damping: 20
+                    }}
+                  />
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" />
+                      <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
+                    </linearGradient>
+                  </defs>
+                </svg>
 
-              {/* Visualização de barras animadas */}
-              <div
-                className="absolute bottom-0 left-0 right-0 h-32 flex items-end justify-center gap-1 px-4 cursor-grab active:cursor-grabbing select-none"
-                onMouseDown={handleWeightDragStart}
-                onMouseMove={handleWeightDragMove}
-                onMouseUp={handleWeightDragEnd}
-                onMouseLeave={handleWeightDragEnd}
-                onTouchStart={handleWeightDragStart}
-                onTouchMove={handleWeightDragMove}
-                onTouchEnd={handleWeightDragEnd}
-              >
-                {Array.from({ length: 40 }).map((_, i) => {
-                  const centerIndex = 20;
-                  const distance = Math.abs(i - centerIndex);
-                  const isCenter = i === centerIndex;
-                  const maxHeight = isCenter ? 80 : Math.max(20, 60 - distance * 3);
-
-                  return (
+                {/* Display do peso no centro */}
+                <div
+                  className="relative z-10 cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={handleWeightDragStart}
+                  onMouseMove={handleWeightDragMove}
+                  onMouseUp={handleWeightDragEnd}
+                  onMouseLeave={handleWeightDragEnd}
+                  onTouchStart={handleWeightDragStart}
+                  onTouchMove={handleWeightDragMove}
+                  onTouchEnd={handleWeightDragEnd}
+                >
+                  <motion.div
+                    key={`weight-${weight}`}
+                    initial={{ scale: 0.9 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20
+                    }}
+                    className="text-center"
+                  >
                     <motion.div
-                      key={i}
-                      initial={{ height: 20 }}
+                      className="text-7xl font-black text-primary"
                       animate={{
-                        height: maxHeight,
-                        backgroundColor: isCenter
-                          ? "hsl(var(--primary) / 0.8)"
-                          : distance < 5
-                          ? "hsl(var(--muted-foreground) / 0.3)"
-                          : "hsl(var(--muted-foreground) / 0.15)",
+                        textShadow: [
+                          "0 0 20px hsl(var(--primary) / 0.3)",
+                          "0 0 40px hsl(var(--primary) / 0.5)",
+                          "0 0 20px hsl(var(--primary) / 0.3)"
+                        ]
                       }}
                       transition={{
-                        duration: 0.3,
-                        ease: "easeOut",
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
                       }}
-                      className="w-1 rounded-full pointer-events-none"
-                      style={{
-                        minHeight: "20px",
-                      }}
-                    />
-                  );
-                })}
+                    >
+                      {weight}
+                    </motion.div>
+                    <div className="text-2xl text-muted-foreground font-semibold mt-2">Kg</div>
+                    <div className="text-sm text-muted-foreground mt-1">Arraste para ajustar</div>
+                  </motion.div>
+                </div>
+
+                {/* Indicador de posição */}
+                <motion.div
+                  className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2"
+                  animate={{
+                    y: [0, -8, 0]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <div className="w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/50" />
+                </motion.div>
+              </div>
+
+              {/* Range info */}
+              <div className="flex justify-between w-72 mt-6 text-xs text-muted-foreground font-medium">
+                <span>15 kg</span>
+                <span>200 kg</span>
               </div>
             </div>
 

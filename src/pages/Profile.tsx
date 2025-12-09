@@ -40,6 +40,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string>("");
   const [stats, setStats] = useState<ProfileStats>({
     workouts: 1,
     streak: 7,
@@ -76,9 +77,10 @@ export default function Profile() {
         .from("user_roles")
         .select("role")
         .eq("user_id", user?.id)
-        .in("role", ["admin", "master"])
+        .in("role", ["admin", "master", "personal", "nutritionist"])
         .maybeSingle();
 
+      setUserRole(data?.role || "");
       setIsAdmin(!!data);
     } catch (error) {
       console.error("Error checking admin status:", error);
@@ -100,7 +102,7 @@ export default function Profile() {
   };
 
   const accountMenuItems: MenuItem[] = [
-    { icon: Users, label: "Sobre Mim", path: "/settings" },
+    { icon: Users, label: "Editar Perfil", path: "/edit-profile" },
     { icon: Target, label: "Meus Objetivos", path: "/goals" },
     { icon: Trophy, label: "Conquistas", path: "/progress" },
     { icon: Heart, label: "Favoritos", path: "/favorites" },
@@ -177,40 +179,73 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* About Me Section */}
-      <div className="px-4 mb-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <h3 className="font-bold text-foreground mb-1">Sobre Mim</h3>
-            <p className="text-sm text-muted-foreground">
-              Adicione uma descrição sobre você e seus objetivos fitness.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Admin Section */}
+      {/* Management Section */}
       {isAdmin && (
         <div className="px-4 mb-4">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
             Gerenciamento
           </p>
-          <Card 
-            className="bg-orange/10 border-orange/30 cursor-pointer hover:bg-orange/20 transition-colors"
-            onClick={() => navigate("/admin")}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-orange/20 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-orange" />
+          <div className="space-y-2">
+            {/* Admin Panel - For admin and master */}
+            {(userRole === "admin" || userRole === "master") && (
+              <Card
+                className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/30 cursor-pointer hover:from-orange-500/20 hover:to-red-500/20 transition-all"
+                onClick={() => navigate("/admin")}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-orange-500" />
+                      </div>
+                      <span className="font-bold text-orange-500">Painel Admin</span>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-orange-500" />
                   </div>
-                  <span className="font-bold text-orange">Painel Admin</span>
-                </div>
-                <ChevronRight className="h-5 w-5 text-orange" />
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Vision Trainer - For personal trainers AND admin/master */}
+            {(userRole === "personal" || userRole === "admin" || userRole === "master") && (
+              <Card
+                className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/30 cursor-pointer hover:from-blue-500/20 hover:to-cyan-500/20 transition-all"
+                onClick={() => navigate("/vision-trainer")}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                        <Dumbbell className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <span className="font-bold text-blue-500">Vision Trainer</span>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Vision Nutri - For nutritionists AND admin/master */}
+            {(userRole === "nutritionist" || userRole === "admin" || userRole === "master") && (
+              <Card
+                className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 cursor-pointer hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
+                onClick={() => navigate("/vision-nutri")}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                        <Target className="h-5 w-5 text-green-500" />
+                      </div>
+                      <span className="font-bold text-green-500">Vision Nutri</span>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       )}
 

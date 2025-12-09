@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowLeft, 
-  Users, 
-  Dumbbell, 
-  Target, 
-  Search, 
+import {
+  ArrowLeft,
+  Users,
+  Dumbbell,
+  Target,
+  Search,
   Plus,
   Pencil,
   Trash2,
@@ -25,31 +25,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import UserDetailCard from "@/components/admin/UserDetailCard";
+import StudentDetailCard from "@/components/admin/StudentDetailCard";
 import WorkoutDetailCard from "@/components/admin/WorkoutDetailCard";
-import AssignWorkoutModal from "@/components/admin/AssignWorkoutModal";
-import CreateWorkoutModal from "@/components/admin/CreateWorkoutModal";
 import AdminWorkoutModal from "@/components/admin/AdminWorkoutModal";
 import EditWorkoutModal from "@/components/admin/EditWorkoutModal";
 import ExercisePickerModal from "@/components/admin/ExercisePickerModal";
 import ExerciseFormModal from "@/components/admin/ExerciseFormModal";
 import WorkoutProgramModal from "@/components/admin/WorkoutProgramModal";
-import StudentDetailCard from "@/components/admin/StudentDetailCard";
 import StudentReportModal from "@/components/admin/StudentReportModal";
 import SendMessageModal from "@/components/admin/SendMessageModal";
 import { toast } from "sonner";
 
-interface User {
+interface Exercise {
   id: string;
-  full_name: string;
-  email?: string;
-  phone?: string;
-  role?: string;
-  workouts_count?: number;
-  gender?: string;
-  age?: number;
-  weight_kg?: number;
-  is_active?: boolean;
+  name: string;
+  muscle_groups: string[];
+  difficulty?: string;
+  image_url?: string;
+  equipment?: string;
+  description?: string;
+  video_url?: string;
 }
 
 interface WorkoutPlan {
@@ -61,17 +56,6 @@ interface WorkoutPlan {
   description?: string;
   user_id?: string;
   created_by?: string;
-}
-
-interface Exercise {
-  id: string;
-  name: string;
-  muscle_groups: string[];
-  difficulty?: string;
-  image_url?: string;
-  equipment?: string;
-  description?: string;
-  video_url?: string;
 }
 
 interface WorkoutProgram {
@@ -106,13 +90,12 @@ interface Student {
   current_program_name?: string;
 }
 
-type TabType = "students" | "users" | "programs" | "workouts" | "exercises";
+type TabType = "students" | "programs" | "workouts" | "exercises";
 
-export default function Admin() {
+export default function VisionTrainer() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("students");
-  const [users, setUsers] = useState<User[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutPlan[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -121,13 +104,6 @@ export default function Admin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("");
   const [focusFilter, setFocusFilter] = useState<string>("");
-
-  // User modal states
-  const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [userSelectedExercises, setUserSelectedExercises] = useState<Exercise[]>([]);
-  const [userExercisePickerOpen, setUserExercisePickerOpen] = useState(false);
 
   // Workout modal states
   const [adminWorkoutModalOpen, setAdminWorkoutModalOpen] = useState(false);
@@ -141,7 +117,7 @@ export default function Admin() {
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
 
   // Context for which picker is being used
-  const [pickerContext, setPickerContext] = useState<"user" | "workout" | "edit">("user");
+  const [pickerContext, setPickerContext] = useState<"workout" | "edit">("workout");
 
   // Program modal states
   const [programModalOpen, setProgramModalOpen] = useState(false);
@@ -155,7 +131,6 @@ export default function Admin() {
 
   const stats = {
     students: students.length,
-    users: users.length,
     programs: programs.length,
     workouts: workouts.length,
     exercises: exercises.length
@@ -242,44 +217,6 @@ export default function Admin() {
       );
       setStudents(studentsWithDetails);
 
-      // Load users with auth data
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, full_name, gender, age, weight_kg")
-        .order("full_name");
-
-      // Get roles, email and active status for each user
-      const usersWithDetails = await Promise.all(
-        (profilesData || []).map(async (profile) => {
-          // Get role
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", profile.id)
-            .maybeSingle();
-
-          // Get email and phone from auth.users
-          const { data: authData } = await supabase.auth.admin.getUserById(profile.id);
-
-          // Count workouts for user
-          const { count } = await supabase
-            .from("workout_plans")
-            .select("*", { count: 'exact', head: true })
-            .eq("user_id", profile.id);
-
-          return {
-            ...profile,
-            email: authData?.user?.email,
-            phone: authData?.user?.user_metadata?.phone,
-            role: roleData?.role || "user",
-            workouts_count: count || 0,
-            is_active: authData?.user?.banned_until ? false : true
-          };
-        })
-      );
-
-      setUsers(usersWithDetails);
-
       // Load workout programs
       const { data: programsData } = await supabase
         .from("workout_programs")
@@ -321,135 +258,6 @@ export default function Admin() {
     }
   };
 
-  // User handlers
-  const handleAssignWorkout = (userId: string) => {
-    const foundUser = users.find(u => u.id === userId);
-    if (foundUser) {
-      setSelectedUser(foundUser);
-      setAssignModalOpen(true);
-    }
-  };
-
-  const handleCreateWorkout = (userId: string) => {
-    const foundUser = users.find(u => u.id === userId);
-    if (foundUser) {
-      setSelectedUser(foundUser);
-      setUserSelectedExercises([]);
-      setCreateModalOpen(true);
-    }
-  };
-
-  const handleMakeAdmin = async (userId: string) => {
-    try {
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (existingRole) {
-        toast.info("Usuário já é admin");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "admin" });
-
-      if (error) throw error;
-
-      toast.success("Usuário promovido a admin");
-      loadAllData();
-    } catch (error) {
-      console.error("Error making admin:", error);
-      toast.error("Erro ao promover usuário");
-    }
-  };
-
-  const handleMakeTrainer = async (userId: string) => {
-    try {
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "personal")
-        .maybeSingle();
-
-      if (existingRole) {
-        toast.info("Usuário já é personal trainer");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "personal" });
-
-      if (error) throw error;
-
-      toast.success("Usuário promovido a Personal Trainer");
-      loadAllData();
-    } catch (error) {
-      console.error("Error making trainer:", error);
-      toast.error("Erro ao promover usuário");
-    }
-  };
-
-  const handleMakeNutritionist = async (userId: string) => {
-    try {
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "nutritionist")
-        .maybeSingle();
-
-      if (existingRole) {
-        toast.info("Usuário já é nutricionista");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "nutritionist" });
-
-      if (error) throw error;
-
-      toast.success("Usuário promovido a Nutricionista");
-      loadAllData();
-    } catch (error) {
-      console.error("Error making nutritionist:", error);
-      toast.error("Erro ao promover usuário");
-    }
-  };
-
-  const handleToggleActive = async (userId: string, currentlyActive: boolean) => {
-    try {
-      if (currentlyActive) {
-        // Ban user (set banned_until to a far future date)
-        const { error } = await supabase.auth.admin.updateUserById(userId, {
-          ban_duration: "876600h" // 100 years
-        });
-
-        if (error) throw error;
-        toast.success("Usuário desativado");
-      } else {
-        // Unban user
-        const { error } = await supabase.auth.admin.updateUserById(userId, {
-          ban_duration: "none"
-        });
-
-        if (error) throw error;
-        toast.success("Usuário ativado");
-      }
-
-      loadAllData();
-    } catch (error) {
-      console.error("Error toggling user active status:", error);
-      toast.error("Erro ao alterar status do usuário");
-    }
-  };
-
   // Workout handlers
   const handleEditWorkout = (workout: WorkoutPlan) => {
     setEditingWorkout(workout);
@@ -474,7 +282,7 @@ export default function Admin() {
         .eq("id", workoutId);
 
       if (error) throw error;
-      
+
       toast.success("Treino excluído com sucesso");
       loadAllData();
     } catch (error) {
@@ -484,25 +292,13 @@ export default function Admin() {
   };
 
   // Exercise picker handlers based on context
-  const handleOpenExercisePicker = (context: "user" | "workout" | "edit") => {
+  const handleOpenExercisePicker = (context: "workout" | "edit") => {
     setPickerContext(context);
-    if (context === "user") {
-      setUserExercisePickerOpen(true);
-    } else {
-      setWorkoutExercisePickerOpen(true);
-    }
+    setWorkoutExercisePickerOpen(true);
   };
 
   const handleSelectExercises = (newExercises: Exercise[]) => {
-    if (pickerContext === "user") {
-      setUserSelectedExercises(prev => [...prev, ...newExercises]);
-    } else {
-      setWorkoutSelectedExercises(prev => [...prev, ...newExercises]);
-    }
-  };
-
-  const handleRemoveUserExercise = (exerciseId: string) => {
-    setUserSelectedExercises(prev => prev.filter(e => e.id !== exerciseId));
+    setWorkoutSelectedExercises(prev => [...prev, ...newExercises]);
   };
 
   const handleRemoveWorkoutExercise = (exerciseId: string) => {
@@ -555,7 +351,7 @@ export default function Admin() {
       .select("*")
       .eq("id", programId)
       .maybeSingle();
-    
+
     if (program) {
       setStudentForProgram(studentId);
       setEditingProgram(program);
@@ -585,7 +381,6 @@ export default function Admin() {
 
   const tabs = [
     { id: "students" as TabType, label: "Alunos", icon: GraduationCap },
-    { id: "users" as TabType, label: "Usuários", icon: Users },
     { id: "programs" as TabType, label: "Programas", icon: Calendar },
     { id: "workouts" as TabType, label: "Treinos", icon: Dumbbell },
     { id: "exercises" as TabType, label: "Exercícios", icon: Target },
@@ -605,15 +400,15 @@ export default function Admin() {
       <div className="px-4 md:px-6 lg:px-8 pt-6 pb-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-4 mb-2">
-            <button 
-              onClick={() => navigate("/dashboard")}
+            <button
+              onClick={() => navigate("/profile")}
               className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors"
             >
               <ArrowLeft className="h-5 w-5 text-foreground" />
             </button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-foreground">Painel Admin</h1>
-              <p className="text-sm text-muted-foreground">Master Admin - Gerencie treinos e exercícios</p>
+              <h1 className="text-2xl md:text-3xl font-black text-primary">Vision Trainer</h1>
+              <p className="text-sm text-muted-foreground">Gerencie alunos, programas e treinos</p>
             </div>
           </div>
         </div>
@@ -623,19 +418,12 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
           <div className="mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <Card className="bg-card border-border border-lime/30">
                 <CardContent className="p-4 text-center">
                   <GraduationCap className="h-6 w-6 text-lime mx-auto mb-2" />
                   <p className="text-2xl md:text-3xl font-black text-foreground">{stats.students}</p>
                   <p className="text-xs md:text-sm text-muted-foreground">Alunos</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-card border-border">
-                <CardContent className="p-4 text-center">
-                  <Users className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
-                  <p className="text-2xl md:text-3xl font-black text-foreground">{stats.users}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">Usuários</p>
                 </CardContent>
               </Card>
               <Card className="bg-card border-border">
@@ -664,7 +452,7 @@ export default function Admin() {
 
           {/* Tabs */}
           <div className="mb-4">
-            <div className="grid grid-cols-5 gap-1 p-1 bg-card rounded-xl overflow-x-auto">
+            <div className="grid grid-cols-4 gap-1 p-1 bg-card rounded-xl overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -714,7 +502,7 @@ export default function Admin() {
                     {filteredStudents.length} alunos
                   </Badge>
                 </div>
-                
+
                 {filteredStudents.length === 0 ? (
                   <div className="text-center py-12">
                     <GraduationCap className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -741,34 +529,12 @@ export default function Admin() {
               </>
             )}
 
-            {/* Users Tab */}
-            {activeTab === "users" && (
-              <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
-                {users
-                  .filter((u) => 
-                    u.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-                  )
-                  .map((userData) => (
-                    <UserDetailCard
-                      key={userData.id}
-                      user={userData}
-                      onAssignWorkout={handleAssignWorkout}
-                      onCreateWorkout={handleCreateWorkout}
-                      onMakeAdmin={handleMakeAdmin}
-                      onMakeTrainer={handleMakeTrainer}
-                      onMakeNutritionist={handleMakeNutritionist}
-                      onToggleActive={handleToggleActive}
-                    />
-                  ))}
-              </div>
-            )}
-
             {/* Programs Tab */}
             {activeTab === "programs" && (
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg md:text-xl font-bold text-foreground">Programas de Treino</h2>
-                  <Button 
+                  <Button
                     className="bg-lime text-black font-bold hover:bg-lime/90"
                     onClick={() => {
                       setEditingProgram(null);
@@ -782,8 +548,8 @@ export default function Admin() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredPrograms.map((program) => (
-                    <Card 
-                      key={program.id} 
+                    <Card
+                      key={program.id}
                       className="bg-card border-border cursor-pointer hover:border-lime/50 transition-all"
                       onClick={() => {
                         setEditingProgram(program);
@@ -812,13 +578,13 @@ export default function Admin() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button 
+                            <button
                               className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
                               onClick={(e) => { e.stopPropagation(); setEditingProgram(program); setProgramModalOpen(true); }}
                             >
                               <Pencil className="h-4 w-4 text-blue-400" />
                             </button>
-                            <button 
+                            <button
                               className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center hover:bg-red-500/30 transition-colors"
                               onClick={async (e) => {
                                 e.stopPropagation();
@@ -879,7 +645,7 @@ export default function Admin() {
 
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg md:text-xl font-bold text-foreground">Planos de Treino</h2>
-                  <Button 
+                  <Button
                     className="bg-lime text-black font-bold hover:bg-lime/90"
                     onClick={() => {
                       setWorkoutSelectedExercises([]);
@@ -942,7 +708,7 @@ export default function Admin() {
 
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg md:text-xl font-bold text-foreground">Exercícios</h2>
-                  <Button 
+                  <Button
                     className="bg-lime text-black font-bold hover:bg-lime/90"
                     onClick={() => {
                       setEditingExercise(null);
@@ -956,16 +722,16 @@ export default function Admin() {
 
                 <div className="flex flex-col gap-3">
                   {filteredExercises.map((exercise) => (
-                    <div 
-                      key={exercise.id} 
+                    <div
+                      key={exercise.id}
                       className="flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:border-lime/30 transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         {/* GIF/Image as cover */}
                         <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden flex items-center justify-center flex-shrink-0">
                           {exercise.image_url ? (
-                            <img 
-                              src={exercise.image_url} 
+                            <img
+                              src={exercise.image_url}
                               alt={exercise.name}
                               className="w-full h-full object-cover"
                             />
@@ -973,15 +739,15 @@ export default function Admin() {
                             <Target className="h-7 w-7 text-muted-foreground" />
                           )}
                         </div>
-                        
+
                         {/* Exercise info */}
                         <div>
                           <h3 className="font-bold text-foreground text-base mb-2">{exercise.name}</h3>
                           <div className="flex gap-2 flex-wrap">
                             {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
-                              <Badge 
-                                key={idx} 
-                                variant="outline" 
+                              <Badge
+                                key={idx}
+                                variant="outline"
                                 className="text-xs px-2.5 py-0.5 border-border text-muted-foreground"
                               >
                                 {mg}
@@ -995,10 +761,10 @@ export default function Admin() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Actions */}
                       <div className="flex items-center gap-3">
-                        <button 
+                        <button
                           className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                           onClick={() => {
                             setEditingExercise(exercise);
@@ -1007,7 +773,7 @@ export default function Admin() {
                         >
                           <Pencil className="h-5 w-5" />
                         </button>
-                        <button 
+                        <button
                           className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-400"
                           onClick={async () => {
                             if (confirm("Tem certeza que deseja excluir este exercício?")) {
@@ -1041,31 +807,6 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* User Modals */}
-      <AssignWorkoutModal
-        isOpen={assignModalOpen}
-        onClose={() => {
-          setAssignModalOpen(false);
-          setSelectedUser(null);
-          loadAllData();
-        }}
-        user={selectedUser}
-      />
-
-      <CreateWorkoutModal
-        isOpen={createModalOpen}
-        onClose={() => {
-          setCreateModalOpen(false);
-          setSelectedUser(null);
-          setUserSelectedExercises([]);
-          loadAllData();
-        }}
-        user={selectedUser}
-        onOpenExercisePicker={() => handleOpenExercisePicker("user")}
-        selectedExercises={userSelectedExercises}
-        onRemoveExercise={handleRemoveUserExercise}
-      />
-
       {/* Workout Modals */}
       <AdminWorkoutModal
         isOpen={adminWorkoutModalOpen}
@@ -1094,13 +835,6 @@ export default function Admin() {
       />
 
       {/* Exercise Pickers */}
-      <ExercisePickerModal
-        isOpen={userExercisePickerOpen}
-        onClose={() => setUserExercisePickerOpen(false)}
-        onSelectExercises={handleSelectExercises}
-        selectedCount={userSelectedExercises.length}
-      />
-
       <ExercisePickerModal
         isOpen={workoutExercisePickerOpen}
         onClose={() => setWorkoutExercisePickerOpen(false)}

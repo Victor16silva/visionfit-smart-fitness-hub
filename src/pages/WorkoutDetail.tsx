@@ -10,8 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ExerciseDetailModal } from "@/components/ExerciseDetailModal";
-import { SubstituteExerciseModal } from "@/components/SubstituteExerciseModal";
+import ExerciseDetailModal from "@/components/ExerciseDetailModal";
+import SubstituteExerciseModal from "@/components/SubstituteExerciseModal";
 
 interface Exercise {
   id: string;
@@ -93,13 +93,13 @@ export default function WorkoutDetail() {
     }
   };
 
-  const handleSubstitute = async (newExerciseId: string) => {
+  const handleSubstitute = async (newExercise: { id: string; name: string; muscle_groups: string[]; image_url?: string; equipment?: string }) => {
     if (!selectedWorkoutExercise) return;
 
     try {
       const { error } = await supabase
         .from("workout_exercises")
-        .update({ exercise_id: newExerciseId })
+        .update({ exercise_id: newExercise.id })
         .eq("id", selectedWorkoutExercise.id);
 
       if (error) throw error;
@@ -294,15 +294,15 @@ export default function WorkoutDetail() {
       {selectedExercise && (
         <ExerciseDetailModal
           exercise={selectedExercise}
-          open={showDetailModal}
-          onOpenChange={setShowDetailModal}
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
         />
       )}
 
       {selectedWorkoutExercise?.exercise && (
         <SubstituteExerciseModal
-          open={showSubstituteModal}
-          onOpenChange={setShowSubstituteModal}
+          isOpen={showSubstituteModal}
+          onClose={() => setShowSubstituteModal(false)}
           currentExercise={selectedWorkoutExercise.exercise}
           onSubstitute={handleSubstitute}
         />

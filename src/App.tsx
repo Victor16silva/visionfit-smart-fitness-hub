@@ -39,6 +39,9 @@ import BodyFocusWorkouts from "./pages/BodyFocusWorkouts";
 import AllBodyFocus from "./pages/AllBodyFocus";
 import ProgramDetail from "./pages/ProgramDetail";
 import WorkoutDetail from "./pages/WorkoutDetail";
+import VisionTrainer from "./pages/VisionTrainer";
+import VisionNutri from "./pages/VisionNutri";
+import EditProfile from "./pages/EditProfile";
 
 const queryClient = new QueryClient();
 
@@ -184,7 +187,17 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
+            <Route
+              path="/edit-profile"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <EditProfile />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
             {/* Workout Routes */}
             <Route
               path="/workout/:id"
@@ -294,7 +307,23 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
+            <Route
+              path="/vision-trainer"
+              element={
+                <ProtectedRoute>
+                  <VisionTrainer />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/vision-nutri"
+              element={
+                <ProtectedRoute>
+                  <VisionNutri />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Category Routes */}
             <Route
               path="/workouts/categories"
