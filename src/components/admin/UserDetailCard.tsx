@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Plus, X, UserCheck, UserX } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -8,7 +8,6 @@ interface UserDetailCardProps {
     id: string;
     full_name: string;
     email?: string;
-    phone?: string;
     role?: string;
     workouts_count?: number;
     gender?: string;
@@ -17,24 +16,17 @@ interface UserDetailCardProps {
     height?: number;
     level?: string;
     biotype?: string;
-    is_active?: boolean;
   };
   onAssignWorkout: (userId: string) => void;
   onCreateWorkout: (userId: string) => void;
   onMakeAdmin: (userId: string) => void;
-  onMakeTrainer?: (userId: string) => void;
-  onMakeMaster?: (userId: string) => void;
-  onToggleActive?: (userId: string, isActive: boolean) => void;
 }
 
-export default function UserDetailCard({
-  user,
-  onAssignWorkout,
+export default function UserDetailCard({ 
+  user, 
+  onAssignWorkout, 
   onCreateWorkout,
-  onMakeAdmin,
-  onMakeTrainer,
-  onMakeMaster,
-  onToggleActive
+  onMakeAdmin 
 }: UserDetailCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -70,13 +62,10 @@ export default function UserDetailCard({
               </span>
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
                 <h3 className="font-bold text-foreground">{user.full_name}</h3>
                 <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getRoleBadge(user.role || "user")}`}>
                   {(user.role || "user").charAt(0).toUpperCase() + (user.role || "user").slice(1)}
-                </span>
-                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${user.is_active !== false ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500"}`}>
-                  {user.is_active !== false ? "Ativo" : "Inativo"}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -93,8 +82,6 @@ export default function UserDetailCard({
           <div className="px-4 pb-4 space-y-4 animate-fade-in">
             {/* Info grid */}
             <div className="grid grid-cols-2 gap-2">
-              <InfoItem label="Email" value={user.email} />
-              <InfoItem label="Telefone" value={user.phone} />
               <InfoItem label="Gênero" value={user.gender} />
               <InfoItem label="Idade" value={user.age} />
               <InfoItem label="Peso" value={user.weight_kg ? `${user.weight_kg} kg` : undefined} />
@@ -105,7 +92,7 @@ export default function UserDetailCard({
 
             {/* Action buttons */}
             <div className="space-y-2">
-              <Button
+              <Button 
                 className="w-full bg-lime text-black font-bold hover:bg-lime/90 h-11"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -115,7 +102,7 @@ export default function UserDetailCard({
                 <Plus className="h-4 w-4 mr-2" />
                 Atribuir Treino Existente
               </Button>
-              <Button
+              <Button 
                 className="w-full bg-purple text-white font-bold hover:bg-purple/90 h-11"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -125,74 +112,16 @@ export default function UserDetailCard({
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Treino Personalizado
               </Button>
-              {/* Role Assignment Buttons */}
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-orange-500 text-orange-500 font-bold hover:bg-orange-500/10 h-10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMakeAdmin(user.id);
-                  }}
-                >
-                  Admin
-                </Button>
-                {onMakeTrainer && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-500 text-blue-500 font-bold hover:bg-blue-500/10 h-10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onMakeTrainer(user.id);
-                    }}
-                  >
-                    Trainer
-                  </Button>
-                )}
-                {onMakeMaster && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-purple text-purple font-bold hover:bg-purple/10 h-10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onMakeMaster(user.id);
-                    }}
-                  >
-                    Master
-                  </Button>
-                )}
-              </div>
-
-              {/* Active/Inactive Toggle */}
-              {onToggleActive && (
-                <Button
-                  variant="outline"
-                  className={`w-full font-bold h-11 ${
-                    user.is_active !== false
-                      ? "border-red-500 text-red-500 hover:bg-red-500/10"
-                      : "border-green-500 text-green-500 hover:bg-green-500/10"
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleActive(user.id, user.is_active !== false);
-                  }}
-                >
-                  {user.is_active !== false ? (
-                    <>
-                      <UserX className="h-4 w-4 mr-2" />
-                      Desativar Usuário
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      Ativar Usuário
-                    </>
-                  )}
-                </Button>
-              )}
+              <Button 
+                variant="outline"
+                className="w-full border-orange text-orange font-bold hover:bg-orange/10 h-11"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMakeAdmin(user.id);
+                }}
+              >
+                Tornar Admin
+              </Button>
             </div>
           </div>
         )}

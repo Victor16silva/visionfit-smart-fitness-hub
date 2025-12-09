@@ -15,8 +15,7 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Calendar,
-  GraduationCap
+  Calendar
 } from "lucide-react";
 import {
   Select,
@@ -34,22 +33,17 @@ import EditWorkoutModal from "@/components/admin/EditWorkoutModal";
 import ExercisePickerModal from "@/components/admin/ExercisePickerModal";
 import ExerciseFormModal from "@/components/admin/ExerciseFormModal";
 import WorkoutProgramModal from "@/components/admin/WorkoutProgramModal";
-import StudentDetailCard from "@/components/admin/StudentDetailCard";
-import StudentReportModal from "@/components/admin/StudentReportModal";
-import SendMessageModal from "@/components/admin/SendMessageModal";
 import { toast } from "sonner";
 
 interface User {
   id: string;
   full_name: string;
   email?: string;
-  phone?: string;
   role?: string;
   workouts_count?: number;
   gender?: string;
   age?: number;
   weight_kg?: number;
-  is_active?: boolean;
 }
 
 interface WorkoutPlan {
@@ -84,36 +78,13 @@ interface WorkoutProgram {
   workouts_count?: number;
 }
 
-interface Student {
-  id: string;
-  full_name: string;
-  email?: string;
-  goals?: {
-    gender?: string;
-    age?: number;
-    weight_kg?: number;
-    height_cm?: number;
-    fitness_goals?: string[];
-    body_type?: string;
-    training_level?: string;
-    photo_front_url?: string;
-    photo_back_url?: string;
-    photo_left_url?: string;
-    photo_right_url?: string;
-    trainer_request_date?: string;
-  };
-  current_program_id?: string;
-  current_program_name?: string;
-}
-
-type TabType = "students" | "users" | "programs" | "workouts" | "exercises";
+type TabType = "users" | "programs" | "workouts" | "exercises";
 
 export default function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabType>("students");
+  const [activeTab, setActiveTab] = useState<TabType>("users");
   const [users, setUsers] = useState<User[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutPlan[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [programs, setPrograms] = useState<WorkoutProgram[]>([]);
@@ -147,14 +118,7 @@ export default function Admin() {
   const [programModalOpen, setProgramModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<WorkoutProgram | null>(null);
 
-  // Student modal states
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [messageModalOpen, setMessageModalOpen] = useState(false);
-  const [studentForProgram, setStudentForProgram] = useState<string | null>(null);
-
   const stats = {
-    students: students.length,
     users: users.length,
     programs: programs.length,
     workouts: workouts.length,
@@ -193,73 +157,20 @@ export default function Admin() {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      // Load students (users who requested a trainer)
-      const { data: goalsData } = await supabase
-        .from("user_goals")
-        .select("*")
-        .eq("trainer_requested", true)
-        .order("trainer_request_date", { ascending: false });
-
-      const studentsWithDetails = await Promise.all(
-        (goalsData || []).map(async (goal) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, full_name, current_program_id")
-            .eq("id", goal.user_id)
-            .maybeSingle();
-
-          let programName = null;
-          if (profile?.current_program_id) {
-            const { data: program } = await supabase
-              .from("workout_programs")
-              .select("name")
-              .eq("id", profile.current_program_id)
-              .maybeSingle();
-            programName = program?.name;
-          }
-
-          return {
-            id: goal.user_id,
-            full_name: profile?.full_name || "Usuário",
-            goals: {
-              gender: goal.gender,
-              age: goal.age,
-              weight_kg: goal.weight_kg,
-              height_cm: goal.height_cm,
-              fitness_goals: goal.fitness_goals,
-              body_type: goal.body_type,
-              training_level: goal.training_level,
-              photo_front_url: goal.photo_front_url,
-              photo_back_url: goal.photo_back_url,
-              photo_left_url: goal.photo_left_url,
-              photo_right_url: goal.photo_right_url,
-              trainer_request_date: goal.trainer_request_date,
-            },
-            current_program_id: profile?.current_program_id,
-            current_program_name: programName,
-          };
-        })
-      );
-      setStudents(studentsWithDetails);
-
       // Load users with auth data
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, full_name, gender, age, weight_kg")
         .order("full_name");
 
-      // Get roles, email and active status for each user
+      // Get roles and email for each user
       const usersWithDetails = await Promise.all(
         (profilesData || []).map(async (profile) => {
-          // Get role
           const { data: roleData } = await supabase
             .from("user_roles")
             .select("role")
             .eq("user_id", profile.id)
             .maybeSingle();
-
-          // Get email and phone from auth.users
-          const { data: authData } = await supabase.auth.admin.getUserById(profile.id);
 
           // Count workouts for user
           const { count } = await supabase
@@ -269,11 +180,8 @@ export default function Admin() {
 
           return {
             ...profile,
-            email: authData?.user?.email,
-            phone: authData?.user?.user_metadata?.phone,
             role: roleData?.role || "user",
-            workouts_count: count || 0,
-            is_active: true
+            workouts_count: count || 0
           };
         })
       );
@@ -358,95 +266,12 @@ export default function Admin() {
         .insert({ user_id: userId, role: "admin" });
 
       if (error) throw error;
-
+      
       toast.success("Usuário promovido a admin");
       loadAllData();
     } catch (error) {
       console.error("Error making admin:", error);
       toast.error("Erro ao promover usuário");
-    }
-  };
-
-  const handleMakeTrainer = async (userId: string) => {
-    try {
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "personal")
-        .maybeSingle();
-
-      if (existingRole) {
-        toast.info("Usuário já é personal trainer");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "personal" });
-
-      if (error) throw error;
-
-      toast.success("Usuário promovido a Personal Trainer");
-      loadAllData();
-    } catch (error) {
-      console.error("Error making trainer:", error);
-      toast.error("Erro ao promover usuário");
-    }
-  };
-
-  const handleMakeMaster = async (userId: string) => {
-    try {
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "master")
-        .maybeSingle();
-
-      if (existingRole) {
-        toast.info("Usuário já é master");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role: "master" });
-
-      if (error) throw error;
-
-      toast.success("Usuário promovido a Master");
-      loadAllData();
-    } catch (error) {
-      console.error("Error making master:", error);
-      toast.error("Erro ao promover usuário");
-    }
-  };
-
-  const handleToggleActive = async (userId: string, currentlyActive: boolean) => {
-    try {
-      if (currentlyActive) {
-        // Ban user (set banned_until to a far future date)
-        const { error } = await supabase.auth.admin.updateUserById(userId, {
-          ban_duration: "876600h" // 100 years
-        });
-
-        if (error) throw error;
-        toast.success("Usuário desativado");
-      } else {
-        // Unban user
-        const { error } = await supabase.auth.admin.updateUserById(userId, {
-          ban_duration: "none"
-        });
-
-        if (error) throw error;
-        toast.success("Usuário ativado");
-      }
-
-      loadAllData();
-    } catch (error) {
-      console.error("Error toggling user active status:", error);
-      toast.error("Erro ao alterar status do usuário");
     }
   };
 
@@ -529,62 +354,7 @@ export default function Admin() {
     return matchesSearch;
   });
 
-  const filteredStudents = students.filter((s) => {
-    const matchesSearch = s.full_name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
-
-  // Student handlers
-  const handleViewReport = (studentId: string) => {
-    const student = students.find(s => s.id === studentId);
-    if (student) {
-      setSelectedStudent(student);
-      setReportModalOpen(true);
-    }
-  };
-
-  const handleCreateStudentProgram = (studentId: string) => {
-    setStudentForProgram(studentId);
-    setEditingProgram(null);
-    setProgramModalOpen(true);
-  };
-
-  const handleEditStudentProgram = async (studentId: string, programId: string) => {
-    const { data: program } = await supabase
-      .from("workout_programs")
-      .select("*")
-      .eq("id", programId)
-      .maybeSingle();
-    
-    if (program) {
-      setStudentForProgram(studentId);
-      setEditingProgram(program);
-      setProgramModalOpen(true);
-    }
-  };
-
-  const handleSendMessage = (studentId: string) => {
-    const student = students.find(s => s.id === studentId);
-    if (student) {
-      setSelectedStudent(student);
-      setMessageModalOpen(true);
-    }
-  };
-
-  const handleProgramSuccess = async () => {
-    if (studentForProgram && editingProgram) {
-      // If we created/edited a program for a student, assign it to them
-      await supabase
-        .from("profiles")
-        .update({ current_program_id: editingProgram.id })
-        .eq("id", studentForProgram);
-    }
-    setStudentForProgram(null);
-    loadAllData();
-  };
-
   const tabs = [
-    { id: "students" as TabType, label: "Alunos", icon: GraduationCap },
     { id: "users" as TabType, label: "Usuários", icon: Users },
     { id: "programs" as TabType, label: "Programas", icon: Calendar },
     { id: "workouts" as TabType, label: "Treinos", icon: Dumbbell },
@@ -623,14 +393,7 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto">
           {/* Stats Cards */}
           <div className="mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-              <Card className="bg-card border-border border-lime/30">
-                <CardContent className="p-4 text-center">
-                  <GraduationCap className="h-6 w-6 text-lime mx-auto mb-2" />
-                  <p className="text-2xl md:text-3xl font-black text-foreground">{stats.students}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">Alunos</p>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <Card className="bg-card border-border">
                 <CardContent className="p-4 text-center">
                   <Users className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
@@ -640,7 +403,7 @@ export default function Admin() {
               </Card>
               <Card className="bg-card border-border">
                 <CardContent className="p-4 text-center">
-                  <Calendar className="h-6 w-6 text-blue mx-auto mb-2" />
+                  <Calendar className="h-6 w-6 text-lime mx-auto mb-2" />
                   <p className="text-2xl md:text-3xl font-black text-foreground">{stats.programs}</p>
                   <p className="text-xs md:text-sm text-muted-foreground">Programas</p>
                 </CardContent>
@@ -664,7 +427,7 @@ export default function Admin() {
 
           {/* Tabs */}
           <div className="mb-4">
-            <div className="grid grid-cols-5 gap-1 p-1 bg-card rounded-xl overflow-x-auto">
+            <div className="grid grid-cols-4 gap-1 p-1 bg-card rounded-xl">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -703,44 +466,6 @@ export default function Admin() {
 
           {/* Content */}
           <div>
-            {/* Students Tab */}
-            {activeTab === "students" && (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg md:text-xl font-bold text-foreground">
-                    Alunos que Solicitaram Treino
-                  </h2>
-                  <Badge variant="outline" className="bg-lime/10 text-lime border-lime">
-                    {filteredStudents.length} alunos
-                  </Badge>
-                </div>
-                
-                {filteredStudents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <GraduationCap className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="font-bold text-foreground mb-2">Nenhum aluno ainda</h3>
-                    <p className="text-muted-foreground text-sm">
-                      Quando os usuários completarem o onboarding e clicarem em "Chamar Professor",<br/>
-                      eles aparecerão aqui para você criar o treino deles.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
-                    {filteredStudents.map((student) => (
-                      <StudentDetailCard
-                        key={student.id}
-                        student={student}
-                        onViewReport={handleViewReport}
-                        onCreateProgram={handleCreateStudentProgram}
-                        onEditProgram={handleEditStudentProgram}
-                        onSendMessage={handleSendMessage}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
             {/* Users Tab */}
             {activeTab === "users" && (
               <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
@@ -755,9 +480,6 @@ export default function Admin() {
                       onAssignWorkout={handleAssignWorkout}
                       onCreateWorkout={handleCreateWorkout}
                       onMakeAdmin={handleMakeAdmin}
-                      onMakeTrainer={handleMakeTrainer}
-                      onMakeMaster={handleMakeMaster}
-                      onToggleActive={handleToggleActive}
                     />
                   ))}
               </div>
@@ -813,13 +535,14 @@ export default function Admin() {
                           </div>
                           <div className="flex items-center gap-2">
                             <button 
-                              className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 transition-colors"
                               onClick={(e) => { e.stopPropagation(); setEditingProgram(program); setProgramModalOpen(true); }}
                             >
                               <Pencil className="h-4 w-4 text-blue-400" />
+                              <span className="text-xs text-blue-400 font-medium">Editar</span>
                             </button>
                             <button 
-                              className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center hover:bg-red-500/30 transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-colors"
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 if (confirm("Excluir este programa e todos os treinos dentro dele?")) {
@@ -830,6 +553,7 @@ export default function Admin() {
                               }}
                             >
                               <Trash2 className="h-4 w-4 text-red-400" />
+                              <span className="text-xs text-red-400 font-medium">Excluir</span>
                             </button>
                           </div>
                         </div>
@@ -954,83 +678,86 @@ export default function Admin() {
                   </Button>
                 </div>
 
-                <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredExercises.map((exercise) => (
-                    <div 
-                      key={exercise.id} 
-                      className="flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:border-lime/30 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        {/* GIF/Image as cover */}
-                        <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden flex items-center justify-center flex-shrink-0">
-                          {exercise.image_url ? (
-                            <img 
-                              src={exercise.image_url} 
-                              alt={exercise.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Target className="h-7 w-7 text-muted-foreground" />
-                          )}
-                        </div>
-                        
-                        {/* Exercise info */}
-                        <div>
-                          <h3 className="font-bold text-foreground text-base mb-2">{exercise.name}</h3>
-                          <div className="flex gap-2 flex-wrap">
-                            {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
-                              <Badge 
-                                key={idx} 
-                                variant="outline" 
-                                className="text-xs px-2.5 py-0.5 border-border text-muted-foreground"
-                              >
-                                {mg}
-                              </Badge>
-                            ))}
-                            {exercise.equipment && (
-                              <Badge className="bg-lime text-black text-xs px-2.5 py-0.5">
-                                {exercise.equipment}
-                              </Badge>
-                            )}
+                    <Card key={exercise.id} className="bg-card border-border">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
+                              {exercise.image_url ? (
+                                <img 
+                                  src={exercise.image_url} 
+                                  alt={exercise.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Target className="h-6 w-6 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-foreground mb-1">{exercise.name}</h3>
+                              <div className="flex gap-1.5 flex-wrap">
+                                {exercise.muscle_groups?.slice(0, 2).map((mg, idx) => (
+                                  <Badge 
+                                    key={idx} 
+                                    variant="secondary" 
+                                    className="text-xs bg-muted text-foreground"
+                                  >
+                                    {mg}
+                                  </Badge>
+                                ))}
+                                {exercise.difficulty && (
+                                  <Badge className="text-xs bg-muted text-foreground">
+                                    {exercise.difficulty}
+                                  </Badge>
+                                )}
+                                {exercise.equipment && (
+                                  <Badge className="bg-lime text-black text-xs">
+                                    {exercise.equipment}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 transition-colors"
+                              onClick={() => {
+                                setEditingExercise(exercise);
+                                setExerciseFormOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 text-blue-400" />
+                              <span className="text-xs text-blue-400 font-medium">Editar</span>
+                            </button>
+                            <button 
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-colors"
+                              onClick={async () => {
+                                if (confirm("Tem certeza que deseja excluir este exercício?")) {
+                                  const { error } = await supabase
+                                    .from("exercises")
+                                    .delete()
+                                    .eq("id", exercise.id);
+                                  if (error) {
+                                    toast.error("Erro ao excluir exercício");
+                                  } else {
+                                    toast.success("Exercício excluído");
+                                    loadAllData();
+                                  }
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-400" />
+                              <span className="text-xs text-red-400 font-medium">Excluir</span>
+                            </button>
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        <button 
-                          className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                          onClick={() => {
-                            setEditingExercise(exercise);
-                            setExerciseFormOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-5 w-5" />
-                        </button>
-                        <button 
-                          className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-400"
-                          onClick={async () => {
-                            if (confirm("Tem certeza que deseja excluir este exercício?")) {
-                              const { error } = await supabase
-                                .from("exercises")
-                                .delete()
-                                .eq("id", exercise.id);
-                              if (error) {
-                                toast.error("Erro ao excluir exercício");
-                              } else {
-                                toast.success("Exercício excluído");
-                                loadAllData();
-                              }
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                   {filteredExercises.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">
+                    <p className="col-span-full text-center text-muted-foreground py-8">
                       Nenhum exercício encontrado
                     </p>
                   )}
@@ -1125,36 +852,10 @@ export default function Admin() {
         onClose={() => {
           setProgramModalOpen(false);
           setEditingProgram(null);
-          setStudentForProgram(null);
         }}
-        onSuccess={handleProgramSuccess}
+        onSuccess={loadAllData}
         editingProgram={editingProgram}
-        studentId={studentForProgram}
       />
-
-      {/* Student Report Modal */}
-      <StudentReportModal
-        isOpen={reportModalOpen}
-        onClose={() => {
-          setReportModalOpen(false);
-          setSelectedStudent(null);
-        }}
-        student={selectedStudent}
-      />
-
-      {/* Send Message Modal */}
-      {selectedStudent && (
-        <SendMessageModal
-          isOpen={messageModalOpen}
-          onClose={() => {
-            setMessageModalOpen(false);
-            setSelectedStudent(null);
-          }}
-          studentId={selectedStudent.id}
-          studentName={selectedStudent.full_name}
-          onSuccess={loadAllData}
-        />
-      )}
     </div>
   );
 }

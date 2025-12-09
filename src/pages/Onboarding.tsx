@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Dumbbell, ChevronRight } from "lucide-react";
+import splashImg from "@/assets/onboarding-splash.jpg";
+import welcomeImg from "@/assets/onboarding-welcome.jpg";
+import loginImg from "@/assets/onboarding-login.jpg";
 
 export default function Onboarding() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -28,17 +31,17 @@ export default function Onboarding() {
 
   const slides = [
     {
+      image: splashImg,
       title: "VisionFit",
       subtitle: "Transforme Seu Potencial",
       showButton: false,
-      bgGradient: "from-primary/20 via-primary/10 to-background",
     },
     {
+      image: welcomeImg,
       title: "Bem-vindo",
       description: "VisionFit é um personal trainer alimentado por IA que se adapta aos seus objetivos, rastreia seu progresso e oferece treinos personalizados e planos focados.",
       showButton: true,
       buttonText: "Vamos Começar",
-      bgGradient: "from-purple-500/20 via-primary/10 to-background",
     },
   ];
 
@@ -50,8 +53,15 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background Gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-b ${currentSlideData.bgGradient}`} />
+      {/* Background Image */}
+      <div className="absolute inset-0">
+        <img
+          src={currentSlideData.image}
+          alt="Background"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+      </div>
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col justify-between p-8">
