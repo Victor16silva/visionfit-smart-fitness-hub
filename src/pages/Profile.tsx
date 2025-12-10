@@ -100,7 +100,6 @@ export default function Profile() {
   };
 
   const accountMenuItems: MenuItem[] = [
-    { icon: Users, label: "Sobre Mim", path: "/settings" },
     { icon: Target, label: "Meus Objetivos", path: "/goals" },
     { icon: Trophy, label: "Conquistas", path: "/progress" },
     { icon: Heart, label: "Favoritos", path: "/favorites" },
@@ -177,19 +176,7 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* About Me Section */}
-      <div className="px-4 mb-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <h3 className="font-bold text-foreground mb-1">Sobre Mim</h3>
-            <p className="text-sm text-muted-foreground">
-              Adicione uma descrição sobre você e seus objetivos fitness.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Admin Section */}
+      {/* Admin Section - Above Account */}
       {isAdmin && (
         <div className="px-4 mb-4">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
