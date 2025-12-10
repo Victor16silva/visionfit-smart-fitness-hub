@@ -41,6 +41,7 @@ export default function Profile() {
   const [fullName, setFullName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [stats, setStats] = useState<ProfileStats>({
     workouts: 1,
     streak: 7,
@@ -60,12 +61,15 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, avatar_url")
         .eq("id", user?.id)
         .single();
 
       if (error) throw error;
-      setFullName(data.full_name);
+      // Extract first name only to match Dashboard greeting
+      const firstName = data.full_name?.split(' ')[0] || data.full_name || 'Usuário';
+      setFullName(firstName);
+      setAvatarUrl(data.avatar_url || "");
     } catch (error) {
       console.error("Error loading profile:", error);
     }
@@ -127,17 +131,24 @@ export default function Profile() {
 
       {/* Profile Card with Gradient */}
       <div className="px-4 mb-6">
-        <Card className="overflow-hidden border-0 bg-gradient-to-br from-purple via-purple/80 to-accent">
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-purple to-purple/90">
           <CardContent className="p-6">
             {/* User Info */}
             <div className="flex items-center gap-4 mb-6">
               <div className="relative">
                 <Avatar className="h-20 w-20 border-4 border-background">
-                  <AvatarFallback className="text-2xl bg-card text-primary font-bold">
-                    {getInitials()}
-                  </AvatarFallback>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <AvatarFallback className="text-2xl bg-card text-primary font-bold">
+                      {getInitials()}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
-                <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center">
+                <button
+                  onClick={() => navigate("/edit-profile")}
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors"
+                >
                   <ExternalLink className="h-3.5 w-3.5 text-primary-foreground" />
                 </button>
               </div>
@@ -145,12 +156,30 @@ export default function Profile() {
                 <h2 className="text-xl font-bold text-white">{fullName}</h2>
                 <p className="text-white/70 text-sm">{user?.email}</p>
                 <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                    Premium
-                  </span>
-                  {isAdmin && (
-                    <span className="px-2 py-0.5 rounded-full bg-card text-foreground text-xs font-semibold">
+                  {userRole === "master" ? (
+                    <>
+                      <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-semibold">
+                        Master
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                        Premium
+                      </span>
+                    </>
+                  ) : userRole === "admin" ? (
+                    <span className="px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-semibold">
                       Admin
+                    </span>
+                  ) : userRole === "personal" ? (
+                    <span className="px-2 py-0.5 rounded-full bg-blue-500 text-white text-xs font-semibold">
+                      Personal
+                    </span>
+                  ) : userRole === "nutritionist" ? (
+                    <span className="px-2 py-0.5 rounded-full bg-green-500 text-white text-xs font-semibold">
+                      Nutri
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                      Premium
                     </span>
                   )}
                 </div>
@@ -180,74 +209,142 @@ export default function Profile() {
       </div>
 
       {/* Management Section */}
-      {isAdmin && (
-        <div className="px-4 mb-4">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
-            Gerenciamento
-          </p>
-          <div className="space-y-2">
-            {/* Admin Panel - For admin and master */}
-            {(userRole === "admin" || userRole === "master") && (
-              <Card
-                className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/30 cursor-pointer hover:from-orange-500/20 hover:to-red-500/20 transition-all"
-                onClick={() => navigate("/admin")}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-orange-500" />
-                      </div>
-                      <span className="font-bold text-orange-500">Painel Admin</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-orange-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+      <div className="px-4 mb-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
+          Gerenciamento
+        </p>
 
-            {/* Vision Trainer - For personal trainers AND admin/master */}
-            {(userRole === "personal" || userRole === "admin" || userRole === "master") && (
-              <Card
-                className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/30 cursor-pointer hover:from-blue-500/20 hover:to-cyan-500/20 transition-all"
-                onClick={() => navigate("/vision-trainer")}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                        <Dumbbell className="h-5 w-5 text-blue-500" />
-                      </div>
-                      <span className="font-bold text-blue-500">Vision Trainer</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+        <div className="space-y-2">
+          {/* Admin Panel */}
+          <Card
+            className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/30 cursor-pointer hover:from-orange-500/20 hover:to-red-500/20 transition-all"
+            onClick={async () => {
+              // Add master role if not present and wait for confirmation
+              if (!userRole) {
+                try {
+                  const { error } = await supabase
+                    .from("user_roles")
+                    .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
 
-            {/* Vision Nutri - For nutritionists AND admin/master */}
-            {(userRole === "nutritionist" || userRole === "admin" || userRole === "master") && (
-              <Card
-                className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 cursor-pointer hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
-                onClick={() => navigate("/vision-nutri")}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                        <Target className="h-5 w-5 text-green-500" />
-                      </div>
-                      <span className="font-bold text-green-500">Vision Nutri</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-green-500" />
+                  if (error) {
+                    console.error("Error setting master role:", error);
+                    return;
+                  }
+
+                  // Update local state
+                  setUserRole("master");
+                  setIsAdmin(true);
+
+                  // Small delay to ensure DB update
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                } catch (error) {
+                  console.error("Error setting master role:", error);
+                  return;
+                }
+              }
+              navigate("/admin");
+            }}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-orange-500" />
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                  <span className="font-bold text-orange-500">Painel Admin</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-orange-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Vision Trainer */}
+          <Card
+            className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/30 cursor-pointer hover:from-blue-500/20 hover:to-cyan-500/20 transition-all"
+            onClick={async () => {
+              // Add master role if not present and wait for confirmation
+              if (!userRole) {
+                try {
+                  const { error } = await supabase
+                    .from("user_roles")
+                    .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
+
+                  if (error) {
+                    console.error("Error setting master role:", error);
+                    return;
+                  }
+
+                  // Update local state
+                  setUserRole("master");
+                  setIsAdmin(true);
+
+                  // Small delay to ensure DB update
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                } catch (error) {
+                  console.error("Error setting master role:", error);
+                  return;
+                }
+              }
+              navigate("/vision-trainer");
+            }}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                    <Dumbbell className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <span className="font-bold text-blue-500">Vision Trainer</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Vision Nutri */}
+          <Card
+            className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 cursor-pointer hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
+            onClick={async () => {
+              // Add master role if not present and wait for confirmation
+              if (!userRole) {
+                try {
+                  const { error } = await supabase
+                    .from("user_roles")
+                    .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
+
+                  if (error) {
+                    console.error("Error setting master role:", error);
+                    return;
+                  }
+
+                  // Update local state
+                  setUserRole("master");
+                  setIsAdmin(true);
+
+                  // Small delay to ensure DB update
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                } catch (error) {
+                  console.error("Error setting master role:", error);
+                  return;
+                }
+              }
+              navigate("/vision-nutri");
+            }}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-green-500" />
+                  </div>
+                  <span className="font-bold text-green-500">Vision Nutri</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      )}
+      </div>
 
       {/* Account Menu */}
       <div className="px-4">

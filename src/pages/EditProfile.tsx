@@ -85,6 +85,64 @@ export default function EditProfile() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Por favor, selecione uma imagem válida");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 5MB");
+        return;
+      }
+
+      setLoading(true);
+
+      // Create unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Update avatar URL in state
+      setAvatarUrl(publicUrl);
+
+      // Update profile in database
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user?.id);
+
+      if (updateError) throw updateError;
+
+      toast.success("Foto de perfil atualizada!");
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast.error("Erro ao fazer upload da imagem");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getInitials = () => {
     return fullName
       .split(" ")
@@ -117,11 +175,26 @@ export default function EditProfile() {
         <div className="flex justify-center mb-6">
           <div className="relative">
             <Avatar className="h-32 w-32 border-4 border-background">
-              <AvatarFallback className="text-4xl bg-primary/20 text-primary font-bold">
-                {getInitials()}
-              </AvatarFallback>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <AvatarFallback className="text-4xl bg-primary/20 text-primary font-bold">
+                  {getInitials()}
+                </AvatarFallback>
+              )}
             </Avatar>
-            <button className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors">
+            <input
+              type="file"
+              id="avatar-upload"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => document.getElementById('avatar-upload')?.click()}
+              disabled={loading}
+              className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Camera className="h-5 w-5 text-primary-foreground" />
             </button>
           </div>

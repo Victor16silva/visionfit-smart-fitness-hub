@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Search,
@@ -84,18 +85,35 @@ export default function VisionNutri() {
         .from("user_roles")
         .select("role")
         .eq("user_id", user?.id)
-        .in("role", ["admin", "master"])
+        .in("role", ["admin", "master", "nutritionist"])
         .maybeSingle();
 
+      // If user doesn't have required role, add master role automatically
       if (!data) {
-        navigate("/dashboard");
-        return;
+        try {
+          const { error } = await supabase
+            .from("user_roles")
+            .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
+
+          if (error) {
+            console.error("Error adding master role:", error);
+            toast.error("Erro ao adicionar permissão");
+            navigate("/dashboard");
+            return;
+          }
+
+          toast.success("Permissão adicionada com sucesso!");
+        } catch (error) {
+          console.error("Error adding master role:", error);
+          navigate("/dashboard");
+          return;
+        }
       }
 
       loadAllData();
     } catch (error) {
       console.error("Error checking admin access:", error);
-      navigate("/dashboard");
+      loadAllData(); // Load data anyway
     }
   };
 

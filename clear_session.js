@@ -1,0 +1,1 @@
+console.log('Clearing all Supabase data...'); localStorage.clear(); sessionStorage.clear(); indexedDB.databases().then(dbs => dbs.forEach(db => indexedDB.deleteDatabase(db.name))); location.href = '/auth';

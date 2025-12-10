@@ -29,13 +29,15 @@ interface WorkoutPlan {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const userName = user?.user_metadata?.full_name?.split(' ')[0] || 'Usuário';
-  
+  const [userRole, setUserRole] = useState<string>("");
+  const [displayName, setDisplayName] = useState<string>("");
+
   const [recommendedWorkouts, setRecommendedWorkouts] = useState<WorkoutPlan[]>([]);
   const [warmupWorkouts, setWarmupWorkouts] = useState<WorkoutPlan[]>([]);
   const [currentRecommendedIndex, setCurrentRecommendedIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasWorkoutToday, setHasWorkoutToday] = useState(false);
 
   const muscleGroups = [
     { name: "Ombros", image: muscleShoulders, area: "ombros" },
@@ -46,7 +48,67 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadWorkouts();
-  }, []);
+    loadUserRole();
+    checkTodayWorkout();
+  }, [user]);
+
+  const loadUserRole = async () => {
+    if (!user) return;
+
+    try {
+      // Check user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const role = roleData?.role || "";
+      setUserRole(role);
+
+      // Set display name based on role
+      if (role === "master") {
+        setDisplayName("Master");
+      } else if (role === "admin") {
+        setDisplayName("Admin");
+      } else if (role === "personal") {
+        setDisplayName("Personal");
+      } else if (role === "nutritionist") {
+        setDisplayName("Nutri");
+      } else {
+        // Use first name from profile for regular users
+        const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Usuário';
+        setDisplayName(firstName);
+      }
+    } catch (error) {
+      console.error("Error loading user role:", error);
+      const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Usuário';
+      setDisplayName(firstName);
+    }
+  };
+
+  const checkTodayWorkout = async () => {
+    if (!user) return;
+
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { data: logs, error } = await supabase
+        .from('workout_logs')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('completed_at', today.toISOString())
+        .limit(1);
+
+      if (error) throw error;
+
+      setHasWorkoutToday(logs && logs.length > 0);
+    } catch (error) {
+      console.error("Error checking today's workout:", error);
+      setHasWorkoutToday(false);
+    }
+  };
 
   const loadWorkouts = async () => {
     try {
@@ -120,7 +182,7 @@ export default function Dashboard() {
         
         {/* Greeting */}
         <div className="mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold mb-1">Olá, {userName}! 👋</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-1">Olá, {displayName}! 👋</h2>
           <p className="text-muted-foreground text-sm md:text-base">É hora de desafiar seus limites.</p>
         </div>
 
@@ -129,18 +191,20 @@ export default function Dashboard() {
           <CurrentWorkoutCard />
         </div>
 
-        {/* Performance Calendar - Real-time */}
-        <div className="mb-6">
-          <SectionHeader 
-            title="Meu Desempenho" 
-            actionText="Ver Tudo"
-            actionLink="/progress"
-            showBar={false}
-          />
-          <div className="mt-3">
-            <PerformanceCalendar />
+        {/* Performance Calendar - Only show if there's a workout today */}
+        {hasWorkoutToday && (
+          <div className="mb-6">
+            <SectionHeader
+              title="Meu Desempenho"
+              actionText="Ver Tudo"
+              actionLink="/progress"
+              showBar={false}
+            />
+            <div className="mt-3">
+              <PerformanceCalendar />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Recommended Workouts - Only show if there are workouts */}

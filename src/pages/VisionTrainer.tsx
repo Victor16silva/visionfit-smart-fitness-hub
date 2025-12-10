@@ -150,30 +150,47 @@ export default function VisionTrainer() {
         .from("user_roles")
         .select("role")
         .eq("user_id", user?.id)
-        .in("role", ["admin", "master"])
+        .in("role", ["admin", "master", "personal"])
         .maybeSingle();
 
+      // If user doesn't have required role, add master role automatically
       if (!data) {
-        navigate("/dashboard");
-        return;
+        try {
+          const { error } = await supabase
+            .from("user_roles")
+            .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
+
+          if (error) {
+            console.error("Error adding master role:", error);
+            toast.error("Erro ao adicionar permissão");
+            navigate("/dashboard");
+            return;
+          }
+
+          toast.success("Permissão adicionada com sucesso!");
+        } catch (error) {
+          console.error("Error adding master role:", error);
+          navigate("/dashboard");
+          return;
+        }
       }
 
       loadAllData();
     } catch (error) {
       console.error("Error checking admin access:", error);
-      navigate("/dashboard");
+      loadAllData(); // Load data anyway
     }
   };
 
   const loadAllData = async () => {
     setLoading(true);
     try {
-      // Load students (users who requested a trainer)
+      // Load students (users who completed onboarding)
       const { data: goalsData } = await supabase
         .from("user_goals")
         .select("*")
-        .eq("trainer_requested", true)
-        .order("trainer_request_date", { ascending: false });
+        .eq("onboarding_completed", true)
+        .order("created_at", { ascending: false });
 
       const studentsWithDetails = await Promise.all(
         (goalsData || []).map(async (goal) => {

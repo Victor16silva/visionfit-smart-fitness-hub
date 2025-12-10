@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { User, Scale, Ruler, Target, Dumbbell, MessageCircle, Loader2 } from "lucide-react";
+import { User, Scale, Ruler, Target, Dumbbell, MessageCircle, Loader2, Edit } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +20,7 @@ interface ProfileSummaryProps {
   onRequestTrainer: () => void;
   trainerRequested: boolean;
   loading: boolean;
+  onEdit?: () => void;
 }
 
 const goalLabels: Record<string, string> = {
@@ -42,7 +43,7 @@ const levelLabels: Record<string, string> = {
   advanced: "Avançado",
 };
 
-export function ProfileSummary({ data, onRequestTrainer, trainerRequested, loading }: ProfileSummaryProps) {
+export function ProfileSummary({ data, onRequestTrainer, trainerRequested, loading, onEdit }: ProfileSummaryProps) {
   const hasPhotos = data.photo_front_url || data.photo_back_url || data.photo_left_url || data.photo_right_url;
 
   return (
@@ -52,7 +53,7 @@ export function ProfileSummary({ data, onRequestTrainer, trainerRequested, loadi
       className="space-y-6 pb-24"
     >
       {/* Header */}
-      <div className="text-center py-6">
+      <div className="text-center py-6 relative">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -63,6 +64,14 @@ export function ProfileSummary({ data, onRequestTrainer, trainerRequested, loadi
         </motion.div>
         <h1 className="text-2xl font-black text-foreground">Sua Ficha Técnica</h1>
         <p className="text-muted-foreground text-sm">Resumo do seu perfil fitness</p>
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="absolute top-6 right-4 w-10 h-10 rounded-full bg-lime flex items-center justify-center hover:bg-lime/90 transition-colors"
+          >
+            <Edit className="w-5 h-5 text-black" />
+          </button>
+        )}
       </div>
 
       {/* Stats Grid */}

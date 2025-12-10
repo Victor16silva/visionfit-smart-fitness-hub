@@ -7,11 +7,11 @@ interface GoalsStepProps {
 }
 
 const fitnessGoals = [
-  { id: "lose_weight", label: "Perder Peso", emoji: "⚖️", description: "Queimar gordura e emagrecer" },
-  { id: "build_muscle", label: "Ganhar Massa", emoji: "💎", description: "Hipertrofia muscular" },
+  { id: "lose_weight", label: "Perder Peso", emoji: "🔥", description: "Queimar gordura e emagrecer" },
+  { id: "build_muscle", label: "Ganhar Massa", emoji: "💪", description: "Hipertrofia muscular" },
   { id: "get_fit", label: "Condicionamento", emoji: "❤️", description: "Melhorar saúde geral" },
-  { id: "increase_strength", label: "Força", emoji: "⚡", description: "Aumentar força máxima" },
-  { id: "flexibility", label: "Flexibilidade", emoji: "🎯", description: "Melhorar mobilidade" },
+  { id: "increase_strength", label: "Força", emoji: "🏋️", description: "Aumentar força máxima" },
+  { id: "flexibility", label: "Flexibilidade", emoji: "🤸", description: "Melhorar mobilidade" },
 ];
 
 export function GoalsStep({ value, onChange }: GoalsStepProps) {

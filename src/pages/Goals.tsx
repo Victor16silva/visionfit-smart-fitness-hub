@@ -222,6 +222,10 @@ export default function Goals() {
     );
   }
 
+  const handleEditGoals = () => {
+    setStep(1); // Start from the beginning to edit
+  };
+
   if (step > TOTAL_STEPS) {
     return (
       <div className="min-h-screen bg-background">
@@ -236,6 +240,7 @@ export default function Goals() {
             onRequestTrainer={handleRequestTrainer}
             trainerRequested={data.trainer_requested}
             loading={requestingTrainer}
+            onEdit={handleEditGoals}
           />
         </div>
       </div>
