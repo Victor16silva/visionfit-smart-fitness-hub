@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Plus, Dumbbell, Trash2, Clock, Flame } from "lucide-react";
+import { X, Plus, Dumbbell, Trash2, ChevronDown, ChevronUp, Upload, Calendar, Clock, Flame, Weight, Search, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import ExercisePickerModal from "./ExercisePickerModal";
 
 interface Exercise {
   id: string;
@@ -59,6 +58,8 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
   
   // Exercise picker state
   const [showExercisePicker, setShowExercisePicker] = useState(false);
+  const [allExercises, setAllExercises] = useState<Exercise[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeTrainingDayId, setActiveTrainingDayId] = useState<string | null>(null);
   
   // Training day detail view
@@ -66,6 +67,7 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
 
   useEffect(() => {
     if (isOpen) {
+      loadExercises();
       if (editingProgram) {
         loadProgramData();
       } else {
@@ -78,6 +80,11 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
     setProgramData({ name: "", description: "", category: "Hipertrofia", coverImageUrl: "", isRecommended: false });
     setTrainingDays([]);
     setSelectedTrainingDay(null);
+  };
+
+  const loadExercises = async () => {
+    const { data } = await supabase.from("exercises").select("id, name, muscle_groups, image_url").order("name");
+    setAllExercises(data || []);
   };
 
   const loadProgramData = async () => {
@@ -156,18 +163,17 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
     setShowExercisePicker(true);
   };
 
-  const addExercisesToDay = (exercises: Exercise[]) => {
+  const addExerciseToDay = (exercise: Exercise) => {
     if (!activeTrainingDayId) return;
-    const newExercises: ExerciseWithConfig[] = exercises.map(exercise => ({
+    const newExercise: ExerciseWithConfig = {
       id: exercise.id,
       name: exercise.name,
       sets: 4,
       reps: 8,
       restSeconds: 60,
-    }));
-    const currentDay = trainingDays.find(d => d.id === activeTrainingDayId);
+    };
     updateTrainingDay(activeTrainingDayId, {
-      exercises: [...(currentDay?.exercises || []), ...newExercises],
+      exercises: [...(trainingDays.find(d => d.id === activeTrainingDayId)?.exercises || []), newExercise],
     });
     setShowExercisePicker(false);
   };
@@ -234,14 +240,10 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
 
       // Create training days (workout_plans)
       for (const day of trainingDays) {
-        // Get muscle groups from database
-        const exerciseIds = day.exercises.map(e => e.id);
-        const { data: exercisesData } = await supabase
-          .from("exercises")
-          .select("muscle_groups")
-          .in("id", exerciseIds);
-        
-        const muscleGroups = [...new Set((exercisesData || []).flatMap(e => e.muscle_groups || []))];
+        const muscleGroups = [...new Set(day.exercises.flatMap(e => {
+          const ex = allExercises.find(x => x.id === e.id);
+          return ex?.muscle_groups || [];
+        }))];
 
         const { data: workoutData, error: workoutError } = await supabase.from("workout_plans").insert({
           name: day.name,
@@ -282,6 +284,10 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
       setLoading(false);
     }
   };
+
+  const filteredExercises = allExercises.filter(ex => 
+    ex.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (!isOpen) return null;
 
@@ -421,13 +427,45 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
           </div>
         </div>
 
-        {/* Exercise Picker Modal */}
-        <ExercisePickerModal
-          isOpen={showExercisePicker}
-          onClose={() => setShowExercisePicker(false)}
-          onSelectExercises={addExercisesToDay}
-          selectedCount={selectedTrainingDay?.exercises.length || 0}
-        />
+        {/* Exercise Picker */}
+        {showExercisePicker && (
+          <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+            <div className="bg-card rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h3 className="font-bold text-foreground">Selecionar Exercício</h3>
+                <button onClick={() => setShowExercisePicker(false)} className="text-muted-foreground hover:text-foreground">✕</button>
+              </div>
+              <div className="p-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                    placeholder="Buscar exercício..." 
+                    className="pl-10 bg-muted border-border h-10" 
+                  />
+                </div>
+              </div>
+              <div className="overflow-y-auto max-h-[50vh] p-4 pt-0 space-y-2">
+                {filteredExercises.map((ex) => (
+                  <button 
+                    key={ex.id} 
+                    onClick={() => addExerciseToDay(ex)} 
+                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted text-left transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                      <Dumbbell className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{ex.name}</p>
+                      <p className="text-xs text-muted-foreground">{ex.muscle_groups?.join(", ")}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -473,7 +511,6 @@ export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editin
               <Select value={programData.category} onValueChange={(value) => setProgramData(prev => ({ ...prev, category: value }))}>
                 <SelectTrigger className="bg-muted border-border h-11"><SelectValue /></SelectTrigger>
                 <SelectContent className="bg-card border-border z-[60]">
-                  <SelectItem value="Nenhuma">Nenhuma</SelectItem>
                   <SelectItem value="Hipertrofia">Hipertrofia</SelectItem>
                   <SelectItem value="Força">Força</SelectItem>
                   <SelectItem value="Resistência">Resistência</SelectItem>

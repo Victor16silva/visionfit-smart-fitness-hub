@@ -7,7 +7,6 @@ import WeeklyChallengeCard from "@/components/WeeklyChallengeCard";
 import WarmupCard from "@/components/WarmupCard";
 import BodyFocusItem from "@/components/BodyFocusItem";
 import CurrentWorkoutCard from "@/components/CurrentWorkoutCard";
-import PerformanceCalendar from "@/components/PerformanceCalendar";
 import workoutDaily from "@/assets/workout-daily.jpg";
 import workoutFullbody from "@/assets/workout-fullbody.jpg";
 import workoutHiit from "@/assets/workout-hiit.jpg";
@@ -35,20 +34,28 @@ export default function Dashboard() {
     { name: "Pernas", image: muscleLegs, area: "pernas" },
   ];
 
+  const weekDays = [
+    { day: "Seg", date: 1, active: true },
+    { day: "Ter", date: 2, active: false },
+    { day: "Qua", date: 3, active: false },
+    { day: "Qui", date: 4, active: false },
+    { day: "Sex", date: 5, active: false },
+  ];
+
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-8">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="p-4 pb-0">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl md:text-3xl font-black text-lime tracking-tight">VISIONFIT</h1>
+          <h1 className="text-2xl font-black text-lime tracking-tight">VISIONFIT</h1>
           <div className="flex items-center gap-2">
             <button 
               onClick={() => navigate("/workouts")}
-              className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors"
+              className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-card-hover transition-colors"
             >
               <Search className="h-5 w-5 text-foreground" />
             </button>
-            <button className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors relative">
+            <button className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-card-hover transition-colors relative">
               <Bell className="h-5 w-5 text-foreground" />
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-lime rounded-full border-2 border-background"></span>
             </button>
@@ -57,16 +64,16 @@ export default function Dashboard() {
         
         {/* Greeting */}
         <div className="mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold mb-1">Olá, {userName}! 👋</h2>
-          <p className="text-muted-foreground text-sm md:text-base">É hora de desafiar seus limites.</p>
+          <h2 className="text-2xl font-bold mb-1">Olá, {userName}! 👋</h2>
+          <p className="text-muted-foreground text-sm">É hora de desafiar seus limites.</p>
         </div>
 
-        {/* Current Workout */}
+        {/* Current Workout - NEW SECTION */}
         <div className="mb-6">
           <CurrentWorkoutCard />
         </div>
 
-        {/* Performance Calendar - Real-time */}
+        {/* Performance - Week Days */}
         <div className="mb-6">
           <SectionHeader 
             title="Meu Desempenho" 
@@ -74,8 +81,20 @@ export default function Dashboard() {
             actionLink="/progress"
             showBar={false}
           />
-          <div className="mt-3">
-            <PerformanceCalendar />
+          <div className="flex gap-2 mt-3">
+            {weekDays.map((item, index) => (
+              <button
+                key={index}
+                className={`flex-1 py-3 rounded-xl text-center transition-all ${
+                  item.active 
+                    ? 'bg-lime text-black' 
+                    : 'bg-card border border-border text-foreground'
+                }`}
+              >
+                <div className="text-xs opacity-70 mb-0.5">{item.day}</div>
+                <div className="text-xl font-bold">{item.date}</div>
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -99,7 +118,7 @@ export default function Dashboard() {
           actionText="Ver Todos"
           actionLink="/workouts"
         />
-        <div className="flex gap-4 mt-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide md:grid md:grid-cols-4 md:mx-0 md:px-0 md:overflow-visible">
+        <div className="flex gap-4 mt-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {muscleGroups.map((group, index) => (
             <BodyFocusItem
               key={index}
@@ -111,39 +130,36 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Warmup and Challenge Grid for larger screens */}
-      <div className="px-4 pb-6 md:grid md:grid-cols-2 md:gap-6">
-        {/* Warmup Section */}
-        <div className="mb-6 md:mb-0">
-          <SectionHeader 
-            title="Aquecimento" 
-            actionText="Ver Mais"
-            actionLink="/workouts/category/alongamento"
+      {/* Warmup Section */}
+      <div className="px-4 mb-6">
+        <SectionHeader 
+          title="Aquecimento" 
+          actionText="Ver Mais"
+          actionLink="/workouts/category/alongamento"
+        />
+        <div className="mt-3">
+          <WarmupCard 
+            title="Alongamento Pré-Treino"
+            subtitle="10 min • Prepare seu corpo"
+            image={workoutStretching}
+            points={15}
           />
-          <div className="mt-3">
-            <WarmupCard 
-              title="Alongamento Pré-Treino"
-              subtitle="10 min • Prepare seu corpo"
-              image={workoutStretching}
-              points={15}
-            />
-          </div>
         </div>
+      </div>
 
-        {/* Weekly Challenge */}
-        <div>
-          <SectionHeader 
-            title="Desafio da Semana" 
-            showBar={false}
+      {/* Weekly Challenge */}
+      <div className="px-4 pb-6">
+        <SectionHeader 
+          title="Desafio da Semana" 
+          showBar={false}
+        />
+        <div className="mt-3">
+          <WeeklyChallengeCard 
+            title="Plank com Hip Twist"
+            duration="7 dias"
+            level="Intermediário"
+            points={100}
           />
-          <div className="mt-3">
-            <WeeklyChallengeCard 
-              title="Plank com Hip Twist"
-              duration="7 dias"
-              level="Intermediário"
-              points={100}
-            />
-          </div>
         </div>
       </div>
     </div>

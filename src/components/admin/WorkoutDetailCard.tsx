@@ -103,21 +103,21 @@ export default function WorkoutDetailCard({
       <CardContent className="p-0">
         {/* Header */}
         <div 
-          className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+          className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-lime flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-lime flex items-center justify-center">
               <span className="text-lg font-bold text-black">
                 {workout.division_letter || "A"}
               </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-foreground truncate">{workout.name}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-1">
+            <div>
+              <h3 className="font-bold text-foreground">{workout.name}</h3>
+              <p className="text-sm text-muted-foreground">
                 {workout.description || workout.muscle_groups?.slice(0, 2).join(" e ")}
               </p>
-              <div className="flex gap-1.5 mt-1 flex-wrap">
+              <div className="flex gap-1.5 mt-1">
                 <Badge className={`text-xs ${getLevelBadge(workout.category)}`}>
                   {workout.category || "Intermediário"}
                 </Badge>
@@ -129,30 +129,24 @@ export default function WorkoutDetailCard({
               </div>
             </div>
           </div>
-          
-          {/* Action Buttons - Separate Row */}
-          <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-border/50">
+          <div className="flex items-center gap-2">
             <button 
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 transition-colors"
+              className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-muted transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(workout);
               }}
-              title="Editar treino"
             >
-              <Pencil className="h-4 w-4 text-blue-400" />
-              <span className="text-xs text-blue-400 font-medium">Editar</span>
+              <Pencil className="h-4 w-4 text-muted-foreground" />
             </button>
             <button 
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 transition-colors"
+              className="w-8 h-8 rounded-full bg-card-hover flex items-center justify-center hover:bg-destructive/20 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(workout.id);
               }}
-              title="Excluir treino"
             >
-              <Trash2 className="h-4 w-4 text-red-400" />
-              <span className="text-xs text-red-400 font-medium">Excluir</span>
+              <Trash2 className="h-4 w-4 text-muted-foreground" />
             </button>
             <button className="text-muted-foreground ml-2">
               {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}

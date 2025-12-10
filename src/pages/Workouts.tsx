@@ -122,13 +122,13 @@ export default function Workouts() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-8">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="px-4 pt-12 pb-6">
-        <h1 className="text-3xl md:text-4xl font-black text-foreground mb-6">Treinos</h1>
+        <h1 className="text-3xl font-black text-foreground mb-6">Treinos</h1>
         
         {/* Search Bar */}
-        <div className="relative mb-4 max-w-md">
+        <div className="relative mb-4">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             placeholder="Buscar treinos..."
@@ -139,7 +139,7 @@ export default function Workouts() {
         </div>
 
         {/* Level Filters */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2">
           {levels.map((level) => (
             <button
               key={level}
@@ -160,7 +160,7 @@ export default function Workouts() {
       {currentWorkout && (
         <div className="px-4 mb-6">
           <SectionHeader title="Treino Atual" />
-          <Card className="mt-3 bg-gradient-to-br from-lime/20 to-lime/5 border-lime/30 max-w-2xl">
+          <Card className="mt-3 bg-gradient-to-br from-lime/20 to-lime/5 border-lime/30">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -195,7 +195,7 @@ export default function Workouts() {
       {filteredMyWorkouts.length > 0 && (
         <div className="px-4 mb-6">
           <SectionHeader title="Meus Treinos" subtitle="Treinos atribuídos a você" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+          <div className="space-y-3 mt-3">
             {filteredMyWorkouts.map((workout) => (
               <Card 
                 key={workout.id}
@@ -205,22 +205,22 @@ export default function Workouts() {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1" onClick={() => navigate(`/workout-session/${workout.id}`)}>
-                      <div className="w-12 h-12 rounded-xl bg-purple/20 flex items-center justify-center flex-shrink-0">
+                    <div className="flex items-center gap-4" onClick={() => navigate(`/workout-session/${workout.id}`)}>
+                      <div className="w-12 h-12 rounded-xl bg-purple/20 flex items-center justify-center">
                         <span className="text-lg font-bold text-purple">{workout.division_letter || "A"}</span>
                       </div>
-                      <div className="min-w-0">
+                      <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-foreground truncate">{workout.name}</h3>
-                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime flex-shrink-0" />}
+                          <h3 className="font-bold text-foreground">{workout.name}</h3>
+                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime" />}
                         </div>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{workout.duration_minutes || 40} min</span>
-                          <span className="flex items-center gap-1 truncate"><Dumbbell className="h-3.5 w-3.5 flex-shrink-0" />{workout.muscle_groups?.join(", ")}</span>
+                          <span className="flex items-center gap-1"><Dumbbell className="h-3.5 w-3.5" />{workout.muscle_groups?.join(", ")}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2">
                       {workout.id !== currentWorkoutId && (
                         <Button 
                           size="sm" 
@@ -248,7 +248,7 @@ export default function Workouts() {
           subtitle="Escolha um treino para começar"
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+        <div className="space-y-3 mt-3">
           {filteredRecommended.length > 0 ? (
             filteredRecommended.map((workout) => (
               <Card 
@@ -259,33 +259,33 @@ export default function Workouts() {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1" onClick={() => navigate(`/workout-session/${workout.id}`)}>
-                      <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <div className="flex items-center gap-4" onClick={() => navigate(`/workout-session/${workout.id}`)}>
+                      <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
                         {workout.is_daily ? (
                           <Star className="h-6 w-6 text-amber-500" />
                         ) : (
                           <Dumbbell className="h-6 w-6 text-amber-500" />
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-foreground truncate">{workout.name}</h3>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-foreground">{workout.name}</h3>
                           {workout.is_daily && <Badge className="bg-amber-500/20 text-amber-500 text-xs">Diário</Badge>}
-                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime flex-shrink-0" />}
+                          {workout.id === currentWorkoutId && <Check className="h-4 w-4 text-lime" />}
                         </div>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{workout.duration_minutes || 40} min</span>
                           <span className="flex items-center gap-1"><Flame className="h-3.5 w-3.5 text-orange" />{workout.calories || 200} kcal</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 truncate">{workout.muscle_groups?.join(", ")}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{workout.muscle_groups?.join(", ")}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2">
                       {workout.id !== currentWorkoutId && (
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="border-lime/50 text-lime hover:bg-lime/10 hidden sm:flex"
+                          className="border-lime/50 text-lime hover:bg-lime/10"
                           onClick={() => selectAsCurrentWorkout(workout.id)}
                         >
                           Selecionar
@@ -298,7 +298,7 @@ export default function Workouts() {
               </Card>
             ))
           ) : (
-            <div className="col-span-full text-center py-12">
+            <div className="text-center py-12">
               <Dumbbell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">Nenhum treino recomendado disponível</p>
               <p className="text-sm text-muted-foreground mt-1">Aguarde seu personal criar treinos para você</p>
