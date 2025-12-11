@@ -33,11 +33,12 @@ interface TrainingDay {
   totalWeight: number;
 }
 
-interface WorkoutProgramModalProps {
+export interface WorkoutProgramModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   editingProgram?: any;
+  studentId?: string | null;
 }
 
 const DAYS_OF_WEEK = [
@@ -50,7 +51,7 @@ const DAYS_OF_WEEK = [
   { value: "Dom", label: "Domingo" },
 ];
 
-export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editingProgram }: WorkoutProgramModalProps) {
+export default function WorkoutProgramModal({ isOpen, onClose, onSuccess, editingProgram, studentId }: WorkoutProgramModalProps) {
   const { user } = useAuth();
   const [programData, setProgramData] = useState({ name: "", description: "", category: "Hipertrofia", coverImageUrl: "", isRecommended: false });
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([]);
