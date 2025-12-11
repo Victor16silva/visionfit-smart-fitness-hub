@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Dumbbell, ChevronUp, ChevronDown, Upload, Search, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Dumbbell, ChevronUp, ChevronDown, Upload, Search } from "lucide-react";
 import { toast } from "sonner";
 
 interface Exercise {
@@ -28,7 +28,6 @@ interface ExerciseWithConfig {
 export default function CreateWorkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [formData, setFormData] = useState({ name: "", division: "A", focus: "", focusArea: "", level: "Intermediário", category: "Hipertrofia", duration: "40", calories: "200", totalWeight: "0", coverImageUrl: "", isRecommended: false, isDaily: false, isChallenge: false, challengePoints: "50" });
   const [exercises, setExercises] = useState<ExerciseWithConfig[]>([]);
   const [allExercises, setAllExercises] = useState<Exercise[]>([]);
@@ -38,30 +37,8 @@ export default function CreateWorkout() {
 
   useEffect(() => {
     if (!user) { navigate("/auth"); return; }
-    checkAdminAccess();
+    loadExercises();
   }, [user]);
-
-  const checkAdminAccess = async () => {
-    try {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user?.id)
-        .in("role", ["admin", "master", "personal"])
-        .maybeSingle();
-
-      if (!data) {
-        setIsAdmin(false);
-        return;
-      }
-
-      setIsAdmin(true);
-      loadExercises();
-    } catch (error) {
-      console.error("Error checking admin access:", error);
-      setIsAdmin(false);
-    }
-  };
 
   const loadExercises = async () => {
     const { data } = await supabase.from("exercises").select("id, name, muscle_groups, image_url").order("name");
@@ -97,51 +74,18 @@ export default function CreateWorkout() {
         const exerciseInserts = exercises.map((ex, index) => ({ workout_plan_id: workoutData.id, exercise_id: ex.id, order_index: index, sets: ex.sets, reps_min: ex.reps, reps_max: ex.reps, rest_seconds: ex.restSeconds }));
         await supabase.from("workout_exercises").insert(exerciseInserts);
       }
-      toast.success("Treino criado com sucesso!"); navigate("/admin");
+      toast.success("Treino criado com sucesso!"); navigate("/dashboard");
     } catch (error) { console.error(error); toast.error("Erro ao criar treino"); } finally { setLoading(false); }
   };
 
   const filteredExercises = allExercises.filter(ex => ex.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  // Loading state
-  if (isAdmin === null) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Verificando acesso...</p>
-      </div>
-    );
-  }
-
-  // Not admin - show access denied
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center mb-4">
-          <ShieldAlert className="h-10 w-10 text-destructive" />
-        </div>
-        <h1 className="text-xl font-bold text-foreground mb-2">Acesso Restrito</h1>
-        <p className="text-muted-foreground text-center mb-6">
-          Apenas administradores podem criar treinos.<br />
-          Escolha um treino recomendado na aba de treinos.
-        </p>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate("/workouts")}>
-            Ver Treinos
-          </Button>
-          <Button onClick={() => navigate("/dashboard")} className="bg-lime text-black hover:bg-lime/90">
-            Voltar ao Início
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-20">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}><ArrowLeft className="h-5 w-5" /></Button>
-          <h1 className="text-lg font-bold text-foreground">Criar Treino (Admin)</h1>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}><ArrowLeft className="h-5 w-5" /></Button>
+          <h1 className="text-lg font-bold text-foreground">Criar Treino Personalizado</h1>
         </div>
       </header>
 

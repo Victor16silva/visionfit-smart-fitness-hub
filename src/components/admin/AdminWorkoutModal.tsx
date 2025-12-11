@@ -31,7 +31,6 @@ export default function AdminWorkoutModal({ isOpen, onClose, onOpenExercisePicke
   const [formData, setFormData] = useState({ name: "", division: "A", focus: "", focusArea: "", level: "Intermediário", category: "Hipertrofia", duration: "40", calories: "200", totalWeight: "0", coverImageUrl: "", isRecommended: false, isDaily: false, isChallenge: false, challengePoints: "50" });
   const [loading, setLoading] = useState(false);
   const [exercises, setExercises] = useState<ExerciseWithConfig[]>([]);
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     const existingIds = exercises.map(e => e.id);
@@ -49,56 +48,6 @@ export default function AdminWorkoutModal({ isOpen, onClose, onOpenExercisePicke
     setExercises(newExercises);
   };
   const removeExercise = (id: string) => { setExercises(prev => prev.filter(ex => ex.id !== id)); onRemoveExercise(id); };
-
-  const handleCoverImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error("Por favor, selecione uma imagem válida");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("A imagem deve ter no máximo 5MB");
-        return;
-      }
-
-      setUploadingImage(true);
-
-      // Create unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `workout-cover-${Date.now()}.${fileExt}`;
-      const filePath = `workout-covers/${fileName}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('profile-images')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('profile-images')
-        .getPublicUrl(filePath);
-
-      const publicUrl = urlData.publicUrl;
-
-      // Update form data with new URL
-      setFormData(prev => ({ ...prev, coverImageUrl: publicUrl }));
-
-      toast.success("Imagem carregada com sucesso!");
-    } catch (error) {
-      console.error("Error uploading cover image:", error);
-      toast.error("Erro ao fazer upload da imagem");
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   const handleCreate = async () => {
     if (!formData.name || !user) { toast.error("Preencha o nome do treino"); return; }
@@ -144,7 +93,7 @@ export default function AdminWorkoutModal({ isOpen, onClose, onOpenExercisePicke
             <div><label className="block text-sm text-foreground mb-1.5">Calorias</label><Input value={formData.calories} onChange={(e) => setFormData(prev => ({ ...prev, calories: e.target.value }))} type="number" className="bg-muted border-border h-11" /></div>
             <div><label className="block text-sm text-foreground mb-1.5">Carga Total (kg)</label><Input value={formData.totalWeight} onChange={(e) => setFormData(prev => ({ ...prev, totalWeight: e.target.value }))} type="number" className="bg-muted border-border h-11" /></div>
           </div>
-          <div><label className="block text-sm text-foreground mb-1.5">Imagem de Capa</label><div className="flex gap-2"><Input value={formData.coverImageUrl} onChange={(e) => setFormData(prev => ({ ...prev, coverImageUrl: e.target.value }))} placeholder="https://..." className="bg-muted border-border h-11 flex-1" /><input type="file" id="cover-image-upload-new" accept="image/*" onChange={handleCoverImageUpload} className="hidden" /><Button variant="outline" size="icon" className="h-11 w-11 border-border" onClick={() => document.getElementById('cover-image-upload-new')?.click()} disabled={uploadingImage} type="button">{uploadingImage ? <span className="animate-spin">⏳</span> : <Upload className="h-4 w-4" />}</Button></div></div>
+          <div><label className="block text-sm text-foreground mb-1.5">Imagem de Capa</label><div className="flex gap-2"><Input value={formData.coverImageUrl} onChange={(e) => setFormData(prev => ({ ...prev, coverImageUrl: e.target.value }))} placeholder="https://..." className="bg-muted border-border h-11 flex-1" /><Button variant="outline" size="icon" className="h-11 w-11 border-border"><Upload className="h-4 w-4" /></Button></div></div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2"><Checkbox id="recommended" checked={formData.isRecommended} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isRecommended: !!checked }))} /><label htmlFor="recommended" className="text-sm text-foreground cursor-pointer">Recomendado</label></div>
             <div className="flex items-center gap-2"><Checkbox id="daily" checked={formData.isDaily} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDaily: !!checked }))} /><label htmlFor="daily" className="text-sm text-foreground cursor-pointer">Treino Diário</label></div>

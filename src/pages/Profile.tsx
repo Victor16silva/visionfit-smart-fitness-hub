@@ -40,8 +40,6 @@ export default function Profile() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<string>("");
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [stats, setStats] = useState<ProfileStats>({
     workouts: 1,
     streak: 7,
@@ -61,15 +59,12 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url")
+        .select("full_name")
         .eq("id", user?.id)
         .single();
 
       if (error) throw error;
-      // Extract first name only to match Dashboard greeting
-      const firstName = data.full_name?.split(' ')[0] || data.full_name || 'Usuário';
-      setFullName(firstName);
-      setAvatarUrl(data.avatar_url || "");
+      setFullName(data.full_name);
     } catch (error) {
       console.error("Error loading profile:", error);
     }
@@ -81,10 +76,9 @@ export default function Profile() {
         .from("user_roles")
         .select("role")
         .eq("user_id", user?.id)
-        .in("role", ["admin", "master", "personal", "nutritionist"])
+        .in("role", ["admin", "master"])
         .maybeSingle();
 
-      setUserRole(data?.role || "");
       setIsAdmin(!!data);
     } catch (error) {
       console.error("Error checking admin status:", error);
@@ -106,7 +100,7 @@ export default function Profile() {
   };
 
   const accountMenuItems: MenuItem[] = [
-    { icon: Users, label: "Editar Perfil", path: "/edit-profile" },
+    { icon: Users, label: "Sobre Mim", path: "/settings" },
     { icon: Target, label: "Meus Objetivos", path: "/goals" },
     { icon: Trophy, label: "Conquistas", path: "/progress" },
     { icon: Heart, label: "Favoritos", path: "/favorites" },
@@ -131,24 +125,17 @@ export default function Profile() {
 
       {/* Profile Card with Gradient */}
       <div className="px-4 mb-6">
-        <Card className="overflow-hidden border-0 bg-gradient-to-br from-purple to-purple/90">
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-purple via-purple/80 to-accent">
           <CardContent className="p-6">
             {/* User Info */}
             <div className="flex items-center gap-4 mb-6">
               <div className="relative">
                 <Avatar className="h-20 w-20 border-4 border-background">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <AvatarFallback className="text-2xl bg-card text-primary font-bold">
-                      {getInitials()}
-                    </AvatarFallback>
-                  )}
+                  <AvatarFallback className="text-2xl bg-card text-primary font-bold">
+                    {getInitials()}
+                  </AvatarFallback>
                 </Avatar>
-                <button
-                  onClick={() => navigate("/edit-profile")}
-                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors"
-                >
+                <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center">
                   <ExternalLink className="h-3.5 w-3.5 text-primary-foreground" />
                 </button>
               </div>
@@ -156,30 +143,12 @@ export default function Profile() {
                 <h2 className="text-xl font-bold text-white">{fullName}</h2>
                 <p className="text-white/70 text-sm">{user?.email}</p>
                 <div className="flex gap-2 mt-2">
-                  {userRole === "master" ? (
-                    <>
-                      <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-semibold">
-                        Master
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                        Premium
-                      </span>
-                    </>
-                  ) : userRole === "admin" ? (
-                    <span className="px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-semibold">
+                  <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                    Premium
+                  </span>
+                  {isAdmin && (
+                    <span className="px-2 py-0.5 rounded-full bg-card text-foreground text-xs font-semibold">
                       Admin
-                    </span>
-                  ) : userRole === "personal" ? (
-                    <span className="px-2 py-0.5 rounded-full bg-blue-500 text-white text-xs font-semibold">
-                      Personal
-                    </span>
-                  ) : userRole === "nutritionist" ? (
-                    <span className="px-2 py-0.5 rounded-full bg-green-500 text-white text-xs font-semibold">
-                      Nutri
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                      Premium
                     </span>
                   )}
                 </div>
@@ -208,143 +177,42 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* Management Section */}
+      {/* About Me Section */}
       <div className="px-4 mb-4">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
-          Gerenciamento
-        </p>
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <h3 className="font-bold text-foreground mb-1">Sobre Mim</h3>
+            <p className="text-sm text-muted-foreground">
+              Adicione uma descrição sobre você e seus objetivos fitness.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-        <div className="space-y-2">
-          {/* Admin Panel */}
-          <Card
-            className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/30 cursor-pointer hover:from-orange-500/20 hover:to-red-500/20 transition-all"
-            onClick={async () => {
-              // Add master role if not present and wait for confirmation
-              if (!userRole) {
-                try {
-                  const { error } = await supabase
-                    .from("user_roles")
-                    .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
-
-                  if (error) {
-                    console.error("Error setting master role:", error);
-                    return;
-                  }
-
-                  // Update local state
-                  setUserRole("master");
-                  setIsAdmin(true);
-
-                  // Small delay to ensure DB update
-                  await new Promise(resolve => setTimeout(resolve, 300));
-                } catch (error) {
-                  console.error("Error setting master role:", error);
-                  return;
-                }
-              }
-              navigate("/admin");
-            }}
+      {/* Admin Section */}
+      {isAdmin && (
+        <div className="px-4 mb-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
+            Gerenciamento
+          </p>
+          <Card 
+            className="bg-orange/10 border-orange/30 cursor-pointer hover:bg-orange/20 transition-colors"
+            onClick={() => navigate("/admin")}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-orange-500" />
+                  <div className="w-10 h-10 rounded-xl bg-orange/20 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-orange" />
                   </div>
-                  <span className="font-bold text-orange-500">Painel Admin</span>
+                  <span className="font-bold text-orange">Painel Admin</span>
                 </div>
-                <ChevronRight className="h-5 w-5 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Vision Trainer */}
-          <Card
-            className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/30 cursor-pointer hover:from-blue-500/20 hover:to-cyan-500/20 transition-all"
-            onClick={async () => {
-              // Add master role if not present and wait for confirmation
-              if (!userRole) {
-                try {
-                  const { error } = await supabase
-                    .from("user_roles")
-                    .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
-
-                  if (error) {
-                    console.error("Error setting master role:", error);
-                    return;
-                  }
-
-                  // Update local state
-                  setUserRole("master");
-                  setIsAdmin(true);
-
-                  // Small delay to ensure DB update
-                  await new Promise(resolve => setTimeout(resolve, 300));
-                } catch (error) {
-                  console.error("Error setting master role:", error);
-                  return;
-                }
-              }
-              navigate("/vision-trainer");
-            }}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <Dumbbell className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <span className="font-bold text-blue-500">Vision Trainer</span>
-                </div>
-                <ChevronRight className="h-5 w-5 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Vision Nutri */}
-          <Card
-            className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 cursor-pointer hover:from-green-500/20 hover:to-emerald-500/20 transition-all"
-            onClick={async () => {
-              // Add master role if not present and wait for confirmation
-              if (!userRole) {
-                try {
-                  const { error } = await supabase
-                    .from("user_roles")
-                    .upsert({ user_id: user?.id, role: "master" }, { onConflict: "user_id,role" });
-
-                  if (error) {
-                    console.error("Error setting master role:", error);
-                    return;
-                  }
-
-                  // Update local state
-                  setUserRole("master");
-                  setIsAdmin(true);
-
-                  // Small delay to ensure DB update
-                  await new Promise(resolve => setTimeout(resolve, 300));
-                } catch (error) {
-                  console.error("Error setting master role:", error);
-                  return;
-                }
-              }
-              navigate("/vision-nutri");
-            }}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                    <Target className="h-5 w-5 text-green-500" />
-                  </div>
-                  <span className="font-bold text-green-500">Vision Nutri</span>
-                </div>
-                <ChevronRight className="h-5 w-5 text-green-500" />
+                <ChevronRight className="h-5 w-5 text-orange" />
               </div>
             </CardContent>
           </Card>
         </div>
-      </div>
+      )}
 
       {/* Account Menu */}
       <div className="px-4">

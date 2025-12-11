@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Plus, UserCog, Shield, Power } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export interface UserDetailCardProps {
+interface UserDetailCardProps {
   user: {
     id: string;
     full_name: string;
@@ -16,23 +16,17 @@ export interface UserDetailCardProps {
     height?: number;
     level?: string;
     biotype?: string;
-    is_active?: boolean;
   };
   onAssignWorkout: (userId: string) => void;
   onCreateWorkout: (userId: string) => void;
   onMakeAdmin: (userId: string) => void;
-  onMakeTrainer?: (userId: string) => void;
-  onMakeNutritionist?: (userId: string) => void;
-  onToggleActive?: (userId: string, currentlyActive: boolean) => void;
 }
 
 export default function UserDetailCard({ 
   user, 
   onAssignWorkout, 
   onCreateWorkout,
-  onMakeAdmin,
-  onMakeTrainer,
-  onToggleActive
+  onMakeAdmin 
 }: UserDetailCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -56,6 +50,7 @@ export default function UserDetailCard({
   return (
     <Card className="bg-card border-border overflow-hidden">
       <CardContent className="p-0">
+        {/* Header */}
         <div 
           className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -74,7 +69,7 @@ export default function UserDetailCard({
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">{user.email}</p>
-              <p className="text-xs text-muted-foreground">{user.workouts_count || 0} treinos</p>
+              <p className="text-xs text-muted-foreground">{user.workouts_count || 0} treinos atribuídos</p>
             </div>
           </div>
           <button className="text-muted-foreground">
@@ -82,37 +77,51 @@ export default function UserDetailCard({
           </button>
         </div>
 
+        {/* Expanded content */}
         {isExpanded && (
           <div className="px-4 pb-4 space-y-4 animate-fade-in">
+            {/* Info grid */}
             <div className="grid grid-cols-2 gap-2">
               <InfoItem label="Gênero" value={user.gender} />
               <InfoItem label="Idade" value={user.age} />
               <InfoItem label="Peso" value={user.weight_kg ? `${user.weight_kg} kg` : undefined} />
               <InfoItem label="Altura" value={user.height ? `${user.height} cm` : undefined} />
+              <InfoItem label="Nível" value={user.level} />
+              <InfoItem label="Biotipo" value={user.biotype} />
             </div>
 
+            {/* Action buttons */}
             <div className="space-y-2">
-              <Button className="w-full bg-lime text-black font-bold hover:bg-lime/90 h-11" onClick={(e) => { e.stopPropagation(); onAssignWorkout(user.id); }}>
-                <Plus className="h-4 w-4 mr-2" />Atribuir Treino
+              <Button 
+                className="w-full bg-lime text-black font-bold hover:bg-lime/90 h-11"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAssignWorkout(user.id);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Atribuir Treino Existente
               </Button>
-              <Button className="w-full bg-purple text-white font-bold hover:bg-purple/90 h-11" onClick={(e) => { e.stopPropagation(); onCreateWorkout(user.id); }}>
-                <Plus className="h-4 w-4 mr-2" />Criar Treino
+              <Button 
+                className="w-full bg-purple text-white font-bold hover:bg-purple/90 h-11"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateWorkout(user.id);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Treino Personalizado
               </Button>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="border-orange text-orange h-11" onClick={(e) => { e.stopPropagation(); onMakeAdmin(user.id); }}>
-                  <Shield className="h-4 w-4 mr-1" />Admin
-                </Button>
-                {onMakeTrainer && (
-                  <Button variant="outline" className="border-blue text-blue h-11" onClick={(e) => { e.stopPropagation(); onMakeTrainer(user.id); }}>
-                    <UserCog className="h-4 w-4 mr-1" />Personal
-                  </Button>
-                )}
-              </div>
-              {onToggleActive && (
-                <Button variant="outline" className={`w-full h-11 ${user.is_active !== false ? 'border-destructive text-destructive' : 'border-lime text-lime'}`} onClick={(e) => { e.stopPropagation(); onToggleActive(user.id, user.is_active !== false); }}>
-                  <Power className="h-4 w-4 mr-2" />{user.is_active !== false ? 'Desativar' : 'Ativar'}
-                </Button>
-              )}
+              <Button 
+                variant="outline"
+                className="w-full border-orange text-orange font-bold hover:bg-orange/10 h-11"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMakeAdmin(user.id);
+                }}
+              >
+                Tornar Admin
+              </Button>
             </div>
           </div>
         )}

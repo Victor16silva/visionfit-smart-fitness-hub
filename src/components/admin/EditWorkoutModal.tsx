@@ -17,7 +17,6 @@ export default function EditWorkoutModal({ isOpen, onClose, workout, onOpenExerc
   const [existingExercises, setExistingExercises] = useState<WorkoutExercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingExercises, setLoadingExercises] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (workout && isOpen) {
@@ -71,56 +70,6 @@ export default function EditWorkoutModal({ isOpen, onClose, workout, onOpenExerc
     try { const { error } = await supabase.from("workout_exercises").delete().eq("id", exerciseId); if (error) throw error; setExistingExercises(prev => prev.filter(e => e.id !== exerciseId)); toast.success("Exercício removido"); } catch (error) { console.error("Error removing exercise:", error); toast.error("Erro ao remover exercício"); }
   };
 
-  const handleCoverImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error("Por favor, selecione uma imagem válida");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("A imagem deve ter no máximo 5MB");
-        return;
-      }
-
-      setUploadingImage(true);
-
-      // Create unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `workout-cover-${workout?.id || Date.now()}-${Date.now()}.${fileExt}`;
-      const filePath = `workout-covers/${fileName}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('profile-images')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('profile-images')
-        .getPublicUrl(filePath);
-
-      const publicUrl = urlData.publicUrl;
-
-      // Update form data with new URL
-      setFormData(prev => ({ ...prev, coverImageUrl: publicUrl }));
-
-      toast.success("Imagem carregada com sucesso!");
-    } catch (error) {
-      console.error("Error uploading cover image:", error);
-      toast.error("Erro ao fazer upload da imagem");
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
   if (!isOpen || !workout) return null;
 
   return (
@@ -133,7 +82,7 @@ export default function EditWorkoutModal({ isOpen, onClose, workout, onOpenExerc
           <div className="grid grid-cols-2 gap-3"><div><label className="block text-sm text-foreground mb-1.5">Área de Foco</label><Select value={formData.focusArea} onValueChange={(value) => setFormData(prev => ({ ...prev, focusArea: value }))}><SelectTrigger className="bg-muted border-border h-11"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent className="bg-card border-border z-[60]"><SelectItem value="Peito">Peito</SelectItem><SelectItem value="Costas">Costas</SelectItem><SelectItem value="Pernas">Pernas</SelectItem><SelectItem value="Ombros">Ombros</SelectItem><SelectItem value="Braços">Braços</SelectItem><SelectItem value="Abdômen">Abdômen</SelectItem></SelectContent></Select></div><div><label className="block text-sm text-foreground mb-1.5">Nível</label><Select value={formData.level} onValueChange={(value) => setFormData(prev => ({ ...prev, level: value }))}><SelectTrigger className="bg-muted border-border h-11"><SelectValue /></SelectTrigger><SelectContent className="bg-card border-border z-[60]"><SelectItem value="Iniciante">Iniciante</SelectItem><SelectItem value="Intermediário">Intermediário</SelectItem><SelectItem value="Avançado">Avançado</SelectItem></SelectContent></Select></div></div>
           <div className="grid grid-cols-2 gap-3"><div><label className="block text-sm text-foreground mb-1.5">Categoria</label><Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}><SelectTrigger className="bg-muted border-border h-11"><SelectValue /></SelectTrigger><SelectContent className="bg-card border-border z-[60]"><SelectItem value="Hipertrofia">Hipertrofia</SelectItem><SelectItem value="Força">Força</SelectItem><SelectItem value="Resistência">Resistência</SelectItem><SelectItem value="Funcional">Funcional</SelectItem><SelectItem value="HIIT">HIIT</SelectItem></SelectContent></Select></div><div><label className="block text-sm text-foreground mb-1.5">Duração (min)</label><Input value={formData.duration} onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))} type="number" className="bg-muted border-border h-11" /></div></div>
           <div className="grid grid-cols-2 gap-3"><div><label className="block text-sm text-foreground mb-1.5">Calorias</label><Input value={formData.calories} onChange={(e) => setFormData(prev => ({ ...prev, calories: e.target.value }))} type="number" className="bg-muted border-border h-11" /></div><div><label className="block text-sm text-foreground mb-1.5">Carga Total (kg)</label><Input value={formData.totalWeight} onChange={(e) => setFormData(prev => ({ ...prev, totalWeight: e.target.value }))} type="number" className="bg-muted border-border h-11" /></div></div>
-          <div><label className="block text-sm text-foreground mb-1.5">Imagem de Capa</label><div className="flex gap-2"><Input value={formData.coverImageUrl} onChange={(e) => setFormData(prev => ({ ...prev, coverImageUrl: e.target.value }))} placeholder="https://..." className="bg-muted border-border h-11 flex-1" /><input type="file" id="cover-image-upload" accept="image/*" onChange={handleCoverImageUpload} className="hidden" /><Button variant="outline" size="icon" className="h-11 w-11 border-border" onClick={() => document.getElementById('cover-image-upload')?.click()} disabled={uploadingImage} type="button">{uploadingImage ? <span className="animate-spin">⏳</span> : <Upload className="h-4 w-4" />}</Button></div></div>
+          <div><label className="block text-sm text-foreground mb-1.5">Imagem de Capa</label><div className="flex gap-2"><Input value={formData.coverImageUrl} onChange={(e) => setFormData(prev => ({ ...prev, coverImageUrl: e.target.value }))} placeholder="https://..." className="bg-muted border-border h-11 flex-1" /><Button variant="outline" size="icon" className="h-11 w-11 border-border"><Upload className="h-4 w-4" /></Button></div></div>
           <div className="flex items-center gap-6"><div className="flex items-center gap-2"><Checkbox id="recommended-edit" checked={formData.isRecommended} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isRecommended: !!checked }))} /><label htmlFor="recommended-edit" className="text-sm text-foreground cursor-pointer">Recomendado</label></div><div className="flex items-center gap-2"><Checkbox id="daily-edit" checked={formData.isDaily} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDaily: !!checked }))} /><label htmlFor="daily-edit" className="text-sm text-foreground cursor-pointer">Treino Diário</label></div></div>
           <div className="space-y-3"><div className="flex items-center gap-2"><Checkbox id="challenge-edit" checked={formData.isChallenge} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isChallenge: !!checked }))} /><label htmlFor="challenge-edit" className="text-sm text-amber-400 cursor-pointer">🏆 Marcar como Desafio</label></div>{formData.isChallenge && <div><label className="block text-sm text-foreground mb-1.5">Pontos do Desafio</label><Input value={formData.challengePoints} onChange={(e) => setFormData(prev => ({ ...prev, challengePoints: e.target.value }))} type="number" className="bg-muted border-border h-11" /></div>}</div>
           <div>
