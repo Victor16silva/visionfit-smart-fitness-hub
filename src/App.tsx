@@ -35,20 +35,13 @@ import Admin from "./pages/Admin";
 import WorkoutCategories from "./pages/WorkoutCategories";
 import StretchingList from "./pages/StretchingList";
 import EditWorkout from "./pages/EditWorkout";
-import BodyFocusWorkouts from "./pages/BodyFocusWorkouts";
-import AllBodyFocus from "./pages/AllBodyFocus";
-import ProgramDetail from "./pages/ProgramDetail";
-import WorkoutDetail from "./pages/WorkoutDetail";
-import VisionTrainer from "./pages/VisionTrainer";
-import VisionNutri from "./pages/VisionNutri";
-import EditProfile from "./pages/EditProfile";
 
 const queryClient = new QueryClient();
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen w-full bg-background pb-20">
-    <main className="w-full px-4 md:px-6 lg:px-8">
-      <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto">{children}</div>
+  <div className="min-h-screen w-full bg-background">
+    <main className="w-full">
+      <div className="max-w-md mx-auto">{children}</div>
     </main>
     <BottomNav />
   </div>
@@ -57,8 +50,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
 // Layout without BottomNav for full-screen pages
 const FullScreenLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen w-full bg-background">
-    <main className="w-full px-4 md:px-6 lg:px-8">
-      <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto">{children}</div>
+    <main className="w-full">
+      <div className="max-w-md mx-auto">{children}</div>
     </main>
   </div>
 );
@@ -187,17 +180,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/edit-profile"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <EditProfile />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-
+            
             {/* Workout Routes */}
             <Route
               path="/workout/:id"
@@ -307,23 +290,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/vision-trainer"
-              element={
-                <ProtectedRoute>
-                  <VisionTrainer />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/vision-nutri"
-              element={
-                <ProtectedRoute>
-                  <VisionNutri />
-                </ProtectedRoute>
-              }
-            />
-
+            
             {/* Category Routes */}
             <Route
               path="/workouts/categories"
@@ -341,46 +308,6 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <StretchingList />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workouts/focus/:area"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <BodyFocusWorkouts />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/body-focus"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AllBodyFocus />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/program/:programId"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ProgramDetail />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workout-detail/:workoutId"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <WorkoutDetail />
                   </AppLayout>
                 </ProtectedRoute>
               }

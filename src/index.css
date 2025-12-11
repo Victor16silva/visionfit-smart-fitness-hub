@@ -215,13 +215,4 @@
   .glow-orange {
     box-shadow: 0 0 20px hsl(25 95% 53% / 0.3), 0 0 40px hsl(25 95% 53% / 0.1);
   }
-  
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
 }

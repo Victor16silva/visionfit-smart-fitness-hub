@@ -25,24 +25,18 @@ const tips = [
 ];
 
 export default function PerformanceCalendar() {
+  const [selectedIndex, setSelectedIndex] = useState(4); // Start with today selected
   const [workoutData, setWorkoutData] = useState<Record<string, WorkoutDay>>({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   
-  // Get current day of week (0 = Sunday, 1 = Monday, etc.)
-  const today = new Date();
-  const currentDayOfWeek = today.getDay();
-  
-  // Generate 5 days starting from today
-  const next5Days = Array.from({ length: 5 }, (_, i) => {
+  // Generate last 5 days
+  const last5Days = Array.from({ length: 5 }, (_, i) => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + i);
+    date.setDate(date.getDate() - (4 - i));
     return date;
   });
-  
-  // Selected index is always 0 (today)
-  const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -55,9 +49,9 @@ export default function PerformanceCalendar() {
     
     setLoading(true);
     try {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 7); // Get last 7 days for history
-      startDate.setHours(0, 0, 0, 0);
+      const fiveDaysAgo = new Date();
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
+      fiveDaysAgo.setHours(0, 0, 0, 0);
 
       const { data: logs, error } = await supabase
         .from('workout_logs')
@@ -71,7 +65,7 @@ export default function PerformanceCalendar() {
           )
         `)
         .eq('user_id', user.id)
-        .gte('completed_at', startDate.toISOString())
+        .gte('completed_at', fiveDaysAgo.toISOString())
         .order('completed_at', { ascending: false });
 
       if (error) throw error;
@@ -122,25 +116,20 @@ export default function PerformanceCalendar() {
     }
   };
 
-  const selectedDate = next5Days[selectedIndex];
+  const selectedDate = last5Days[selectedIndex];
   const selectedData = workoutData[selectedDate.toDateString()];
 
   const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   const isToday = (date: Date) => {
-    const todayDate = new Date();
-    return date.toDateString() === todayDate.toDateString();
-  };
-
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
   };
 
   return (
     <div>
-      {/* Horizontal 5-day calendar starting from today */}
+      {/* Horizontal 5-day calendar */}
       <div className="flex gap-2 mb-4">
-        {next5Days.map((date, index) => {
+        {last5Days.map((date, index) => {
           const hasWorkout = !!workoutData[date.toDateString()];
           const isSelected = index === selectedIndex;
           const todayDate = isToday(date);
@@ -149,38 +138,47 @@ export default function PerformanceCalendar() {
             <button
               key={index}
               onClick={() => setSelectedIndex(index)}
-              className={`flex-1 py-3 rounded-xl transition-all relative ${
+              className={`flex-1 p-3 rounded-xl transition-all relative ${
                 isSelected 
                   ? 'bg-lime text-black' 
                   : 'bg-card border border-border text-foreground'
               }`}
             >
-              <div className={`text-xs mb-0.5 ${isSelected ? 'text-black/70' : 'opacity-70'}`}>
+              {todayDate && (
+                <span className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${
+                  isSelected ? 'bg-black' : 'bg-lime'
+                }`} />
+              )}
+              <div className="text-xs opacity-80 mb-1">
                 {dayNames[date.getDay()]}
               </div>
-              <div className="text-xl font-bold">
+              <div className="text-xl font-bold mb-1">
                 {date.getDate()}
               </div>
-              {hasWorkout && !isSelected && (
-                <div className="w-1.5 h-1.5 rounded-full mx-auto mt-1 bg-lime" />
+              {hasWorkout && (
+                <div className={`w-1.5 h-1.5 rounded-full mx-auto ${
+                  isSelected ? 'bg-black' : 'bg-lime'
+                }`} />
               )}
             </button>
           );
         })}
       </div>
 
-      {/* Performance Card */}
-      <Card className="p-4 bg-card border-border">
-        <h4 className="font-bold text-foreground mb-3">
-          Desempenho - {formatDate(selectedDate)}
-        </h4>
-        
-        {loading ? (
+      {loading ? (
+        <Card className="mt-4 p-4 bg-card border-border">
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-muted rounded w-1/2"></div>
             <div className="h-10 bg-muted rounded"></div>
+            <div className="h-10 bg-muted rounded"></div>
           </div>
-        ) : selectedData ? (
+        </Card>
+      ) : selectedData ? (
+        <Card className="mt-4 p-4 bg-card border-border">
+          <h4 className="font-bold text-foreground mb-4 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-lime" />
+            Desempenho - {selectedData.date.toLocaleDateString('pt-BR')}
+          </h4>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-orange/20 flex items-center justify-center">
@@ -215,26 +213,25 @@ export default function PerformanceCalendar() {
             <div className="flex items-start gap-3 p-3 bg-blue/10 rounded-lg">
               <Lightbulb className="h-5 w-5 text-blue flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs text-blue mb-1">Dica do Dia</p>
+                <p className="text-xs text-muted-foreground mb-1">Dica do Dia</p>
                 <p className="text-sm text-foreground">{selectedData.tip}</p>
               </div>
             </div>
           </div>
-        ) : (
-          <div>
-            <p className="text-muted-foreground text-sm mb-3">
-              Nenhum treino registrado neste dia.
+        </Card>
+      ) : (
+        <Card className="mt-4 p-4 bg-card border-border text-center">
+          <div className="py-6">
+            <Dumbbell className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground text-sm">
+              Nenhum treino registrado em {selectedDate.toLocaleDateString('pt-BR')}
             </p>
-            <div className="flex items-start gap-3 p-3 bg-blue/10 rounded-lg">
-              <Lightbulb className="h-5 w-5 text-blue flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-blue mb-1">Dica do Dia</p>
-                <p className="text-sm text-foreground">{tips[new Date().getDay() % tips.length]}</p>
-              </div>
-            </div>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Complete um treino para ver seu desempenho aqui!
+            </p>
           </div>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
