@@ -30,9 +30,35 @@ export default function SendMessageModal({
 
     setLoading(true);
     try {
-      const { error } = await supabase.from("trainer_chat").insert({
+      // First check if there's an existing chat request
+      let { data: existingRequest } = await supabase
+        .from("trainer_chat_requests")
+        .select("id")
+        .eq("user_id", studentId)
+        .maybeSingle();
+
+      let requestId = existingRequest?.id;
+
+      // If no existing request, create one
+      if (!requestId) {
+        const { data: newRequest, error: requestError } = await supabase
+          .from("trainer_chat_requests")
+          .insert({
+            user_id: studentId,
+            trainer_id: user.id,
+            status: "active"
+          })
+          .select("id")
+          .single();
+
+        if (requestError) throw requestError;
+        requestId = newRequest?.id;
+      }
+
+      // Insert the message
+      const { error } = await supabase.from("trainer_messages").insert({
+        request_id: requestId,
         sender_id: user.id,
-        receiver_id: studentId,
         message: message.trim(),
       });
 

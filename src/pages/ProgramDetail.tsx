@@ -83,9 +83,11 @@ export default function ProgramDetail() {
           .from("workout_programs")
           .select("*")
           .eq("id", programId)
-          .single();
+          .maybeSingle();
 
-        setProgram(programData);
+        if (programData) {
+          setProgram(programData);
+        }
 
         // Load workouts for this program
         const { data: workoutsData } = await supabase
