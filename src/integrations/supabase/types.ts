@@ -172,11 +172,46 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null
           avatar_url: string | null
           created_at: string
+          current_program_id: string | null
+          current_workout_id: string | null
           full_name: string
           gender: string | null
           id: string
@@ -188,6 +223,8 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          current_program_id?: string | null
+          current_workout_id?: string | null
           full_name: string
           gender?: string | null
           id: string
@@ -199,11 +236,153 @@ export type Database = {
           age?: number | null
           avatar_url?: string | null
           created_at?: string
+          current_program_id?: string | null
+          current_workout_id?: string | null
           full_name?: string
           gender?: string | null
           id?: string
           onboarding_completed?: boolean | null
           updated_at?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_program_id_fkey"
+            columns: ["current_program_id"]
+            isOneToOne: false
+            referencedRelation: "workout_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_current_workout_id_fkey"
+            columns: ["current_workout_id"]
+            isOneToOne: false
+            referencedRelation: "workout_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_chat_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          trainer_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          trainer_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          trainer_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trainer_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          request_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          request_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          request_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "trainer_chat_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_goals: {
+        Row: {
+          age: number | null
+          body_type: string | null
+          created_at: string
+          fitness_goals: string[]
+          gender: string | null
+          height_cm: number | null
+          id: string
+          onboarding_completed: boolean | null
+          photo_back_url: string | null
+          photo_front_url: string | null
+          photo_left_url: string | null
+          photo_right_url: string | null
+          trainer_request_date: string | null
+          trainer_requested: boolean | null
+          training_level: string | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          age?: number | null
+          body_type?: string | null
+          created_at?: string
+          fitness_goals?: string[]
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          onboarding_completed?: boolean | null
+          photo_back_url?: string | null
+          photo_front_url?: string | null
+          photo_left_url?: string | null
+          photo_right_url?: string | null
+          trainer_request_date?: string | null
+          trainer_requested?: boolean | null
+          training_level?: string | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          age?: number | null
+          body_type?: string | null
+          created_at?: string
+          fitness_goals?: string[]
+          gender?: string | null
+          height_cm?: number | null
+          id?: string
+          onboarding_completed?: boolean | null
+          photo_back_url?: string | null
+          photo_front_url?: string | null
+          photo_left_url?: string | null
+          photo_right_url?: string | null
+          trainer_request_date?: string | null
+          trainer_requested?: boolean | null
+          training_level?: string | null
+          updated_at?: string
+          user_id?: string
           weight_kg?: number | null
         }
         Relationships: []
@@ -323,6 +502,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           created_by: string | null
+          day_of_week: string | null
           description: string | null
           division_letter: string | null
           duration_minutes: number | null
@@ -333,6 +513,7 @@ export type Database = {
           is_recommended: boolean | null
           muscle_groups: string[]
           name: string
+          program_id: string | null
           total_weight_kg: number | null
           updated_at: string
           user_id: string
@@ -344,6 +525,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_week?: string | null
           description?: string | null
           division_letter?: string | null
           duration_minutes?: number | null
@@ -354,6 +536,7 @@ export type Database = {
           is_recommended?: boolean | null
           muscle_groups: string[]
           name: string
+          program_id?: string | null
           total_weight_kg?: number | null
           updated_at?: string
           user_id: string
@@ -365,6 +548,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_week?: string | null
           description?: string | null
           division_letter?: string | null
           duration_minutes?: number | null
@@ -375,7 +559,61 @@ export type Database = {
           is_recommended?: boolean | null
           muscle_groups?: string[]
           name?: string
+          program_id?: string | null
           total_weight_kg?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_plans_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "workout_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_programs: {
+        Row: {
+          category: string | null
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_recommended: boolean | null
+          name: string
+          progress_percent: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recommended?: boolean | null
+          name: string
+          progress_percent?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recommended?: boolean | null
+          name?: string
+          progress_percent?: number | null
           updated_at?: string
           user_id?: string
         }
