@@ -84,7 +84,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, user }: AssignWork
             title: "Novo Treino Atribuído!",
             message: `O treino "${workoutData.name}" foi atribuído a você. Confira agora!`,
             type: "workout",
-            workout_id: newWorkout.id
+            related_id: newWorkout.id
           });
         }
 

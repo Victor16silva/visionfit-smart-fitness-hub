@@ -52,11 +52,11 @@ export default function Workouts() {
     try {
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("current_workout_id")
+        .select("*")
         .eq("id", user?.id)
         .single();
 
-      setCurrentWorkoutId(profileData?.current_workout_id || null);
+      setCurrentWorkoutId((profileData as any)?.current_workout_id || null);
 
       const { data: recommended } = await supabase
         .from("workout_plans")
@@ -86,7 +86,7 @@ export default function Workouts() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ current_workout_id: workoutId })
+        .update({ current_workout_id: workoutId } as any)
         .eq("id", user?.id);
 
       if (error) throw error;

@@ -10,13 +10,9 @@ import { useNavigate } from "react-router-dom";
 interface Message {
   id: string;
   sender_id: string;
-  receiver_id: string;
   message: string;
-  workout_id?: string;
-  read: boolean;
   created_at: string;
   sender_name?: string;
-  workout_name?: string;
 }
 
 interface TrainerChatProps {
@@ -25,6 +21,7 @@ interface TrainerChatProps {
   trainerId: string;
   trainerName: string;
   userId: string;
+  requestId?: string;
 }
 
 export default function TrainerChat({
@@ -33,17 +30,18 @@ export default function TrainerChat({
   trainerId,
   trainerName,
   userId,
+  requestId,
 }: TrainerChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chatRequestId, setChatRequestId] = useState<string | null>(requestId || null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
-      loadMessages();
-      subscribeToMessages();
+      initializeChat();
     }
   }, [isOpen, userId, trainerId]);
 
@@ -55,53 +53,60 @@ export default function TrainerChat({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const loadMessages = async () => {
+  const initializeChat = async () => {
+    try {
+      // Find or create chat request
+      let { data: existingRequest } = await supabase
+        .from("trainer_chat_requests")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (existingRequest) {
+        setChatRequestId(existingRequest.id);
+        loadMessages(existingRequest.id);
+        subscribeToMessages(existingRequest.id);
+      }
+    } catch (error) {
+      console.error("Error initializing chat:", error);
+    }
+  };
+
+  const loadMessages = async (reqId: string) => {
     try {
       const { data, error } = await supabase
-        .from("trainer_chat")
+        .from("trainer_messages")
         .select(`
-          *,
-          sender:sender_id(full_name),
-          workout_plans:workout_id(name)
+          id,
+          sender_id,
+          message,
+          created_at
         `)
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-        .or(`sender_id.eq.${trainerId},receiver_id.eq.${trainerId}`)
+        .eq("request_id", reqId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
 
-      const formattedMessages = (data || []).map((msg: any) => ({
-        ...msg,
-        sender_name: msg.sender?.full_name,
-        workout_name: msg.workout_plans?.name,
-      }));
-
-      setMessages(formattedMessages);
-
-      // Mark messages as read
-      await supabase
-        .from("trainer_chat")
-        .update({ read: true })
-        .eq("receiver_id", userId)
-        .eq("read", false);
+      setMessages(data || []);
     } catch (error) {
       console.error("Error loading messages:", error);
       toast.error("Erro ao carregar mensagens");
     }
   };
 
-  const subscribeToMessages = () => {
+  const subscribeToMessages = (reqId: string) => {
     const channel = supabase
-      .channel("trainer_chat_changes")
+      .channel("trainer_messages_changes")
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
-          table: "trainer_chat",
+          table: "trainer_messages",
+          filter: `request_id=eq.${reqId}`,
         },
         () => {
-          loadMessages();
+          loadMessages(reqId);
         }
       )
       .subscribe();
@@ -116,16 +121,36 @@ export default function TrainerChat({
 
     setLoading(true);
     try {
-      const { error } = await supabase.from("trainer_chat").insert({
+      let reqId = chatRequestId;
+
+      // Create chat request if it doesn't exist
+      if (!reqId) {
+        const { data: newRequest, error: requestError } = await supabase
+          .from("trainer_chat_requests")
+          .insert({
+            user_id: userId,
+            status: "pending"
+          })
+          .select("id")
+          .single();
+
+        if (requestError) throw requestError;
+        reqId = newRequest?.id;
+        setChatRequestId(reqId);
+      }
+
+      if (!reqId) throw new Error("Failed to create chat request");
+
+      const { error } = await supabase.from("trainer_messages").insert({
+        request_id: reqId,
         sender_id: userId,
-        receiver_id: trainerId,
         message: newMessage.trim(),
       });
 
       if (error) throw error;
 
       setNewMessage("");
-      loadMessages();
+      loadMessages(reqId);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Erro ao enviar mensagem");
@@ -213,27 +238,10 @@ export default function TrainerChat({
                     >
                       {!isOwnMessage && (
                         <p className="text-xs font-semibold mb-1">
-                          {msg.sender_name || "Trainer"}
+                          {trainerName}
                         </p>
                       )}
                       <p className="text-sm">{msg.message}</p>
-                      {msg.workout_id && msg.workout_name && (
-                        <button
-                          onClick={() => {
-                            navigate(`/workout-session/${msg.workout_id}`);
-                            onClose();
-                          }}
-                          className={`mt-2 flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${
-                            isOwnMessage
-                              ? "bg-black/20 hover:bg-black/30"
-                              : "bg-lime/20 hover:bg-lime/30"
-                          } transition-colors`}
-                        >
-                          <Dumbbell className="h-3 w-3" />
-                          <span>{msg.workout_name}</span>
-                          <ExternalLink className="h-3 w-3" />
-                        </button>
-                      )}
                       <p
                         className={`text-xs mt-1 ${
                           isOwnMessage ? "text-black/60" : "text-muted-foreground"
