@@ -60,7 +60,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, user }: AssignWork
 
       if (workoutData) {
         // Create a copy of the workout for the user
-        const { error } = await supabase
+        const { data: newWorkout, error } = await supabase
           .from("workout_plans")
           .insert({
             name: workoutData.name,
@@ -71,10 +71,23 @@ export default function AssignWorkoutModal({ isOpen, onClose, user }: AssignWork
             cover_image_url: workoutData.cover_image_url,
             user_id: user.id,
             created_by: workoutData.created_by
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
-        
+
+        // Create notification for the user
+        if (newWorkout) {
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            title: "Novo Treino Atribuído!",
+            message: `O treino "${workoutData.name}" foi atribuído a você. Confira agora!`,
+            type: "workout",
+            workout_id: newWorkout.id
+          });
+        }
+
         toast.success(`Treino atribuído para ${user.full_name}`);
         onClose();
         setSelectedWorkout("");

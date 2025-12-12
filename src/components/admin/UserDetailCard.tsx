@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp, Plus, X, Dumbbell, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UserDetailCardProps {
   user: {
@@ -16,19 +18,81 @@ interface UserDetailCardProps {
     height?: number;
     level?: string;
     biotype?: string;
+    is_active?: boolean;
   };
   onAssignWorkout: (userId: string) => void;
   onCreateWorkout: (userId: string) => void;
   onMakeAdmin: (userId: string) => void;
+  onMakeTrainer?: (userId: string) => void;
+  onMakeNutritionist?: (userId: string) => void;
+  onToggleActive?: (userId: string, currentlyActive: boolean) => void;
 }
 
-export default function UserDetailCard({ 
-  user, 
-  onAssignWorkout, 
+interface UserWorkout {
+  id: string;
+  name: string;
+  division_letter: string;
+  muscle_groups: string[];
+}
+
+export default function UserDetailCard({
+  user,
+  onAssignWorkout,
   onCreateWorkout,
-  onMakeAdmin 
+  onMakeAdmin,
+  onMakeTrainer,
+  onMakeNutritionist,
+  onToggleActive
 }: UserDetailCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [userWorkouts, setUserWorkouts] = useState<UserWorkout[]>([]);
+  const [loadingWorkouts, setLoadingWorkouts] = useState(false);
+
+  useEffect(() => {
+    if (isExpanded) {
+      loadUserWorkouts();
+    }
+  }, [isExpanded, user.id]);
+
+  const loadUserWorkouts = async () => {
+    setLoadingWorkouts(true);
+    try {
+      const { data, error } = await supabase
+        .from("workout_plans")
+        .select("id, name, division_letter, muscle_groups")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setUserWorkouts(data || []);
+    } catch (error) {
+      console.error("Error loading user workouts:", error);
+    } finally {
+      setLoadingWorkouts(false);
+    }
+  };
+
+  const handleRemoveWorkout = async (workoutId: string) => {
+    if (!confirm("Tem certeza que deseja remover este treino do usuário?")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("workout_plans")
+        .update({ is_active: false })
+        .eq("id", workoutId);
+
+      if (error) throw error;
+
+      toast.success("Treino removido com sucesso!");
+      loadUserWorkouts();
+    } catch (error) {
+      console.error("Error removing workout:", error);
+      toast.error("Erro ao remover treino");
+    }
+  };
 
   const getRoleBadge = (role: string) => {
     const variants: Record<string, string> = {
@@ -90,6 +154,52 @@ export default function UserDetailCard({
               <InfoItem label="Biotipo" value={user.biotype} />
             </div>
 
+            {/* User's workouts list */}
+            {loadingWorkouts ? (
+              <div className="bg-muted/30 rounded-lg p-4 text-center">
+                <p className="text-sm text-muted-foreground">Carregando treinos...</p>
+              </div>
+            ) : userWorkouts.length > 0 ? (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-foreground">Treinos Atribuídos ({userWorkouts.length})</h4>
+                {userWorkouts.map((workout) => (
+                  <div
+                    key={workout.id}
+                    className="flex items-center justify-between bg-muted/30 rounded-lg p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple/20 flex items-center justify-center">
+                        <span className="text-sm font-bold text-purple">
+                          {workout.division_letter || "A"}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{workout.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {workout.muscle_groups?.join(", ") || "Sem grupos musculares"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveWorkout(workout.id);
+                      }}
+                      className="w-8 h-8 rounded-full bg-destructive/20 hover:bg-destructive/30 flex items-center justify-center transition-colors"
+                      title="Remover treino"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-muted/30 rounded-lg p-4 text-center">
+                <Dumbbell className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Nenhum treino atribuído</p>
+              </div>
+            )}
+
             {/* Action buttons */}
             <div className="space-y-2">
               <Button 
@@ -112,7 +222,7 @@ export default function UserDetailCard({
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Treino Personalizado
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 className="w-full border-orange text-orange font-bold hover:bg-orange/10 h-11"
                 onClick={(e) => {
@@ -122,6 +232,46 @@ export default function UserDetailCard({
               >
                 Tornar Admin
               </Button>
+              {onMakeTrainer && (
+                <Button
+                  variant="outline"
+                  className="w-full border-blue text-blue font-bold hover:bg-blue/10 h-11"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMakeTrainer(user.id);
+                  }}
+                >
+                  Tornar Personal
+                </Button>
+              )}
+              {onMakeNutritionist && (
+                <Button
+                  variant="outline"
+                  className="w-full border-green-500 text-green-500 font-bold hover:bg-green-500/10 h-11"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMakeNutritionist(user.id);
+                  }}
+                >
+                  Tornar Nutricionista
+                </Button>
+              )}
+              {onToggleActive && (
+                <Button
+                  variant="outline"
+                  className={`w-full font-bold h-11 ${
+                    user.is_active
+                      ? 'border-red-500 text-red-500 hover:bg-red-500/10'
+                      : 'border-green-500 text-green-500 hover:bg-green-500/10'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleActive(user.id, user.is_active ?? true);
+                  }}
+                >
+                  {user.is_active ? 'Desativar Usuário' : 'Ativar Usuário'}
+                </Button>
+              )}
             </div>
           </div>
         )}

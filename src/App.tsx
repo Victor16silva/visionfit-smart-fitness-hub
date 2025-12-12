@@ -35,6 +35,7 @@ import Admin from "./pages/Admin";
 import WorkoutCategories from "./pages/WorkoutCategories";
 import StretchingList from "./pages/StretchingList";
 import EditWorkout from "./pages/EditWorkout";
+import ProgramDetail from "./pages/ProgramDetail";
 
 const queryClient = new QueryClient();
 
@@ -234,6 +235,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <EditWorkout />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/program/:programId"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ProgramDetail />
                   </AppLayout>
                 </ProtectedRoute>
               }
