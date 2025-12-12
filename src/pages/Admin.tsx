@@ -117,14 +117,17 @@ export default function Admin() {
 
   const checkAdminAccess = async () => {
     try {
-      const { data } = await supabase
+      // Check using the has_role function via RPC or direct query
+      const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user?.id)
-        .in("role", ["admin", "master"])
-        .maybeSingle();
+        .eq("user_id", user?.id);
 
-      if (!data) {
+      const hasAdminAccess = roles?.some(r => 
+        r.role === "admin" || r.role === "master" || r.role === "personal"
+      );
+
+      if (!hasAdminAccess) {
         navigate("/dashboard");
         return;
       }
