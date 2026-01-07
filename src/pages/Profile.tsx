@@ -72,14 +72,16 @@ export default function Profile() {
 
   const checkAdminStatus = async () => {
     try {
-      const { data } = await supabase
+      const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user?.id)
-        .in("role", ["admin", "master"])
-        .maybeSingle();
+        .eq("user_id", user?.id);
 
-      setIsAdmin(!!data);
+      const hasAdminAccess = roles?.some(r => 
+        r.role === "admin" || r.role === "master" || r.role === "personal"
+      );
+      
+      setIsAdmin(!!hasAdminAccess);
     } catch (error) {
       console.error("Error checking admin status:", error);
     }
