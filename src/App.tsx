@@ -32,6 +32,7 @@ import AllWorkouts from "./pages/AllWorkouts";
 import WorkoutPlayer from "./pages/WorkoutPlayer";
 import WorkoutComplete from "./pages/WorkoutComplete";
 import Admin from "./pages/Admin";
+import NutritionAdmin from "./pages/NutritionAdmin";
 import WorkoutCategories from "./pages/WorkoutCategories";
 import StretchingList from "./pages/StretchingList";
 import EditWorkout from "./pages/EditWorkout";
@@ -298,6 +299,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/nutrition-admin"
+              element={
+                <ProtectedRoute>
+                  <NutritionAdmin />
                 </ProtectedRoute>
               }
             />

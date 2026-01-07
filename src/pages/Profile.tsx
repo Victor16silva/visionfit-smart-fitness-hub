@@ -191,28 +191,55 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* Admin Section */}
+      {/* Management Section */}
       {isAdmin && (
         <div className="px-4 mb-4">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
             Gerenciamento
           </p>
-          <Card 
-            className="bg-orange/10 border-orange/30 cursor-pointer hover:bg-orange/20 transition-colors"
-            onClick={() => navigate("/admin")}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-orange/20 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-orange" />
+          <div className="space-y-2">
+            {/* Vision Treiner */}
+            <Card 
+              className="bg-orange/10 border-orange/30 cursor-pointer hover:bg-orange/20 transition-colors"
+              onClick={() => navigate("/admin")}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-orange/20 flex items-center justify-center">
+                      <Dumbbell className="h-5 w-5 text-orange" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-orange">Vision Treiner</span>
+                      <p className="text-xs text-orange/70">Painel do Personal</p>
+                    </div>
                   </div>
-                  <span className="font-bold text-orange">Painel Admin</span>
+                  <ChevronRight className="h-5 w-5 text-orange" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-orange" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            
+            {/* Vision Nutri */}
+            <Card 
+              className="bg-green-600/10 border-green-600/30 cursor-pointer hover:bg-green-600/20 transition-colors"
+              onClick={() => navigate("/nutrition-admin")}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-green-600/20 flex items-center justify-center">
+                      <Heart className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-green-600">Vision Nutri</span>
+                      <p className="text-xs text-green-600/70">Painel de Nutrição</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
