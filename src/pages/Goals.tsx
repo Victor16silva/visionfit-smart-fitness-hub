@@ -29,6 +29,7 @@ export default function Goals() {
   const [showChat, setShowChat] = useState(false);
   const [existingGoals, setExistingGoals] = useState<any>(null);
   const [chatRequestId, setChatRequestId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Form data
   const [gender, setGender] = useState("");
@@ -81,9 +82,15 @@ export default function Goals() {
       
       if (data.trainer_requested) {
         setSent(true);
-        setStep(TOTAL_STEPS);
       }
+      // Always start from step 1 to allow editing
     }
+  };
+
+  const handleStartEditing = () => {
+    setIsEditing(true);
+    setSent(false);
+    setStep(1);
   };
 
   const checkChatRequest = async () => {
@@ -227,11 +234,116 @@ Mensagem do aluno: ${trainerMessage || "Nenhuma mensagem adicional"}`,
     }
   };
 
+  // Show summary screen if already sent and not editing
+  if (sent && !isEditing && step === 1) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Header */}
+        <div className="p-4 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-bold flex-1">Meus Objetivos</h1>
+          {chatRequestId && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowChat(true)}
+            >
+              <MessageCircle className="w-5 h-5" />
+            </Button>
+          )}
+        </div>
+
+        {/* Summary Content */}
+        <div className="flex-1 p-4 space-y-4">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 mx-auto bg-lime/20 rounded-full flex items-center justify-center mb-3">
+              <span className="text-3xl">✅</span>
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Dados Enviados</h2>
+            <p className="text-sm text-muted-foreground">
+              Seu personal está analisando suas informações
+            </p>
+          </div>
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-muted/50 rounded-xl p-3 text-center">
+              <p className="text-2xl mb-1">{gender === "male" ? "♂" : "♀"}</p>
+              <p className="text-xs text-muted-foreground">Gênero</p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold">{age}</p>
+              <p className="text-xs text-muted-foreground">Anos</p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold">{weight}kg</p>
+              <p className="text-xs text-muted-foreground">Peso</p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-3 text-center">
+              <p className="text-xl font-bold">{height}cm</p>
+              <p className="text-xs text-muted-foreground">Altura</p>
+            </div>
+          </div>
+
+          <div className="bg-muted/50 rounded-xl p-4">
+            <p className="text-sm font-medium mb-2">Objetivos</p>
+            <div className="flex flex-wrap gap-2">
+              {fitnessGoals.map((goal) => (
+                <span key={goal} className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full">
+                  {goal}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 space-y-2">
+          <Button
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-14"
+            onClick={() => setShowChat(true)}
+          >
+            <MessageCircle className="w-5 h-5 mr-2" />
+            Abrir Chat com Personal
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full h-12"
+            onClick={handleStartEditing}
+          >
+            ✏️ Editar Meus Dados
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full h-10"
+            onClick={() => navigate("/dashboard")}
+          >
+            Voltar ao Dashboard
+          </Button>
+        </div>
+
+        {/* Trainer Chat Modal */}
+        {user && (
+          <TrainerChat
+            isOpen={showChat}
+            onClose={() => setShowChat(false)}
+            trainerId=""
+            trainerName="Personal Trainer"
+            userId={user.id}
+            requestId={chatRequestId || undefined}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="p-4 flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={handleBack} disabled={sent}>
+        <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
@@ -249,7 +361,7 @@ Mensagem do aluno: ${trainerMessage || "Nenhuma mensagem adicional"}`,
             Passo {step} de {TOTAL_STEPS}
           </p>
         </div>
-        {sent && chatRequestId && (
+        {chatRequestId && (
           <Button
             variant="outline"
             size="icon"
@@ -301,7 +413,7 @@ Mensagem do aluno: ${trainerMessage || "Nenhuma mensagem adicional"}`,
       </div>
 
       {/* Footer */}
-      {step < TOTAL_STEPS && (
+      {step < TOTAL_STEPS && !sent && (
         <div className="p-4">
           <Button
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-14"
@@ -314,8 +426,8 @@ Mensagem do aluno: ${trainerMessage || "Nenhuma mensagem adicional"}`,
         </div>
       )}
 
-      {/* Footer for sent state */}
-      {sent && (
+      {/* Footer for step 9 after sending while editing */}
+      {sent && step === 9 && (
         <div className="p-4 space-y-2">
           <Button
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-14"
