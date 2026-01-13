@@ -33,6 +33,7 @@ import WorkoutPlayer from "./pages/WorkoutPlayer";
 import WorkoutComplete from "./pages/WorkoutComplete";
 import Admin from "./pages/Admin";
 import NutritionAdmin from "./pages/NutritionAdmin";
+import VisionTreiner from "./pages/VisionTreiner";
 import WorkoutCategories from "./pages/WorkoutCategories";
 import StretchingList from "./pages/StretchingList";
 import EditWorkout from "./pages/EditWorkout";
@@ -310,7 +311,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
+            <Route
+              path="/vision-treiner"
+              element={
+                <ProtectedRoute>
+                  <VisionTreiner />
+                </ProtectedRoute>
+              }
+            />
             {/* Category Routes */}
             <Route
               path="/workouts/categories"

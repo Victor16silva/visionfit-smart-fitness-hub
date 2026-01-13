@@ -40,6 +40,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPersonal, setIsPersonal] = useState(false);
   const [stats, setStats] = useState<ProfileStats>({
     workouts: 1,
     streak: 7,
@@ -52,7 +53,7 @@ export default function Profile() {
       return;
     }
     loadProfile();
-    checkAdminStatus();
+    checkRoles();
   }, [user, navigate]);
 
   const loadProfile = async () => {
@@ -70,20 +71,20 @@ export default function Profile() {
     }
   };
 
-  const checkAdminStatus = async () => {
+  const checkRoles = async () => {
     try {
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user?.id);
 
-      const hasAdminAccess = roles?.some(r => 
-        r.role === "admin" || r.role === "master" || r.role === "personal"
-      );
-      
-      setIsAdmin(!!hasAdminAccess);
+      if (roles) {
+        const roleNames = roles.map(r => r.role);
+        setIsAdmin(roleNames.includes("admin") || roleNames.includes("master"));
+        setIsPersonal(roleNames.includes("personal"));
+      }
     } catch (error) {
-      console.error("Error checking admin status:", error);
+      console.error("Error checking roles:", error);
     }
   };
 
@@ -192,53 +193,80 @@ export default function Profile() {
       </div>
 
       {/* Management Section */}
-      {isAdmin && (
+      {(isAdmin || isPersonal) && (
         <div className="px-4 mb-4">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">
             Gerenciamento
           </p>
           <div className="space-y-2">
-            {/* Vision Treiner */}
-            <Card 
-              className="bg-orange/10 border-orange/30 cursor-pointer hover:bg-orange/20 transition-colors"
-              onClick={() => navigate("/admin")}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-orange/20 flex items-center justify-center">
-                      <Dumbbell className="h-5 w-5 text-orange" />
+            {/* Vision Treiner - For Personal */}
+            {isPersonal && (
+              <Card 
+                className="bg-primary/10 border-primary/30 cursor-pointer hover:bg-primary/20 transition-colors"
+                onClick={() => navigate("/vision-treiner")}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                        <Dumbbell className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-primary">Vision Treiner</span>
+                        <p className="text-xs text-primary/70">Gerencie seus alunos</p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="font-bold text-orange">Vision Treiner</span>
-                      <p className="text-xs text-orange/70">Painel do Personal</p>
-                    </div>
+                    <ChevronRight className="h-5 w-5 text-primary" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-orange" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Painel do Admin - For Admin/Master */}
+            {isAdmin && (
+              <Card 
+                className="bg-orange/10 border-orange/30 cursor-pointer hover:bg-orange/20 transition-colors"
+                onClick={() => navigate("/admin")}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-orange/20 flex items-center justify-center">
+                        <Settings className="h-5 w-5 text-orange" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-orange">Painel do Admin</span>
+                        <p className="text-xs text-orange/70">Administração Geral</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-orange" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             
             {/* Vision Nutri */}
-            <Card 
-              className="bg-green-600/10 border-green-600/30 cursor-pointer hover:bg-green-600/20 transition-colors"
-              onClick={() => navigate("/nutrition-admin")}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-green-600/20 flex items-center justify-center">
-                      <Heart className="h-5 w-5 text-green-600" />
+            {isAdmin && (
+              <Card 
+                className="bg-green-600/10 border-green-600/30 cursor-pointer hover:bg-green-600/20 transition-colors"
+                onClick={() => navigate("/nutrition-admin")}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-green-600/20 flex items-center justify-center">
+                        <Heart className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-green-600">Vision Nutri</span>
+                        <p className="text-xs text-green-600/70">Painel de Nutrição</p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="font-bold text-green-600">Vision Nutri</span>
-                      <p className="text-xs text-green-600/70">Painel de Nutrição</p>
-                    </div>
+                    <ChevronRight className="h-5 w-5 text-green-600" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       )}
