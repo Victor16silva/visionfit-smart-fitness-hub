@@ -83,11 +83,36 @@ export default function Goals() {
       if (data.trainer_requested) {
         setSent(true);
       }
-      // Always start from step 1 to allow editing
     }
   };
 
+  // Check if can edit (once per month)
+  const canEditGoals = () => {
+    if (!existingGoals?.updated_at) return true;
+    const lastUpdate = new Date(existingGoals.updated_at);
+    const nextEdit = new Date(lastUpdate);
+    nextEdit.setMonth(nextEdit.getMonth() + 1);
+    return new Date() >= nextEdit;
+  };
+
+  const getNextEditDate = () => {
+    if (!existingGoals?.updated_at) return null;
+    const lastUpdate = new Date(existingGoals.updated_at);
+    const nextEdit = new Date(lastUpdate);
+    nextEdit.setMonth(nextEdit.getMonth() + 1);
+    return nextEdit;
+  };
+
   const handleStartEditing = () => {
+    if (!canEditGoals()) {
+      const nextDate = getNextEditDate();
+      toast({ 
+        title: "Edição bloqueada", 
+        description: `Você pode editar novamente em ${nextDate?.toLocaleDateString('pt-BR')}`,
+        variant: "destructive" 
+      });
+      return;
+    }
     setIsEditing(true);
     setSent(false);
     setStep(1);
