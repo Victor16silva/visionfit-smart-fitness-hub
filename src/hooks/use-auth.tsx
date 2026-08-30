@@ -2,6 +2,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import {
+  clearDemoSession,
+  createDemoSession,
+  createDemoUser,
+  enableDemoSession,
+  isDemoCredentials,
+  isDemoSession,
+} from "@/lib/demo-auth";
 
 interface AuthContextType {
   user: User | null;
@@ -21,25 +29,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (isDemoSession()) {
+      const demoUser = createDemoUser();
+      setUser(demoUser);
+      setSession(createDemoSession(demoUser));
+      setLoading(false);
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (isDemoSession()) return;
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const timeoutId = window.setTimeout(() => {
+      if (!isDemoSession()) {
+        setLoading(false);
+      }
+    }, 2500);
 
-    return () => subscription.unsubscribe();
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (isDemoSession()) return;
+        window.clearTimeout(timeoutId);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        window.clearTimeout(timeoutId);
+        setLoading(false);
+      });
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
+      if (isDemoCredentials(email, password)) {
+        enableDemoSession();
+        const demoUser = createDemoUser();
+        setUser(demoUser);
+        setSession(createDemoSession(demoUser));
+        setLoading(false);
+        navigate("/dashboard");
+        return { error: null };
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -74,7 +117,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const wasDemo = isDemoSession();
+    clearDemoSession();
+    setUser(null);
+    setSession(null);
+    if (!wasDemo) {
+      await supabase.auth.signOut();
+    }
     navigate("/");
   };
 

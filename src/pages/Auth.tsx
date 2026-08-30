@@ -8,6 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Dumbbell, Mail, Lock, User, ArrowRight, ArrowLeft } from "lucide-react";
 import heroImg from "@/assets/hero-gym.jpg";
+import {
+  DEMO_EMAIL,
+  DEMO_PASSWORD,
+  isDemoModeEnabled,
+} from "@/lib/demo-auth";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,6 +30,29 @@ export default function Auth() {
       navigate("/dashboard");
     }
   }, [user, authLoading, navigate]);
+
+  const handleDemoLogin = async () => {
+    setIsLogin(true);
+    setEmail(DEMO_EMAIL);
+    setPassword(DEMO_PASSWORD);
+    setLoading(true);
+    try {
+      const { error } = await signIn(DEMO_EMAIL, DEMO_PASSWORD);
+      if (error) throw error;
+      toast({
+        title: "Login realizado!",
+        description: "Bem-vindo de volta ao VisionFit.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Ocorreu um erro. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,6 +267,19 @@ export default function Auth() {
                     </span>
                   )}
                 </Button>
+
+                {isDemoModeEnabled() && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    disabled={loading}
+                    onClick={handleDemoLogin}
+                    className="w-full h-12 font-bold text-base"
+                  >
+                    Entrar com a conta de demonstração
+                  </Button>
+                )}
               </form>
             </CardContent>
           </Card>
