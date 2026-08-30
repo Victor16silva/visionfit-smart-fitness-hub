@@ -6,12 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import RestTimer from "@/components/RestTimer";
 import ExerciseItem from "@/components/ExerciseItem";
-
-// Import images
 import workoutDaily from "@/assets/workout-daily.jpg";
-import muscleChest from "@/assets/muscle-chest.jpg";
 
 interface Exercise {
   id: string;
@@ -39,57 +37,15 @@ export default function WorkoutPlayer() {
   const { user } = useAuth();
 
   const [workout, setWorkout] = useState({
-    id: "1",
-    name: "Treino de Peito",
-    duration: 45,
-    calories: 380,
+    id: id || "1",
+    name: "Treino",
+    duration: 0,
+    calories: 0,
     imageUrl: workoutDaily,
   });
 
-  const [exercises, setExercises] = useState<Exercise[]>([
-    {
-      id: "1",
-      name: "Supino Reto com Barra",
-      sets: 4,
-      reps: "8-12",
-      restSeconds: 90,
-      muscleGroup: "Peito",
-      imageUrl: muscleChest,
-      instructions: [
-        "Deite no banco com os pés firmes no chão",
-        "Segure a barra com pegada média",
-        "Desça a barra até tocar o peito",
-        "Empurre a barra de volta até a extensão total"
-      ]
-    },
-    {
-      id: "2",
-      name: "Supino Inclinado com Halteres",
-      sets: 3,
-      reps: "10-12",
-      restSeconds: 60,
-      muscleGroup: "Peito Superior",
-      imageUrl: muscleChest,
-    },
-    {
-      id: "3",
-      name: "Crucifixo na Máquina",
-      sets: 3,
-      reps: "12-15",
-      restSeconds: 60,
-      muscleGroup: "Peito",
-      imageUrl: muscleChest,
-    },
-    {
-      id: "4",
-      name: "Flexão de Braço",
-      sets: 3,
-      reps: "15-20",
-      restSeconds: 45,
-      muscleGroup: "Peito",
-      imageUrl: muscleChest,
-    },
-  ]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [state, setState] = useState<WorkoutState>({
     currentExerciseIndex: 0,
@@ -103,6 +59,64 @@ export default function WorkoutPlayer() {
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
+  useEffect(() => {
+    const loadWorkout = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data: plan, error: planError } = await supabase
+          .from("workout_plans")
+          .select("id, name, duration_minutes, calories, cover_image_url")
+          .eq("id", id)
+          .single();
+
+        if (planError) throw planError;
+
+        setWorkout({
+          id: plan.id,
+          name: plan.name,
+          duration: plan.duration_minutes || 0,
+          calories: plan.calories || 0,
+          imageUrl: plan.cover_image_url || workoutDaily,
+        });
+
+        const { data: rows, error: exerciseError } = await supabase
+          .from("workout_exercises")
+          .select("id, sets, reps_min, reps_max, rest_seconds, exercise:exercises(name, image_url, muscle_groups, description)")
+          .eq("workout_plan_id", id)
+          .order("order_index");
+
+        if (exerciseError) throw exerciseError;
+
+        setExercises(
+          (rows || []).map((row) => {
+            const exercise = Array.isArray(row.exercise) ? row.exercise[0] : row.exercise;
+            const description = exercise?.description?.trim();
+            return {
+              id: row.id,
+              name: exercise?.name || "Exercício",
+              sets: row.sets,
+              reps: `${row.reps_min}-${row.reps_max}`,
+              restSeconds: row.rest_seconds,
+              muscleGroup: exercise?.muscle_groups?.[0] || "",
+              imageUrl: exercise?.image_url || workoutDaily,
+              instructions: description ? description.split("\n").filter(Boolean) : undefined,
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Error loading workout player:", error);
+        setExercises([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWorkout();
+  }, [id]);
+
   // Timer for elapsed time
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -115,7 +129,9 @@ export default function WorkoutPlayer() {
   }, [state.isPlaying, state.isResting]);
 
   const currentExercise = exercises[state.currentExerciseIndex];
-  const progress = ((state.currentExerciseIndex + (state.currentSet - 1) / currentExercise.sets) / exercises.length) * 100;
+  const progress = exercises.length && currentExercise
+    ? ((state.currentExerciseIndex + (state.currentSet - 1) / Math.max(currentExercise.sets, 1)) / exercises.length) * 100
+    : 0;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -151,6 +167,7 @@ export default function WorkoutPlayer() {
             duration: state.elapsedTime,
             calories: workout.calories,
             exercises: exercises.length,
+            workoutPlanId: workout.id,
           }
         });
       }
@@ -170,6 +187,24 @@ export default function WorkoutPlayer() {
       navigate(-1);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando treino...</p>
+      </div>
+    );
+  }
+
+  if (!currentExercise) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+        <p className="text-foreground font-bold mb-2">Treino sem exercícios</p>
+        <p className="text-muted-foreground mb-4">Este treino ainda não tem uma lista de exercícios.</p>
+        <Button onClick={() => navigate(-1)}>Voltar</Button>
+      </div>
+    );
+  }
 
   if (state.isResting) {
     return (

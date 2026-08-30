@@ -7,11 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import WorkoutCard from "@/components/WorkoutCard";
 import BottomNav from "@/components/BottomNav";
-
-// Import images
+import { getFavoriteIds } from "@/lib/favorites";
 import workoutDaily from "@/assets/workout-daily.jpg";
-import workoutFullbody from "@/assets/workout-fullbody.jpg";
-import workoutHiit from "@/assets/workout-hiit.jpg";
 
 interface FavoriteWorkout {
   id: string;
@@ -37,44 +34,45 @@ export default function Favorites() {
   }, [user]);
 
   const loadFavorites = async () => {
-    // TODO: Fetch from database
-    // Mock data for now
-    setFavorites([
-      {
-        id: "1",
-        title: "Treino de Peito Avançado",
-        duration: 45,
-        calories: 380,
-        exercises: 8,
-        level: "Avançado",
-        imageUrl: workoutDaily,
-        category: "Hipertrofia",
-        muscleGroups: ["Peito", "Tríceps"],
-      },
-      {
-        id: "2",
-        title: "Full Body Iniciante",
-        duration: 30,
-        calories: 250,
-        exercises: 6,
-        level: "Iniciante",
-        imageUrl: workoutFullbody,
-        category: "Condicionamento",
-        muscleGroups: ["Full Body"],
-      },
-      {
-        id: "3",
-        title: "HIIT Queima Gordura",
-        duration: 20,
-        calories: 300,
-        exercises: 10,
-        level: "Intermediário",
-        imageUrl: workoutHiit,
-        category: "Cardio",
-        muscleGroups: ["Cardio"],
-      },
-    ]);
-    setLoading(false);
+    if (!user) {
+      setFavorites([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const ids = getFavoriteIds(user.id);
+      if (ids.length === 0) {
+        setFavorites([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("workout_plans")
+        .select("id, name, duration_minutes, calories, category, cover_image_url, muscle_groups")
+        .in("id", ids);
+
+      if (error) throw error;
+
+      setFavorites(
+        (data || []).map((plan) => ({
+          id: plan.id,
+          title: plan.name,
+          duration: plan.duration_minutes || 0,
+          calories: plan.calories || 0,
+          exercises: 0,
+          level: plan.category || "Iniciante",
+          imageUrl: plan.cover_image_url || workoutDaily,
+          category: plan.category || undefined,
+          muscleGroups: plan.muscle_groups || [],
+        }))
+      );
+    } catch (error) {
+      console.error("Error loading favorites:", error);
+      setFavorites([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredFavorites = favorites.filter((workout) =>

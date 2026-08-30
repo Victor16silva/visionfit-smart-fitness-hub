@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Flame, Beef, Wheat, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SectionHeader from "@/components/SectionHeader";
 import BottomNav from "@/components/BottomNav";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { estimateDailyMacros } from "@/lib/nutrition-targets";
 
 // Import meal images
 import mealSalad1 from "@/assets/meal-salad1.jpg";
@@ -70,22 +72,46 @@ const categories = ["Todos", "Café da Manhã", "Almoço", "Jantar", "Lanche"];
 
 export default function Nutrition() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("Todos");
+  const [dailyMacros, setDailyMacros] = useState({
+    calories: { current: 0, target: 2000 },
+    protein: { current: 0, target: 150 },
+    carbs: { current: 0, target: 200 },
+    fat: { current: 0, target: 70 },
+  });
+
+  useEffect(() => {
+    loadTargets();
+  }, [user]);
+
+  const loadTargets = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("user_goals")
+        .select("gender, age, weight_kg, height_cm, training_level")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const targets = estimateDailyMacros(data);
+      setDailyMacros({
+        calories: { current: 0, target: targets.calories },
+        protein: { current: 0, target: targets.protein },
+        carbs: { current: 0, target: targets.carbs },
+        fat: { current: 0, target: targets.fat },
+      });
+    } catch (error) {
+      console.error("Error loading nutrition targets:", error);
+    }
+  };
 
   const filteredMeals = mealPlans.filter((meal) => {
     const matchesSearch = meal.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = activeCategory === "Todos" || meal.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
-
-  // Daily macros summary
-  const dailyMacros = {
-    calories: { current: 1450, target: 2000 },
-    protein: { current: 98, target: 150 },
-    carbs: { current: 120, target: 200 },
-    fat: { current: 48, target: 70 },
-  };
 
   return (
     <div className="min-h-screen bg-background pb-24">

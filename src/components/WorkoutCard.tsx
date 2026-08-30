@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { isFavoriteId, toggleFavoriteId } from "@/lib/favorites";
 
 interface WorkoutCardProps {
   id: string;
@@ -32,12 +34,19 @@ export default function WorkoutCard({
   variant = "vertical"
 }: WorkoutCardProps) {
   const navigate = useNavigate();
-  const [favorite, setFavorite] = useState(isFavorite);
+  const { user } = useAuth();
+  const [favorite, setFavorite] = useState(
+    isFavorite || (user ? isFavoriteId(user.id, id) : false)
+  );
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (user) {
+      const ids = toggleFavoriteId(user.id, id);
+      setFavorite(ids.includes(id));
+      return;
+    }
     setFavorite(!favorite);
-    // TODO: Save to database
   };
 
   const levelColors: Record<string, string> = {

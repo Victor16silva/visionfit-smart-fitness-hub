@@ -3,11 +3,15 @@ import { Trophy, Clock, Flame, Dumbbell, Share2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import confetti from "canvas-confetti";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function WorkoutComplete() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const savedLog = useRef(false);
   
   const stats = location.state || {
     duration: 2700, // 45 minutes in seconds
@@ -18,7 +22,26 @@ export default function WorkoutComplete() {
   const pointsEarned = Math.floor(stats.duration / 60) * 2 + stats.exercises * 10;
 
   useEffect(() => {
-    // Fire confetti on mount
+    const persistLog = async () => {
+      if (!user || savedLog.current) return;
+      savedLog.current = true;
+      try {
+        await supabase.from("workout_logs").insert({
+          user_id: user.id,
+          workout_plan_id:
+            typeof stats.workoutPlanId === "string" &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stats.workoutPlanId)
+              ? stats.workoutPlanId
+              : null,
+          duration_minutes: Math.max(1, Math.round((stats.duration || 0) / 60)),
+          completed_at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("Error saving workout log:", error);
+      }
+    };
+
+    persistLog();
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
