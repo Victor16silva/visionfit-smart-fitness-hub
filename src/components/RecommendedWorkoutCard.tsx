@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, Clock, Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { isFavoriteId, toggleFavoriteId } from "@/lib/favorites";
 
 interface Workout {
   id?: string;
@@ -18,10 +20,13 @@ interface RecommendedWorkoutCardProps {
 
 export default function RecommendedWorkoutCard({ workouts }: RecommendedWorkoutCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const currentWorkout = workouts[currentIndex];
+  const [isFavorite, setIsFavorite] = useState(
+    Boolean(user && currentWorkout?.id && isFavoriteId(user.id, currentWorkout.id))
+  );
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -35,6 +40,11 @@ export default function RecommendedWorkoutCard({ workouts }: RecommendedWorkoutC
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (user && currentWorkout?.id) {
+      const ids = toggleFavoriteId(user.id, currentWorkout.id);
+      setIsFavorite(ids.includes(currentWorkout.id));
+      return;
+    }
     setIsFavorite(!isFavorite);
   };
 

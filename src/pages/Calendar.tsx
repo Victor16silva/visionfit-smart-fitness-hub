@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import StatCard from "@/components/StatCard";
 import BottomNav from "@/components/BottomNav";
+import { supabase } from "@/integrations/supabase/client";
+import { localDateKey } from "@/lib/dates";
 
 interface WorkoutLog {
   date: string;
@@ -34,25 +36,40 @@ export default function Calendar() {
   }, [currentMonth, user]);
 
   const loadWorkoutLogs = async () => {
-    // TODO: Fetch from database
-    // Mock data
-    const mockLogs: Record<string, WorkoutLog> = {};
-    const today = new Date();
-    
-    // Add some mock workout days
-    for (let i = 0; i < 10; i++) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-      const key = date.toISOString().split("T")[0];
-      mockLogs[key] = {
-        date: key,
-        workoutName: ["Treino de Peito", "Full Body", "HIIT", "Pernas"][Math.floor(Math.random() * 4)],
-        duration: 30 + Math.floor(Math.random() * 30),
-        calories: 200 + Math.floor(Math.random() * 200),
-        exercises: 5 + Math.floor(Math.random() * 5),
-      };
+    if (!user) return;
+
+    try {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const start = new Date(year, month, 1).toISOString();
+      const end = new Date(year, month + 1, 1).toISOString();
+
+      const { data, error } = await supabase
+        .from("workout_logs")
+        .select("completed_at, duration_minutes, workout_plan_id, workout_plans(name, calories)")
+        .eq("user_id", user.id)
+        .gte("completed_at", start)
+        .lt("completed_at", end);
+
+      if (error) throw error;
+
+      const mapped: Record<string, WorkoutLog> = {};
+      (data || []).forEach((log) => {
+        const key = localDateKey(new Date(log.completed_at));
+        const plan = Array.isArray(log.workout_plans) ? log.workout_plans[0] : log.workout_plans;
+        mapped[key] = {
+          date: key,
+          workoutName: plan?.name || "Treino",
+          duration: log.duration_minutes || 0,
+          calories: plan?.calories || 0,
+          exercises: 0,
+        };
+      });
+      setWorkoutLogs(mapped);
+    } catch (error) {
+      console.error("Error loading calendar logs:", error);
+      setWorkoutLogs({});
     }
-    setWorkoutLogs(mockLogs);
   };
 
   const getDaysInMonth = (date: Date) => {
@@ -90,11 +107,11 @@ export default function Calendar() {
   };
 
   const hasWorkout = (date: Date) => {
-    return workoutLogs[date.toISOString().split("T")[0]];
+    return workoutLogs[localDateKey(date)];
   };
 
-  const selectedLog = selectedDate 
-    ? workoutLogs[selectedDate.toISOString().split("T")[0]] 
+  const selectedLog = selectedDate
+    ? workoutLogs[localDateKey(selectedDate)]
     : null;
 
   // Monthly stats

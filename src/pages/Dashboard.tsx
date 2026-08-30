@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,6 +8,7 @@ import WeeklyChallengeCard from "@/components/WeeklyChallengeCard";
 import WarmupCard from "@/components/WarmupCard";
 import BodyFocusItem from "@/components/BodyFocusItem";
 import CurrentWorkoutCard from "@/components/CurrentWorkoutCard";
+import { supabase } from "@/integrations/supabase/client";
 import workoutDaily from "@/assets/workout-daily.jpg";
 import workoutFullbody from "@/assets/workout-fullbody.jpg";
 import workoutHiit from "@/assets/workout-hiit.jpg";
@@ -20,12 +22,45 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const userName = user?.user_metadata?.full_name?.split(' ')[0] || 'Victor';
-
-  const recommendedWorkouts = [
-    { id: "1", title: "Superior Peito Avançado", duration: "40 min", calories: "233", level: "Avançado", image: workoutFullbody, points: 50 },
-    { id: "2", title: "Treino Diário", duration: "16 min", calories: "150", level: "Iniciante", image: workoutDaily, points: 20 },
-    { id: "3", title: "HIIT Cardio", duration: "30 min", calories: "280", level: "Intermediário", image: workoutHiit, points: 35 },
+  const fallbackWorkouts = [
+    { title: "Superior Peito Avançado", duration: "40 min", calories: "233", level: "Avançado", image: workoutFullbody, points: 50 },
+    { title: "Treino Diário", duration: "16 min", calories: "150", level: "Iniciante", image: workoutDaily, points: 20 },
+    { title: "HIIT Cardio", duration: "30 min", calories: "280", level: "Intermediário", image: workoutHiit, points: 35 },
   ];
+  const [recommendedWorkouts, setRecommendedWorkouts] = useState(fallbackWorkouts);
+
+  useEffect(() => {
+    const loadRecommended = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("workout_plans")
+          .select("id, name, duration_minutes, calories, category, cover_image_url, challenge_points")
+          .eq("is_recommended", true)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(6);
+
+        if (error) throw error;
+        if (!data || data.length === 0) return;
+
+        setRecommendedWorkouts(
+          data.map((plan) => ({
+            id: plan.id,
+            title: plan.name,
+            duration: `${plan.duration_minutes || 30} min`,
+            calories: String(plan.calories || 0),
+            level: plan.category || "Iniciante",
+            image: plan.cover_image_url || workoutFullbody,
+            points: plan.challenge_points || 20,
+          }))
+        );
+      } catch (error) {
+        console.error("Error loading recommended workouts:", error);
+      }
+    };
+
+    loadRecommended();
+  }, []);
 
   const muscleGroups = [
     { name: "Ombros", image: muscleShoulders, area: "ombros" },

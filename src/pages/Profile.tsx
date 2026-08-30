@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { computeWorkoutStreak, workoutLevelLabel } from "@/lib/workout-stats";
 import { 
   Settings, 
   Users, 
@@ -42,8 +43,8 @@ export default function Profile() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPersonal, setIsPersonal] = useState(false);
   const [stats, setStats] = useState<ProfileStats>({
-    workouts: 1,
-    streak: 7,
+    workouts: 0,
+    streak: 0,
     level: "Iniciante"
   });
 
@@ -54,6 +55,7 @@ export default function Profile() {
     }
     loadProfile();
     checkRoles();
+    loadStats();
   }, [user, navigate]);
 
   const loadProfile = async () => {
@@ -85,6 +87,28 @@ export default function Profile() {
       }
     } catch (error) {
       console.error("Error checking roles:", error);
+    }
+  };
+
+  const loadStats = async () => {
+    if (!user) return;
+    try {
+      const { data: logs, error } = await supabase
+        .from("workout_logs")
+        .select("completed_at")
+        .eq("user_id", user.id)
+        .order("completed_at", { ascending: false });
+
+      if (error) throw error;
+      const dates = (logs || []).map((log) => log.completed_at);
+      const total = logs?.length || 0;
+      setStats({
+        workouts: total,
+        streak: computeWorkoutStreak(dates),
+        level: workoutLevelLabel(total),
+      });
+    } catch (error) {
+      console.error("Error loading profile stats:", error);
     }
   };
 
