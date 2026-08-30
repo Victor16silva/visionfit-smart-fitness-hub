@@ -456,16 +456,23 @@ BEGIN
   IF v_user_id IS NULL THEN
     v_user_id := gen_random_uuid();
 
+    -- Os campos *_token/email_change precisam ser '' (não NULL): o GoTrue
+    -- lê essas colunas como string e falha ("Database error querying schema")
+    -- se estiverem NULL.
     INSERT INTO auth.users (
       instance_id, id, aud, role, email, encrypted_password,
       email_confirmed_at, created_at, updated_at,
-      raw_app_meta_data, raw_user_meta_data
+      raw_app_meta_data, raw_user_meta_data,
+      confirmation_token, recovery_token, email_change,
+      email_change_token_new, email_change_token_current,
+      phone_change, phone_change_token, reauthentication_token
     ) VALUES (
       '00000000-0000-0000-0000-000000000000', v_user_id, 'authenticated', 'authenticated',
       v_email, extensions.crypt(v_password, extensions.gen_salt('bf')),
       now(), now(), now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
-      jsonb_build_object('full_name','Admin VisionFit')
+      jsonb_build_object('full_name','Admin VisionFit'),
+      '', '', '', '', '', '', '', ''
     );
 
     INSERT INTO auth.identities (
@@ -477,8 +484,12 @@ BEGIN
     );
   ELSE
     UPDATE auth.users
-      SET email_confirmed_at = COALESCE(email_confirmed_at, now()),
-          encrypted_password = extensions.crypt(v_password, extensions.gen_salt('bf'))
+      SET email_confirmed_at        = COALESCE(email_confirmed_at, now()),
+          encrypted_password        = extensions.crypt(v_password, extensions.gen_salt('bf')),
+          confirmation_token        = COALESCE(confirmation_token, ''),
+          recovery_token            = COALESCE(recovery_token, ''),
+          email_change              = COALESCE(email_change, ''),
+          email_change_token_new    = COALESCE(email_change_token_new, '')
       WHERE id = v_user_id;
   END IF;
 
