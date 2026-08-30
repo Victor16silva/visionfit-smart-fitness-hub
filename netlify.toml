@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback: rotas do React Router funcionam ao recarregar a página.
+# Arquivos estáticos existentes (sw.js, manifest, icons) são servidos antes deste fallback.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
