@@ -57,6 +57,12 @@ export default function Profile() {
   }, [user, navigate]);
 
   const loadProfile = async () => {
+    const fallbackName =
+      (user?.user_metadata?.full_name as string | undefined) ||
+      user?.email ||
+      "";
+    setFullName(fallbackName);
+
     try {
       const { data, error } = await supabase
         .from("profiles")

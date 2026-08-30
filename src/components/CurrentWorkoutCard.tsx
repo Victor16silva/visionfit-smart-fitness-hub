@@ -36,12 +36,18 @@ export default function CurrentWorkoutCard({ onChangeWorkout }: CurrentWorkoutCa
   const loadWorkouts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from("workout_plans")
         .select("id, name, division_letter, muscle_groups, duration_minutes, calories, description")
         .eq("user_id", user?.id)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
+
+      const timeout = new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("timeout")), 3000);
+      });
+
+      const { data, error } = await Promise.race([query, timeout]);
 
       if (error) throw error;
       setUserWorkouts(data || []);
