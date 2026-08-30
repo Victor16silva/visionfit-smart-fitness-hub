@@ -111,7 +111,7 @@ export default function Progress() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-8 max-w-4xl pb-24">
         {loading ? (
           <p className="text-center py-8">Carregando estatísticas...</p>
         ) : (

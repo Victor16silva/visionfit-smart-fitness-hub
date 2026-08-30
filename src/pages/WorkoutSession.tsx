@@ -178,7 +178,7 @@ export default function WorkoutSession() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="container mx-auto px-4 py-8 max-w-2xl pb-24">
         {restTimer !== null && (
           <Card className="mb-6 bg-primary/10 border-primary">
             <CardContent className="py-4 text-center">

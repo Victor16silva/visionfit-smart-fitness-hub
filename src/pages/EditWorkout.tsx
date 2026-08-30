@@ -28,7 +28,7 @@ interface ExerciseWithConfig {
 }
 
 export default function EditWorkout() {
-  const { workoutId } = useParams();
+  const { id: workoutId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -244,7 +244,7 @@ export default function EditWorkout() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-lg space-y-4">
+      <main className="container mx-auto px-4 py-6 max-w-lg space-y-4 pb-24">
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2"><label className="block text-sm text-foreground mb-1.5">Nome do Treino *</label><Input value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Superior Peito Avançado" className="bg-muted border-border h-11" /></div>
           <div><label className="block text-sm text-foreground mb-1.5">Divisão *</label><Input value={formData.division} onChange={(e) => setFormData(prev => ({ ...prev, division: e.target.value }))} placeholder="A" className="bg-muted border-border h-11" /></div>
