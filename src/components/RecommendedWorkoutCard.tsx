@@ -43,7 +43,7 @@ export default function RecommendedWorkoutCard({ workouts }: RecommendedWorkoutC
   return (
     <div
       className="relative w-full h-48 rounded-2xl overflow-hidden cursor-pointer group"
-      onClick={() => navigate("/workouts")}
+      onClick={() => navigate(currentWorkout.id ? `/workout/${currentWorkout.id}` : "/workouts")}
     >
       <img
         src={currentWorkout.image}

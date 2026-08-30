@@ -92,12 +92,12 @@ export default function Challenges() {
 
       {/* Category Filters */}
       <div className="px-4 mb-6">
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all ${
                 selectedCategory === category
                   ? "bg-primary text-primary-foreground"
                   : "bg-card border border-border text-foreground hover:border-primary/50"

@@ -23,7 +23,7 @@ export default function WorkoutSelection() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-8 max-w-4xl pb-24">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold mb-2 text-gradient-primary">
             Como você quer começar?

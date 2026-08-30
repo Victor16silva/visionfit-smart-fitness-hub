@@ -108,7 +108,7 @@ export default function AllWorkouts() {
               </button>
             </div>
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {workoutsByLevel[level]?.map((workout) => (
                 <Card 
                   key={workout.id}

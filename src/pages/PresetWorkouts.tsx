@@ -175,7 +175,7 @@ export default function PresetWorkouts() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-6xl">
+      <main className="container mx-auto px-4 py-6 max-w-6xl pb-24">
         <div className="mb-8">
           <h2 className="text-lg text-muted-foreground mb-1">Treinos Profissionais</h2>
           <h1 className="text-3xl font-bold mb-2">Escolha por Categoria</h1>
