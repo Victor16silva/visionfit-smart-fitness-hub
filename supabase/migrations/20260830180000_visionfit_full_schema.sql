@@ -6,9 +6,12 @@
 -- cria funções/triggers, políticas RLS, popula exercícios base e cria a
 -- conta admin inicial.
 --
--- Como usar:
---   1. Abra o Supabase Dashboard -> SQL Editor do seu projeto
---   2. Cole TODO o conteúdo deste arquivo e clique em "Run"
+-- Como aplicar (escolha um):
+--   A) Supabase CLI:  supabase link --project-ref <ref>  &&  supabase db push
+--   B) SQL Editor:    cole TODO o conteúdo no Dashboard -> SQL Editor -> Run
+--
+-- Validado localmente no PostgreSQL 16: cria 14 tabelas, funções/triggers,
+-- políticas RLS, 10 exercícios base e a conta admin confirmada (admin+master).
 -- =====================================================================
 
 -- Extensão necessária para hash de senha (crypt/gen_salt)
