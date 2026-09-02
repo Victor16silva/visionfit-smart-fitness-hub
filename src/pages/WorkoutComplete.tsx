@@ -125,7 +125,7 @@ export default function WorkoutComplete() {
             // Share functionality
             if (navigator.share) {
               navigator.share({
-                title: "VisionFit - Treino Completo!",
+                title: "ATHEV gym - Treino Completo!",
                 text: `Acabei de completar um treino de ${formatTime(stats.duration)} e queimei ${stats.calories} calorias! 💪`,
               });
             }

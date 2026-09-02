@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import splashImg from "@/assets/onboarding-splash.jpg";
+import BrandLogo from "@/components/BrandLogo";
 import welcomeImg from "@/assets/onboarding-welcome.jpg";
-import loginImg from "@/assets/onboarding-login.jpg";
 
 export default function Onboarding() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -32,14 +32,14 @@ export default function Onboarding() {
   const slides = [
     {
       image: splashImg,
-      title: "VisionFit",
+      title: "ATHEV gym",
       subtitle: "Transforme Seu Potencial",
       showButton: false,
     },
     {
       image: welcomeImg,
       title: "Bem-vindo",
-      description: "VisionFit é um personal trainer alimentado por IA que se adapta aos seus objetivos, rastreia seu progresso e oferece treinos personalizados e planos focados.",
+      description: "ATHEV gym é um personal trainer alimentado por IA que se adapta aos seus objetivos, rastreia seu progresso e oferece treinos personalizados e planos focados.",
       showButton: true,
       buttonText: "Vamos Começar",
     },
@@ -68,10 +68,8 @@ export default function Onboarding() {
         {/* Logo/Title Area */}
         {currentSlide === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-24 h-24 rounded-3xl bg-primary/20 backdrop-blur-sm flex items-center justify-center mb-6 border border-primary/30">
-              <Dumbbell className="w-12 h-12 text-primary" />
-            </div>
-            <h1 className="text-6xl font-bold text-primary mb-2">
+            <BrandLogo className="w-36 h-36 mb-6" />
+            <h1 className="text-5xl font-bold text-primary mb-2">
               {currentSlideData.title}
             </h1>
             <p className="text-xl text-foreground/80">

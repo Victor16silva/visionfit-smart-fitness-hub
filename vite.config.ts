@@ -15,10 +15,10 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "robots.txt", "icons/apple-touch-icon.png"],
+      includeAssets: ["favicon.ico", "favicon-32.png", "logo.png", "robots.txt", "icons/apple-touch-icon.png"],
       manifest: {
-        name: "VisionFit",
-        short_name: "VisionFit",
+        name: "ATHEV gym",
+        short_name: "ATHEV",
         description: "Treinos personalizados, progresso e desafios com seus amigos.",
         lang: "pt-BR",
         theme_color: "#0b0b12",

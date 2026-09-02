@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VisionFit Design System - Based on Report */
+/* ATHEV gym Design System */
 
 @layer base {
   :root {
@@ -48,7 +48,7 @@
 
     --radius: 1rem;
     
-    /* Custom VisionFit colors */
+    /* Custom ATHEV gym colors */
     --lime: 75 100% 50%;
     --lime-foreground: 0 0% 0%;
     --lime-dark: 72 100% 43%;

@@ -52,7 +52,7 @@ export default function UserOnboarding() {
 
       toast({
         title: "Perfil configurado!",
-        description: "Bem-vindo ao VisionFit",
+        description: "Bem-vindo ao ATHEV gym",
       });
       navigate("/dashboard");
     } catch (error) {

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,10 +12,8 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
-              <Dumbbell className="w-6 h-6 text-background" />
-            </div>
-            <span className="text-xl font-bold">VisionFit</span>
+            <BrandLogo className="w-10 h-10" />
+            <span className="text-xl font-bold">ATHEV gym</span>
           </div>
 
           {/* Desktop Navigation */}

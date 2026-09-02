@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 
 const benefits = [
   "7 dias de teste grátis",
@@ -17,6 +18,7 @@ const CTA = () => {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
+          <BrandLogo className="w-20 h-20 mx-auto mb-6" />
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
             Pronto para transformar
             <br />
@@ -53,7 +55,7 @@ const CTA = () => {
           </div>
 
           <p className="text-sm text-muted-foreground mt-6">
-            Mais de <span className="text-primary font-semibold">10.000</span> academias já usam VisionFit
+            Mais de <span className="text-primary font-semibold">10.000</span> academias já usam ATHEV gym
           </p>
         </div>
       </div>

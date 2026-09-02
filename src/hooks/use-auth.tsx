@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
+import * as amplitude from "@amplitude/unified";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
@@ -22,10 +23,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) {
+          amplitude.setUserId(session.user.id);
+        } else {
+          amplitude.reset();
+        }
       }
     );
 
@@ -33,6 +39,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        amplitude.setUserId(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -75,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    amplitude.reset();
     navigate("/");
   };
 

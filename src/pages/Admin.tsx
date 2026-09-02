@@ -154,8 +154,17 @@ export default function Admin() {
           const { data: roleData } = await supabase
             .from("user_roles")
             .select("role")
-            .eq("user_id", profile.id)
-            .maybeSingle();
+            .eq("user_id", profile.id);
+
+          const roleRank: Record<string, number> = {
+            master: 4,
+            admin: 3,
+            personal: 2,
+            user: 1,
+          };
+          const highestRole = (roleData ?? [])
+            .map((row) => row.role)
+            .sort((a, b) => (roleRank[b] || 0) - (roleRank[a] || 0))[0];
 
           // Count workouts for user
           const { count } = await supabase
@@ -165,7 +174,7 @@ export default function Admin() {
 
           return {
             ...profile,
-            role: roleData?.role || "user",
+            role: highestRole || "user",
             workouts_count: count || 0
           };
         })
@@ -238,6 +247,41 @@ export default function Admin() {
     } catch (error) {
       console.error("Error making admin:", error);
       toast.error("Erro ao promover usuário");
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (userId === user?.id) {
+      toast.error("Você não pode excluir a própria conta");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { user_id: userId },
+      });
+
+      if (error) {
+        const functionError = error as { context?: Response };
+        let message = "Erro ao excluir conta";
+        try {
+          const body = await functionError.context?.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // keep default message
+        }
+        throw new Error(message);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      toast.success("Conta excluída");
+      loadAllData();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao excluir conta");
     }
   };
 
@@ -425,9 +469,11 @@ export default function Admin() {
                 <UserDetailCard
                   key={userData.id}
                   user={userData}
+                  currentUserId={user?.id}
                   onAssignWorkout={handleAssignWorkout}
                   onCreateWorkout={handleCreateWorkout}
                   onMakeAdmin={handleMakeAdmin}
+                  onDeleteUser={handleDeleteUser}
                 />
               ))}
           </div>

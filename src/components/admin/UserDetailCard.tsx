@@ -1,9 +1,20 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Plus, X, Dumbbell, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Dumbbell, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface UserDetailCardProps {
   user: {
@@ -23,6 +34,8 @@ interface UserDetailCardProps {
   onAssignWorkout: (userId: string) => void;
   onCreateWorkout: (userId: string) => void;
   onMakeAdmin: (userId: string) => void;
+  onDeleteUser?: (userId: string) => Promise<void> | void;
+  currentUserId?: string;
   onMakeTrainer?: (userId: string) => void;
   onMakeNutritionist?: (userId: string) => void;
   onToggleActive?: (userId: string, currentlyActive: boolean) => void;
@@ -40,6 +53,8 @@ export default function UserDetailCard({
   onAssignWorkout,
   onCreateWorkout,
   onMakeAdmin,
+  onDeleteUser,
+  currentUserId,
   onMakeTrainer,
   onMakeNutritionist,
   onToggleActive
@@ -271,6 +286,38 @@ export default function UserDetailCard({
                 >
                   {user.is_active ? 'Desativar Usuário' : 'Ativar Usuário'}
                 </Button>
+              )}
+              {onDeleteUser && currentUserId !== user.id && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full border-destructive text-destructive font-bold hover:bg-destructive/10 h-11"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir conta
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-card border-border">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir {user.full_name}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação é permanente. A conta, os treinos atribuídos e o histórico
+                        desse usuário serão removidos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => onDeleteUser(user.id)}
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           </div>

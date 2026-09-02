@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Dumbbell, Mail, Lock, User, ArrowRight, ArrowLeft } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, ArrowLeft } from "lucide-react";
 import heroImg from "@/assets/hero-gym.jpg";
+import BrandLogo from "@/components/BrandLogo";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -36,7 +37,7 @@ export default function Auth() {
         if (error) throw error;
         toast({
           title: "Login realizado!",
-          description: "Bem-vindo de volta ao VisionFit.",
+          description: "Bem-vindo de volta ao ATHEV gym.",
         });
       } else {
         if (!fullName) {
@@ -46,7 +47,7 @@ export default function Auth() {
         if (error) throw error;
         toast({
           title: "Conta criada!",
-          description: "Bem-vindo ao VisionFit.",
+          description: "Bem-vindo ao ATHEV gym.",
         });
       }
     } catch (error: any) {
@@ -74,11 +75,9 @@ export default function Auth() {
         {/* Conteúdo sobre a imagem */}
         <div className="relative z-10 flex flex-col justify-center px-16 text-foreground">
           <div className="mb-8">
-            <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-primary mb-6">
-              <Dumbbell className="w-8 h-8 text-primary-foreground" />
-            </div>
+            <BrandLogo className="w-20 h-20 mb-6" />
             <h1 className="text-5xl font-bold mb-4">
-              VisionFit
+              ATHEV gym
             </h1>
             <p className="text-xl text-foreground/80 max-w-md">
               Transforme seu corpo e sua mente com treinos inteligentes e personalizados
@@ -118,10 +117,8 @@ export default function Auth() {
 
           {/* Logo Mobile */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-primary">
-              <Dumbbell className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-bold">VisionFit</h1>
+            <BrandLogo className="w-12 h-12" />
+            <h1 className="text-2xl font-bold">ATHEV gym</h1>
           </div>
 
           <Card className="border-none shadow-card">
