@@ -14,15 +14,18 @@
 @media(max-width: 700px) { .splash-mobile { display: block; } body:has(.splash-mobile:not(.splash-done)) { overflow: hidden; } }
 @media(prefers-reduced-motion: reduce) { .splash-loading i { animation: none; width: 100%; } }
 .auth-panel.welcome-mobile {
-  position: relative;
-  min-height: 100svh;
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
   overflow: hidden;
   background: #0b0b0c;
-  padding: max(44px, env(safe-area-inset-top)) 32px max(28px, env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 32px;
+  padding: max(12px, env(safe-area-inset-top)) 24px max(12px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: clamp(12px, 3dvh, 28px);
   text-align: center;
 }
 .welcome-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -32,11 +35,20 @@
 .welcome-brand img { width: 90px; height: 100px; object-fit: contain; display: block; margin: auto; }
 .welcome-brand strong { display: block; color: #e5a93b; font: 64px/1.1 Georgia, serif; letter-spacing: 2px; }
 .welcome-brand small { font-size: 12px; color: #ffffffcc; }
-.welcome-copy { padding-top: 180px; }
+.welcome-copy { padding-top: 0; }
 .welcome-copy h2 { font: 24px/1.2 Georgia, serif; color: white; margin: 0; }
 .welcome-divider { height: 3px; width: 117px; background: linear-gradient(90deg, transparent, #e5a93b, transparent); margin: 16px auto; }
 .welcome-copy p { color: #ffffffb3; font-size: 14px; line-height: 1.55; margin: 0; }
 .welcome-actions>.btn { border-radius: 29px; min-height: 58px; background: #e5a93b; color: #0b0b0c; box-shadow: 0 8px 24px #e5a93b44; }
 .welcome-actions>span { display: block; color: #8e8e93; font-size: 13px; margin-top: 16px; }
 .welcome-actions .btn-ghost { display: inline; padding: 0; color: #ffd275; min-height: 44px; font-weight: 700; text-decoration: underline; }
-@media(max-height: 700px) { .welcome-copy { padding-top: 90px; } .welcome-brand strong { font-size: 48px; } }
+html:has(.welcome-mobile), body:has(.welcome-mobile) { overflow: hidden; overscroll-behavior: none; }
+@media(max-height: 700px) {
+  .welcome-brand img { height: 55px; width: 55px; }
+  .welcome-brand strong { font-size: 42px; }
+  .welcome-copy h2 { font-size: 22px; }
+  .welcome-copy p { font-size: 12px; }
+  .welcome-divider { margin: 10px auto; }
+  .welcome-actions>.btn { min-height: 48px; }
+  .welcome-actions>span { margin-top: 4px; }
+}
