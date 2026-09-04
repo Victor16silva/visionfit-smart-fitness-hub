@@ -1,0 +1,2 @@
+export const S={user:null,csrf:'',data:null,route:'home',auth:'welcome',filter:'Todos',search:'',evolutionTab:'geral',period:90,metric:'weight',calendar:new Date(),calendarMode:'month',selectedDate:'',adminSection:'dashboard',students:[],staff:null,student:null,templates:[],messages:[],editor:null,guide:null,busy:false};
+export async function api(...args){return (await import('./cloud-api.js')).api(...args);}

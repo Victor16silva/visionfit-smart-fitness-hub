@@ -1,0 +1,24 @@
+ATHEV — SEU APLICATIVO PARA CELULAR
+
+1. Extraia todos os arquivos do ZIP no computador.
+2. Abra a pasta ATHEV no VS Code.
+3. Execute iniciar-celular.bat no computador.
+4. Conecte celular e computador ao mesmo Wi-Fi.
+5. Abra no celular o endereço http://...:8000 mostrado no terminal.
+6. Na tela do app, toque em Aluno para começar a demonstração.
+
+Para usar apenas no computador: executar iniciar.bat e abrir http://localhost:8000.
+Mantenha o terminal e o computador ligados durante o uso.
+Não use Live Server: este projeto possui servidor e banco de dados próprios.
+
+Conta do aluno: aluno@athev.local
+Conta do professor: professor@athev.local
+Conta da administração: admin@athev.local
+Senha das contas demo: Athev@123
+
+Se não houver Python instalado, instale Python 3.10 ou mais recente.
+O iniciador também reconhece o Python já disponível neste computador via Codex.
+
+Treinos, histórico, medidas, agenda e cadastros ficam no banco local.
+Pagamentos são simulações. Catraca e serviços externos não estão conectados.
+Veja README.md para todos os recursos e instruções detalhadas.

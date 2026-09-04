@@ -23,3 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+.vercel
+.env*.local
+.env
+supabase/.temp/
+__pycache__/
+*.db
+*.sqlite*

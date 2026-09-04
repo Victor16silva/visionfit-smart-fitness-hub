@@ -4,13 +4,14 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const source = join(root, "nvdesing2", "logonv.png");
+const source = join(root, "public", "logo.png");
 const publicDir = join(root, "public");
 const iconsDir = join(publicDir, "icons");
 
 mkdirSync(iconsDir, { recursive: true });
 copyFileSync(source, join(root, "src", "assets", "logo.png"));
-copyFileSync(source, join(publicDir, "logo.png"));
+copyFileSync(source, join(root, "ATHEV-CELULAR/ATHEV/assets/logo.png"));
+copyFileSync(source, join(root, "ATHEV-CELULAR/ATHEV/assets/login-logo.png"));
 
 async function squarePng(size, dest, { padding = 0 } = {}) {
   const inner = Math.max(1, Math.round(size * (1 - padding * 2)));
@@ -60,4 +61,6 @@ await squarePng(512, join(iconsDir, "maskable-512.png"), { padding: 0.18 });
 const faviconPng = readFileSync(join(publicDir, "favicon-32.png"));
 writeFileSync(join(publicDir, "favicon.ico"), pngToIco(faviconPng, 32, 32));
 
-console.log("Brand icons generated from nvdesing2/logonv.png");
+console.log("Brand icons generated from public/logo.png");
+
+await squarePng(1024, join(root, "ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"));

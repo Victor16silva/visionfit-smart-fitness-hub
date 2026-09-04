@@ -1,0 +1,7 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {"label":"ATHEV: iniciar no computador","type":"shell","command":"${workspaceFolder}\\iniciar.bat","problemMatcher":[],"presentation":{"reveal":"always","panel":"dedicated"}},
+    {"label":"ATHEV: testar no celular (Wi-Fi)","type":"shell","command":"${workspaceFolder}\\iniciar-celular.bat","problemMatcher":[],"presentation":{"reveal":"always","panel":"dedicated"}}
+  ]
+}
