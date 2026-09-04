@@ -8,11 +8,13 @@ import {legal,exerciseDetail,workoutDetail,newEditor,readEditor,editorView,findW
 
 const app=document.querySelector('#app'),dialog=document.querySelector('#modal');
 const splashStarted=performance.now();
+let splashFinishScheduled=false;
 function finishBoot(){
  const splash=document.querySelector('.splash-mobile');
- if(!splash)return;
+ if(!splash||splashFinishScheduled)return;
+ splashFinishScheduled=true;
  const minimum=window.matchMedia('(max-width: 700px)').matches?20000:0;
- setTimeout(()=>{splash.classList.add('splash-done');setTimeout(()=>splash.remove(),450);},Math.max(0,minimum-(performance.now()-splashStarted)));
+ setTimeout(()=>{splash.classList.add('splash-done');setTimeout(()=>splash.remove(),450);},Math.max(0,minimum+500-(performance.now()-splashStarted)));
 }
 const routes=['home','workouts','library','session','evolution','agenda','nutrition','achievements','wallet','plans','units','profile','notifications','assistant','trainer','admin'];
 let pendingConfirm=null,saveChain=Promise.resolve(),saveRevision=0,lastRest=0,guideTimer=0,routeRevision=0,saveError=null;
