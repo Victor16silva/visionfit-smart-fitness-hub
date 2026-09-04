@@ -1,3 +1,8 @@
+.splash-mobile { z-index: 200; }
+.splash-loading i { width: 0; animation: splash-slow 20s linear forwards; }
+@keyframes splash-slow { to { width: 100%; } }
+@media(max-width: 700px) { .splash-mobile { display: flex; } body:has(.splash-mobile:not(.splash-done)) { overflow: hidden; } }
+@media(prefers-reduced-motion: reduce) { .splash-loading i { animation: none; width: 100%; } }
 .auth-panel.welcome-mobile {
   position: relative;
   min-height: 100svh;

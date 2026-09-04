@@ -7,6 +7,13 @@ import {authView,shell,view,isManager,isTrainer} from './views.js';
 import {legal,exerciseDetail,workoutDetail,newEditor,readEditor,editorView,findWorkout,measurementForm,eventForm,photoForm,foodForm,nutritionGoals,profileForm,historyDetail,finishForm,invoice,userForm,entityForm} from './forms.js';
 
 const app=document.querySelector('#app'),dialog=document.querySelector('#modal');
+const splashStarted=performance.now();
+function finishBoot(){
+ const splash=document.querySelector('.splash-mobile');
+ if(!splash)return;
+ const minimum=window.matchMedia('(max-width: 700px)').matches?20000:0;
+ setTimeout(()=>{splash.classList.add('splash-done');setTimeout(()=>splash.remove(),450);},Math.max(0,minimum-(performance.now()-splashStarted)));
+}
 const routes=['home','workouts','library','session','evolution','agenda','nutrition','achievements','wallet','plans','units','profile','notifications','assistant','trainer','admin'];
 let pendingConfirm=null,saveChain=Promise.resolve(),saveRevision=0,lastRest=0,guideTimer=0,routeRevision=0,saveError=null;
 function close(){dialog.close();clearInterval(guideTimer);S.guide=null;}
@@ -241,12 +248,11 @@ window.addEventListener('hashchange',routeLoad);
 window.addEventListener('online',()=>toast('Conexão restabelecida.'));
 window.addEventListener('beforeunload',event=>{if(document.querySelector('#workout-form')&&S.editor){event.preventDefault();event.returnValue='';}});
 async function init(){
- const boot=document.querySelector('.splash-mobile');const finishBoot=()=>boot?.classList.add('splash-done');
  const oauthError=socialCallbackError(location.hash,location.search);if(oauthError){history.replaceState(null,"",location.pathname);S.auth="login";render();toast(oauthError,true);return;}
  if(location.protocol==='file:'){S.auth='login';render();finishBoot();modal('Inicie o ATHEV pelo servidor local',`<p>O projeto usa um banco de dados e autenticação. Abra a pasta no VS Code e execute <strong>npm run dev</strong>, ou use o terminal:</p><div class="code-box">npm run dev</div><p>Depois acesse <a class="gold" href="http://localhost:8000">http://localhost:8000</a>.</p>`);return;}
  try{await supabase.auth.getSession();if(location.hash==='#reset-password'){S.auth='reset-password';render();return;}const me=await api('/me');S.user=me.user;S.csrf=me.csrf;S.data=await api('/bootstrap');await routeLoad();}
  catch(e){S.user=null;S.data=null;S.auth='welcome';render();if(e.status!==401)toast(e.message,true);}finally{finishBoot();}
 }
 supabase.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){S.auth='reset-password';render();}if(event==='SIGNED_OUT'){S.user=null;S.data=null;S.auth='login';render();}});
-init();
+init().finally(finishBoot);
 registerWebMCP(refresh);
